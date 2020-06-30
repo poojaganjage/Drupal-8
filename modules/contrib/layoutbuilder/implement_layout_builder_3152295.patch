@@ -1,0 +1,224 @@
+diff --git a/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml b/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
+index 5ab7d0f..87f9c34 100644
+--- a/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
++++ b/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
+@@ -1,2 +1,4 @@
+-allowed_types:
+-  - article
+\ No newline at end of file
++layoutbuilder.allowed_types:
++  entity:
++    - node
++    - taxonomy
+\ No newline at end of file
+diff --git a/modules/contrib/layoutbuilder/layoutbuilder.links.menu.yml b/modules/contrib/layoutbuilder/layoutbuilder.links.menu.yml
+index 922e54f..9246f74 100644
+--- a/modules/contrib/layoutbuilder/layoutbuilder.links.menu.yml
++++ b/modules/contrib/layoutbuilder/layoutbuilder.links.menu.yml
+@@ -1,5 +1,5 @@
+ layoutbuilder.admin_settings:
+-  title: 'Layout Builder Dsiplay'
++  title: 'Layout Builder Display'
+   description: 'Control the display of Layout Builder Form'
+   route_name: layoutbuilder.admin_settings
+   parent: system.admin_config_content
+diff --git a/modules/contrib/layoutbuilder/layoutbuilder.module b/modules/contrib/layoutbuilder/layoutbuilder.module
+index ace41f2..87433cf 100644
+--- a/modules/contrib/layoutbuilder/layoutbuilder.module
++++ b/modules/contrib/layoutbuilder/layoutbuilder.module
+@@ -71,16 +71,23 @@ function layoutbuilder_help($route_name, RouteMatchInterface $route_match) {
+  */
+ function layoutbuilder_entity_type_alter(array &$entity_types) {
+   /** @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types */
+-  $entity_types['entity_view_display']
++
++  // $node = $form_state->getFormObject()->getEntity();
++  // $current_node_type = $node->getType();
++  // $config = \Drupal::config('layoutbuilder.settings');
++  // $types = $config->get('layoutbuilder.allowed_types.entity', array());
++
++  $types['entity_view_display']
+     ->setClass(LayoutBuilderEntityViewDisplay::class)
+     ->setStorageClass(LayoutBuilderEntityViewDisplayStorage::class)
+     ->setFormClass('layoutbuilder', DefaultsEntityForm::class)
+     ->setFormClass('edit', LayoutBuilderEntityViewDisplayForm::class);
+ 
+-  // Ensure every fieldable entity type has a layout form.
+-  foreach ($entity_types as $entity_type) {
+-    if ($entity_type->entityClassImplements(FieldableEntityInterface::class)) {
+-      $entity_type->setFormClass('layoutbuilder', OverridesEntityForm::class);
++  //Ensure every fieldable entity type has a layout form.
++  // if (in_array($current_node_type, $types))
++  foreach ($entity_types as $types) {
++    if ($types->entityClassImplements(FieldableEntityInterface::class)) {
++      $types->setFormClass('layoutbuilder', OverridesEntityForm::class);
+     }
+   }
+ }
+diff --git a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderEntityViewDisplayForm.php b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderEntityViewDisplayForm.php
+index e8f91ae..f91a8a0 100644
+--- a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderEntityViewDisplayForm.php
++++ b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderEntityViewDisplayForm.php
+@@ -37,18 +37,14 @@ class LayoutBuilderEntityViewDisplayForm extends EntityViewDisplayEditForm {
+    */
+   public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL) {
+     $this->sectionStorage = $section_storage;
+-    return parent::buildForm($form, $form_state);
++    //return parent::buildForm($form, $form_state);
+   }
+ 
+   /**
+    * {@inheritdoc}
+    */
+   public function form(array $form, FormStateInterface $form_state) {
+-    $form = parent::form($form, $form_state);
+-    $node = $form_state->getFormObject()->getEntity();
+-    $current_node_type = $node->getTypedData();
+-    $config = \Drupal::config('layoutbuilder.settings');
+-    $types = $config->get('allowed_types', array());
++    // $form = parent::form($form, $form_state);
+ 
+     // Remove the Layout Builder field from the list.
+     $form['#fields'] = array_diff($form['#fields'], [OverridesSectionStorage::FIELD_NAME]);
+@@ -67,63 +63,71 @@ public function form(array $form, FormStateInterface $form_state) {
+       '#title' => $this->t('Manage layout'),
+       '#weight' => -10,
+       '#attributes' => ['class' => ['button']],
+-      '#url' => $this->sectionStorage->getLayoutBuilderUrl(),
++      // '#url' => $this->sectionStorage->getLayoutBuilderUrl(),
+       '#access' => $is_enabled,
+     ];
+ 
+-    $form['layout'] = [
+-      '#type' => 'details',
+-      '#open' => TRUE,
+-      '#title' => $this->t('Layout options'),
+-      '#tree' => TRUE,
+-    ];
+-
+-    $form['layout']['enabled'] = [
+-      '#type' => 'checkbox',
+-      '#title' => $this->t('Use Layout Builder'),
+-      '#default_value' => $is_enabled,
+-    ];
+-    $form['#entity_builders']['layoutbuilder'] = '::entityFormEntityBuild';
++    $node = $form_state->getFormObject()->getEntity();
++    // $current_node_type = $node->getTypedData();
++    $current_node_type = $node->getEntityTypedData();
++    $config = \Drupal::config('layoutbuilder.settings');
++    $types = $config->get('layoutbuilder.allowed_types.entity', array());
++    if (in_array($current_node_type, $types))
++    {
++      $form['layout'] = [
++        '#type' => 'details',
++        '#open' => TRUE,
++        '#title' => $this->t('Layout options'),
++        '#tree' => TRUE,
++      ];
+ 
+-    // @todo Expand to work for all view modes in
+-    //   https://www.drupal.org/node/2907413.
+-    if ($this->isCanonicalMode($this->entity->getMode())) {
+-      $entity_type = $this->entityTypeManager->getDefinition($this->entity->getTargetEntityTypeId());
+-      $form['layout']['allow_custom'] = [
++      $form['layout']['enabled'] = [
+         '#type' => 'checkbox',
+-        '#title' => $this->t('Allow each @entity to have its layout customized.', [
+-          '@entity' => $entity_type->getSingularLabel(),
+-        ]),
+-        '#default_value' => $this->entity->isOverridable(),
+-        '#states' => [
+-          'disabled' => [
+-            ':input[name="layout[enabled]"]' => ['checked' => FALSE],
+-          ],
+-          'invisible' => [
+-            ':input[name="layout[enabled]"]' => ['checked' => FALSE],
+-          ],
+-        ],
++        '#title' => $this->t('Use Layout Builder'),
++        '#default_value' => $is_enabled,
+       ];
+-      if (!$is_enabled) {
+-        $form['layout']['allow_custom']['#attributes']['disabled'] = 'disabled';
++      $form['#entity_builders']['layoutbuilder'] = '::entityFormEntityBuild';
++
++      // @todo Expand to work for all view modes in
++      //   https://www.drupal.org/node/2907413.
++      if ($this->isCanonicalMode($this->entity->getMode())) {
++        $entity_type = $this->entityTypeManager->getDefinition($this->entity->getTargetEntityTypeId());
++        $form['layout']['allow_custom'] = [
++          '#type' => 'checkbox',
++          '#title' => $this->t('Allow each @entity to have its layout customized.', [
++            '@entity' => $entity_type->getSingularLabel(),
++          ]),
++          '#default_value' => $this->entity->isOverridable(),
++          '#states' => [
++            'disabled' => [
++              ':input[name="layout[enabled]"]' => ['checked' => FALSE],
++            ],
++            'invisible' => [
++              ':input[name="layout[enabled]"]' => ['checked' => FALSE],
++            ],
++          ],
++        ];
++        if (!$is_enabled) {
++          $form['layout']['allow_custom']['#attributes']['disabled'] = 'disabled';
++        }
++        // Prevent turning off overrides while any exist.
++        if ($this->hasOverrides($this->entity)) {
++          $form['layout']['enabled']['#disabled'] = TRUE;
++          $form['layout']['enabled']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
++          $form['layout']['allow_custom']['#disabled'] = TRUE;
++          $form['layout']['allow_custom']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
++          unset($form['layout']['allow_custom']['#states']);
++          unset($form['#entity_builders']['layoutbuilder']);
++        }
+       }
+-      // Prevent turning off overrides while any exist.
+-      if ($this->hasOverrides($this->entity)) {
+-        $form['layout']['enabled']['#disabled'] = TRUE;
+-        $form['layout']['enabled']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
+-        $form['layout']['allow_custom']['#disabled'] = TRUE;
+-        $form['layout']['allow_custom']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
+-        unset($form['layout']['allow_custom']['#states']);
+-        unset($form['#entity_builders']['layoutbuilder']);
++      // For non-canonical modes, the existing value should be preserved.
++      else {
++        $form['layout']['allow_custom'] = [
++          '#type' => 'value',
++          '#value' => $this->entity->isOverridable(),
++        ];
+       }
+     }
+-    // For non-canonical modes, the existing value should be preserved.
+-    else {
+-      $form['layout']['allow_custom'] = [
+-        '#type' => 'value',
+-        '#value' => $this->entity->isOverridable(),
+-      ];
+-    }
+     return $form;
+   }
+ 
+diff --git a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
+index 9e3701b..9a6cb2c 100644
+--- a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
++++ b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
+@@ -60,7 +60,7 @@ public function buildForm(array $form, FormStateInterface $form_state, Request $
+       '#type' => 'checkboxes',
+       '#required' => TRUE,
+       '#options' => $types,
+-      '#default_value' => $config->get('allowed_types'),
++      '#default_value' => $config->get('layoutbuilder.allowed_types.entity'),
+     ];
+   	return parent::buildForm($form, $form_state);
+   }
+@@ -71,7 +71,7 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+   	$allowed_types = array_filter($form_state->getValue('entities'));
+   	sort($allowed_types);
+   	$this->config('layoutbuilder.settings')
+-  	  ->set('allowed_types', $allowed_types)
++  	  ->set('layoutbuilder.allowed_types.entity', $allowed_types)
+   	  ->save();
+   	  parent::submitForm($form, $form_state);
+   }
