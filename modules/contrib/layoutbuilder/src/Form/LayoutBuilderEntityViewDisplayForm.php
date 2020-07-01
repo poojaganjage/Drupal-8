@@ -37,14 +37,19 @@ class LayoutBuilderEntityViewDisplayForm extends EntityViewDisplayEditForm {
    */
   public function buildForm(array $form, FormStateInterface $form_state, SectionStorageInterface $section_storage = NULL) {
     $this->sectionStorage = $section_storage;
-    //return parent::buildForm($form, $form_state);
+    return parent::buildForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
-    // $form = parent::form($form, $form_state);
+    $form = parent::form($form, $form_state);
+    // $node = $form_state->getFormObject()->getEntity();
+    // // $current_node_type = $node->getTypedData();
+    // $current_node_type = $node->getEntityTypedData();
+    // $config = \Drupal::config('layoutbuilder.settings');
+    // $types = $config->get('layoutbuilder.allowed_types', array());
 
     // Remove the Layout Builder field from the list.
     $form['#fields'] = array_diff($form['#fields'], [OverridesSectionStorage::FIELD_NAME]);
@@ -63,70 +68,62 @@ class LayoutBuilderEntityViewDisplayForm extends EntityViewDisplayEditForm {
       '#title' => $this->t('Manage layout'),
       '#weight' => -10,
       '#attributes' => ['class' => ['button']],
-      // '#url' => $this->sectionStorage->getLayoutBuilderUrl(),
+      '#url' => $this->sectionStorage->getLayoutBuilderUrl(),
       '#access' => $is_enabled,
     ];
 
-    $node = $form_state->getFormObject()->getEntity();
-    // $current_node_type = $node->getTypedData();
-    $current_node_type = $node->getEntityTypedData();
-    $config = \Drupal::config('layoutbuilder.settings');
-    $types = $config->get('layoutbuilder.allowed_types.entity', array());
-    if (in_array($current_node_type, $types))
-    {
-      $form['layout'] = [
-        '#type' => 'details',
-        '#open' => TRUE,
-        '#title' => $this->t('Layout options'),
-        '#tree' => TRUE,
-      ];
+    $form['layout'] = [
+      '#type' => 'details',
+      '#open' => TRUE,
+      '#title' => $this->t('Layout options'),
+      '#tree' => TRUE,
+    ];
 
-      $form['layout']['enabled'] = [
+    $form['layout']['enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use Layout Builder'),
+      '#default_value' => $is_enabled,
+    ];
+    $form['#entity_builders']['layoutbuilder'] = '::entityFormEntityBuild';
+
+    // @todo Expand to work for all view modes in
+    //   https://www.drupal.org/node/2907413.
+    if ($this->isCanonicalMode($this->entity->getMode())) {
+      $entity_type = $this->entityTypeManager->getDefinition($this->entity->getTargetEntityTypeId());
+      $form['layout']['allow_custom'] = [
         '#type' => 'checkbox',
-        '#title' => $this->t('Use Layout Builder'),
-        '#default_value' => $is_enabled,
-      ];
-      $form['#entity_builders']['layoutbuilder'] = '::entityFormEntityBuild';
-
-      // @todo Expand to work for all view modes in
-      //   https://www.drupal.org/node/2907413.
-      if ($this->isCanonicalMode($this->entity->getMode())) {
-        $entity_type = $this->entityTypeManager->getDefinition($this->entity->getTargetEntityTypeId());
-        $form['layout']['allow_custom'] = [
-          '#type' => 'checkbox',
-          '#title' => $this->t('Allow each @entity to have its layout customized.', [
-            '@entity' => $entity_type->getSingularLabel(),
-          ]),
-          '#default_value' => $this->entity->isOverridable(),
-          '#states' => [
-            'disabled' => [
-              ':input[name="layout[enabled]"]' => ['checked' => FALSE],
-            ],
-            'invisible' => [
-              ':input[name="layout[enabled]"]' => ['checked' => FALSE],
-            ],
+        '#title' => $this->t('Allow each @entity to have its layout customized.', [
+          '@entity' => $entity_type->getSingularLabel(),
+        ]),
+        '#default_value' => $this->entity->isOverridable(),
+        '#states' => [
+          'disabled' => [
+            ':input[name="layout[enabled]"]' => ['checked' => FALSE],
           ],
-        ];
-        if (!$is_enabled) {
-          $form['layout']['allow_custom']['#attributes']['disabled'] = 'disabled';
-        }
-        // Prevent turning off overrides while any exist.
-        if ($this->hasOverrides($this->entity)) {
-          $form['layout']['enabled']['#disabled'] = TRUE;
-          $form['layout']['enabled']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
-          $form['layout']['allow_custom']['#disabled'] = TRUE;
-          $form['layout']['allow_custom']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
-          unset($form['layout']['allow_custom']['#states']);
-          unset($form['#entity_builders']['layoutbuilder']);
-        }
+          'invisible' => [
+            ':input[name="layout[enabled]"]' => ['checked' => FALSE],
+          ],
+        ],
+      ];
+      if (!$is_enabled) {
+        $form['layout']['allow_custom']['#attributes']['disabled'] = 'disabled';
       }
-      // For non-canonical modes, the existing value should be preserved.
-      else {
-        $form['layout']['allow_custom'] = [
-          '#type' => 'value',
-          '#value' => $this->entity->isOverridable(),
-        ];
+      // Prevent turning off overrides while any exist.
+      if ($this->hasOverrides($this->entity)) {
+        $form['layout']['enabled']['#disabled'] = TRUE;
+        $form['layout']['enabled']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
+        $form['layout']['allow_custom']['#disabled'] = TRUE;
+        $form['layout']['allow_custom']['#description'] = $this->t('You must revert all customized layouts of this display before you can disable this option.');
+        unset($form['layout']['allow_custom']['#states']);
+        unset($form['#entity_builders']['layoutbuilder']);
       }
+    }
+    // For non-canonical modes, the existing value should be preserved.
+    else {
+      $form['layout']['allow_custom'] = [
+        '#type' => 'value',
+        '#value' => $this->entity->isOverridable(),
+      ];
     }
     return $form;
   }

@@ -1,0 +1,31 @@
+diff --git a/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml b/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
+index 7b7bd79..41cbc1a 100644
+--- a/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
++++ b/modules/contrib/layoutbuilder/config/install/layoutbuilder.settings.yml
+@@ -1,3 +1,2 @@
+ layoutbuilder.allowed_types:
+-  entity:
+     - node
+\ No newline at end of file
+diff --git a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
+index 9450ac8..6e1d891 100644
+--- a/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
++++ b/modules/contrib/layoutbuilder/src/Form/LayoutBuilderSettingsForm.php
+@@ -40,7 +40,7 @@ public function buildForm(array $form, FormStateInterface $form_state, Request $
+       '#type' => 'checkboxes',
+       '#required' => TRUE,
+       '#options' => $types,
+-      '#default_value' => $config->get('layoutbuilder.allowed_types.entity'),
++      '#default_value' => $config->get('layoutbuilder.allowed_types'),
+     ];
+   	return parent::buildForm($form, $form_state);
+   }
+@@ -51,7 +51,7 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+   	$allowed_types = array_filter($form_state->getValue('entities'));
+   	sort($allowed_types);
+   	$this->config('layoutbuilder.settings')
+-  	  ->set('layoutbuilder.allowed_types.entity', $allowed_types)
++  	  ->set('layoutbuilder.allowed_types', $allowed_types)
+   	  ->save();
+   	  parent::submitForm($form, $form_state);
+   }

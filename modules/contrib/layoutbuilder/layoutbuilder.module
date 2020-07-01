@@ -71,17 +71,16 @@ function layoutbuilder_help($route_name, RouteMatchInterface $route_match) {
  */
 function layoutbuilder_entity_type_alter(array &$entity_types) {
   /** @var \Drupal\Core\Entity\EntityTypeInterface[] $entity_types */
-
-  $types['entity_view_display']
+  $entity_types['entity_view_display']
     ->setClass(LayoutBuilderEntityViewDisplay::class)
     ->setStorageClass(LayoutBuilderEntityViewDisplayStorage::class)
     ->setFormClass('layoutbuilder', DefaultsEntityForm::class)
     ->setFormClass('edit', LayoutBuilderEntityViewDisplayForm::class);
 
-  //Ensure every fieldable entity type has a layout form.
-  foreach ($entity_types as $types) {
-    if ($types->entityClassImplements(FieldableEntityInterface::class)) {
-      $types->setFormClass('layoutbuilder', OverridesEntityForm::class);
+  // Ensure every fieldable entity type has a layout form.
+  foreach ($entity_types as $entity_type) {
+    if ($entity_type->entityClassImplements(FieldableEntityInterface::class)) {
+      $entity_type->setFormClass('layoutbuilder', OverridesEntityForm::class);
     }
   }
 }
