@@ -3,7 +3,7 @@
 
 # Settings form.
 layout_builder_bgcolor.settings:
-  path: '/admin/config/content/layout-builder-bgcolor'
+  path: '/admin/config/content/layout_builder_bgcolor'
   defaults:
     _form: '\Drupal\layout_builder_bgcolor\Form\Settings'
     _title: 'Layout Builder BGColor settings'
