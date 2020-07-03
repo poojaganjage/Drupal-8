@@ -1,0 +1,57 @@
+/* Start table responsive */
+/* Force table to not be like tables anymore */
+table,
+thead,
+tbody,
+th,
+td,
+tr {
+  display: block;
+}
+
+/* Hide table headers (but not display: none;, for accessibility) */
+thead tr {
+  position: absolute;
+  top: -9999px;
+  left: -9999px;
+}
+
+tr {
+  border: 1px solid #ccc;
+}
+
+td {
+  /* Behave  like a "row" */
+  border: none !important;
+  border-bottom: 1px solid #eee !important;
+  position: relative !important;
+  padding-left: 50% !important;
+  white-space: normal !important;
+  text-align: left !important;
+}
+
+td:before {
+  /* Now like a table header */
+  position: absolute;
+  left: 1%;
+  padding-right: 10px;
+  white-space: nowrap;
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Label the data */
+td:before {
+  content: attr(data-title);
+  white-space: normal;
+}
+/* Empty row data */
+td>div.simple-responsive-table-empty-row-data {
+  min-height: 1.5em;
+}
+/* End table responsive */
+/* Start action dropdown multiple */
+.js table td .dropbutton-multiple {
+  padding-right: inherit;
+}
+/* End action dropdown multiple */

@@ -1,0 +1,7 @@
+global-styling:
+  version: 1.x
+  js:
+    js/simple-responsive-table.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupalSettings
