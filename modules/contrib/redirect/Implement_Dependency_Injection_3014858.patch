@@ -1,0 +1,441 @@
+diff --git a/modules/contrib/redirect/redirect.services.yml b/modules/contrib/redirect/redirect.services.yml
+index 578acb0..2de02e9 100644
+--- a/modules/contrib/redirect/redirect.services.yml
++++ b/modules/contrib/redirect/redirect.services.yml
+@@ -3,7 +3,7 @@ parameters:
+ services:
+   redirect.repository:
+     class: Drupal\redirect\RedirectRepository
+-    arguments: ['@entity_type.manager', '@database', '@config.factory']
++    arguments: ['@entity_type.manager', '@database', '@config.factory', '@request_stack']
+     tags:
+       - { name: backend_overridable }
+   redirect.checker:
+@@ -11,7 +11,7 @@ services:
+     arguments: ['@config.factory', '@state', '@access_manager', '@current_user', '@router.route_provider']
+   redirect.request_subscriber:
+     class: Drupal\redirect\EventSubscriber\RedirectRequestSubscriber
+-    arguments: ['@redirect.repository', '@language_manager', '@config.factory', '@path_alias.manager', '@module_handler', '@entity_type.manager', '@redirect.checker', '@router.request_context', '@path_processor_manager']
++    arguments: ['@redirect.repository', '@language_manager', '@config.factory', '@path_alias.manager', '@module_handler', '@entity_type.manager', '@redirect.checker', '@router.request_context', '@path_processor_manager', '@logger.factory']
+     tags:
+       - { name: event_subscriber }
+   redirect.settings_cache_tag:
+@@ -28,3 +28,18 @@ services:
+     class: Drupal\redirect\Routing\RouteSubscriber
+     tags:
+       - { name: event_subscriber }
++  redirect.entity:
++    class: Drupal\redirect\Entity\Redirect
++    arguments: ['@current_user']
++    tags:
++      - { name: entity }
++  redirect.form:
++    class: Drupal\redirect\Form\RedirectForm
++    arguments: ['@entity_type.manager', '@language_manager', '@config.factory']
++    tags:
++      - { name: form }
++  redirect.plugin:
++    class: Drupal\redirect\Plugin\Field\FieldWidget\RedirectSourceWidget
++    arguments: ['@redirect.repository', '@current_route_match']
++    tags:
++      - { name: plugin }
+diff --git a/modules/contrib/redirect/src/Entity/Redirect.php b/modules/contrib/redirect/src/Entity/Redirect.php
+index c1796c1..8aaebea 100644
+--- a/modules/contrib/redirect/src/Entity/Redirect.php
++++ b/modules/contrib/redirect/src/Entity/Redirect.php
+@@ -9,6 +9,8 @@
+ use Drupal\Core\Entity\EntityTypeInterface;
+ use Drupal\Core\Field\BaseFieldDefinition;
+ use Drupal\link\LinkItemInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
++use Drupal\Core\Session\AccountProxyInterface;
+ 
+ /**
+  * The redirect entity class.
+@@ -46,6 +48,20 @@
+  */
+ class Redirect extends ContentEntityBase {
+ 
++  /**
++   * Drupal\Core\Session\AccountProxyInterface definition.
++   *
++   * @var AccountProxyInterface $currentUser
++   */
++  protected $currentUser;
++
++  /**
++   * Class constructor.
++   */
++  public function __construct(AccountProxyInterface $current_user) {
++    $this->currentUser = $current_user;
++  }
++
+   /**
+    * Generates a unique hash for identification purposes.
+    *
+@@ -341,7 +357,8 @@ public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
+    *   An array of default values.
+    */
+   public static function getCurrentUserId() {
+-    return [\Drupal::currentUser()->id()];
++    // return [\Drupal::currentUser()->id()];
++    return [$this->currentUser->id()];
+   }
+ 
+ }
+diff --git a/modules/contrib/redirect/src/EventSubscriber/RedirectRequestSubscriber.php b/modules/contrib/redirect/src/EventSubscriber/RedirectRequestSubscriber.php
+index f3e35f8..e6b7fe0 100644
+--- a/modules/contrib/redirect/src/EventSubscriber/RedirectRequestSubscriber.php
++++ b/modules/contrib/redirect/src/EventSubscriber/RedirectRequestSubscriber.php
+@@ -19,6 +19,8 @@
+ use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+ use Symfony\Component\Routing\RequestContext;
++use Drupal\Core\Logger\LoggerChannelFactoryInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Redirect subscriber for controller requests.
+@@ -70,6 +72,13 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
+    */
+   protected $pathProcessor;
+ 
++  /**
++   * The LoggerFactory service.
++   *
++   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
++   */
++  protected $loggerFactory;
++
+   /**
+    * Constructs a \Drupal\redirect\EventSubscriber\RedirectRequestSubscriber object.
+    *
+@@ -89,8 +98,10 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
+    *   The redirect checker service.
+    * @param \Symfony\Component\Routing\RequestContext
+    *   Request context.
++   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
++   *   The logger service.
+    */
+-  public function __construct(RedirectRepository $redirect_repository, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config, AliasManagerInterface $alias_manager, ModuleHandlerInterface $module_handler, EntityTypeManagerInterface $entity_type_manager, RedirectChecker $checker, RequestContext $context, InboundPathProcessorInterface $path_processor) {
++  public function __construct(RedirectRepository $redirect_repository, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config, AliasManagerInterface $alias_manager, ModuleHandlerInterface $module_handler, EntityTypeManagerInterface $entity_type_manager, RedirectChecker $checker, RequestContext $context, InboundPathProcessorInterface $path_processor, LoggerChannelFactoryInterface $logger_factory = NULL) {
+     $this->redirectRepository = $redirect_repository;
+     $this->languageManager = $language_manager;
+     $this->config = $config->get('redirect.settings');
+@@ -100,6 +111,25 @@ public function __construct(RedirectRepository $redirect_repository, LanguageMan
+     $this->checker = $checker;
+     $this->context = $context;
+     $this->pathProcessor = $path_processor;
++    $this->loggerFactory = $logger_factory;
++  }
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function create(ContainerInterface $container) {
++    return new static(
++      $container->get('redirect_repository'),
++      $container->get('language_manager'),
++      $container->get('config.factory'),
++      $container->get('path_alias.manager'),
++      $container->get('module_handler'),
++      $container->get('entity_type.manager'),
++      $container->get('redirect.checker'),
++      $container->get('router.request_context'),
++      $container->get('path_processor_manager'),
++      $container->get('logger.factory')
++    );
+   }
+ 
+   /**
+@@ -145,7 +175,8 @@ public function onKernelRequestCheckRedirect(GetResponseEvent $event) {
+       $redirect = $this->redirectRepository->findMatchingRedirect($path, $request_query, $this->languageManager->getCurrentLanguage()->getId());
+     }
+     catch (RedirectLoopException $e) {
+-      \Drupal::logger('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
++      // \Drupal::logger('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
++      $this->loggerFactory->get('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
+       $response = new Response();
+       $response->setStatusCode(503);
+       $response->setContent('Service unavailable');
+diff --git a/modules/contrib/redirect/src/Form/RedirectForm.php b/modules/contrib/redirect/src/Form/RedirectForm.php
+index 1b4f453..df0358e 100644
+--- a/modules/contrib/redirect/src/Form/RedirectForm.php
++++ b/modules/contrib/redirect/src/Form/RedirectForm.php
+@@ -6,13 +6,76 @@
+ use Drupal\Core\Entity\ContentEntityForm;
+ use Drupal\Core\Language\Language;
+ use Drupal\Core\Language\LanguageInterface;
++use Drupal\Core\Language\LanguageManagerInterface;
+ use Drupal\Core\Routing\MatchingRouteNotFoundException;
+ use Drupal\Core\Url;
+ use Drupal\redirect\Entity\Redirect;
+ use Drupal\Core\Form\FormStateInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
++use Drupal\Core\Entity\EntityTypeManagerInterface;
++use Drupal\Core\Config\ConfigFactoryInterface;
++
+ 
+ class RedirectForm extends ContentEntityForm {
+ 
++  /**
++   * The Entity Type Manager.
++   *
++   * @var Drupal\Core\Entity\EntityTypeManagerInterface
++   */
++    
++    protected $entityTypeManager;
++
++  /**
++   * The language manager service.
++   *
++   * @var \Drupal\Core\Language\LanguageManagerInterface
++   */
++   
++   protected $languageManager;
++
++   /**
++   * @var \Drupal\Core\Config\ConfigFactoryInterface
++   */
++  protected $config;
++
++  /**
++   * Constructs an RedirectForm object.
++   *
++   * @param $entityTypeManager The Entity Type Manager.
++   */
++
++  /**
++   * Constructs an RedirectForm object.
++   *
++   * @param $languageManager The Language Manager.
++   */
++
++  /**
++   * Constructs an RedirectForm object.
++   *
++   * @param $config The Config Factory Interface.
++   */
++
++  public function __construct(
++      EntityTypeManagerInterface $entityTypeManager, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config
++  ) {
++      $this->entityTypeManager = $entityTypeManager;
++      $this->languageManager = $language_manager;
++      $this->config = $config->get('redirect.settings');
++  }
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function create(ContainerInterface $container) {
++    return new static(
++      $container->get('entity_type.manager'),
++      $container->get('language_manager'),
++      $container->get('config.factory')
++    );
++  }
++
+   /**
+    * {@inheritdoc}
+    */
+@@ -68,13 +131,15 @@ public function form(array $form, FormStateInterface $form_state) {
+ 
+     // Only add the configured languages and a single key for all languages.
+     if (isset($form['language']['widget'][0]['value']))  {
+-      foreach (\Drupal::languageManager()->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language) {
++      // foreach (\Drupal::languageManager()->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language)
++      foreach ($this->languageManager->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language){
+         $form['language']['widget'][0]['value']['#options'][$langcode] = $language->getName();
+       }
+       $form['language']['widget'][0]['value']['#options'][LanguageInterface::LANGCODE_NOT_SPECIFIED] = $this->t('- All languages -');
+     }
+ 
+-    $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : \Drupal::config('redirect.settings')->get('default_status_code');
++    // $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : \Drupal::config('redirect.settings')->get('default_status_code');
++    $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : $this->config->get('default_status_code');
+ 
+     $form['status_code'] = [
+       '#type' => 'select',
+@@ -130,9 +195,10 @@ public function validateForm(array &$form, FormStateInterface $form_state) {
+     $hash = Redirect::generateHash($path, $query, $form_state->getValue('language')[0]['value']);
+ 
+     // Search for duplicate.
+-    $redirects = \Drupal::entityTypeManager()
+-      ->getStorage('redirect')
+-      ->loadByProperties(['hash' => $hash]);
++    // $redirects = \Drupal::entityTypeManager()
++    //   ->getStorage('redirect')
++    //   ->loadByProperties(['hash' => $hash]);
++    $redirects = $this->entityTypeManager->getStorage('redirect')->loadByProperties(['hash' => $hash]);
+ 
+     if (!empty($redirects)) {
+       $redirect = array_shift($redirects);
+diff --git a/modules/contrib/redirect/src/Plugin/Field/FieldWidget/RedirectSourceWidget.php b/modules/contrib/redirect/src/Plugin/Field/FieldWidget/RedirectSourceWidget.php
+index a07f218..1c62101 100644
+--- a/modules/contrib/redirect/src/Plugin/Field/FieldWidget/RedirectSourceWidget.php
++++ b/modules/contrib/redirect/src/Plugin/Field/FieldWidget/RedirectSourceWidget.php
+@@ -10,6 +10,10 @@
+ use Drupal\Core\Form\FormStateInterface;
+ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
++use Drupal\redirect\RedirectRepository;
++use Drupal\Core\Routing\CurrentRouteMatch;
++use Symfony\Component\DependencyInjection\ContainerInterface;
++use Symfony\Component\DependencyInjection\ContainerFactoryPluginInterface;
+ 
+ /**
+  * Plugin implementation of the 'link' widget for the redirect module.
+@@ -29,7 +33,41 @@
+  *   }
+  * )
+  */
+-class RedirectSourceWidget extends WidgetBase {
++class RedirectSourceWidget extends WidgetBase implements ContainerFactoryPluginInterface {
++
++  /** @var  \Drupal\redirect\RedirectRepository */
++  protected $redirectRepository;
++
++  /** @var  Drupal\Core\Routing\CurrentRouteMatch */
++  protected $routeMatch;
++
++  /**
++   * Constructs a Drupal\redirect\Plugin\Field\FieldWidget object.
++   *
++   * @param \Drupal\redirect\RedirectRepository $redirect_repository
++   *   The redirect entity repository.
++   * @param Drupal\Core\Routing\CurrentRouteMatch $route_match
++   *   The redirect entity repository.
++   */
++
++  public function __construct(array $configuration, $plugin_id, $plugin_definition, RedirectRepository $redirect_repository, CurrentRouteMatch $route_match) {
++    parent::__construct($configuration, $plugin_id, $plugin_definition);
++    $this->redirectRepository = $redirect_repository;
++    $this->routeMatch = $route_match;
++  }
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
++    return new static(
++      $configuration,
++      $plugin_id,
++      $plugin_definition,
++      $container->get('redirect.repository'),
++      $container->get('current_route_match')
++    );
++  }
+ 
+   /**
+    * {@inheritdoc}
+@@ -65,7 +103,8 @@ public function formElement(FieldItemListInterface $items, $delta, array $elemen
+         // @todo - Hmm... exception driven logic. Find a better way how to
+         //   determine if we have a valid path.
+         try {
+-          \Drupal::service('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
++          // \Drupal::service('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
++          $this->routeMatch->get('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
+           $element['status_box'][]['#markup'] = '<div class="messages messages--warning">' . $this->t('The source path %path is likely a valid path. It is preferred to <a href="@url-alias">create URL aliases</a> for existing paths rather than redirects.',
+               ['%path' => $source_path, '@url-alias' => Url::fromRoute('entity.path_alias.add_form')->toString()]) . '</div>';
+         }
+@@ -81,7 +120,8 @@ public function formElement(FieldItemListInterface $items, $delta, array $elemen
+         $path = isset($parsed_url['path']) ? $parsed_url['path'] : NULL;
+         if (!empty($path)) {
+           /** @var \Drupal\redirect\RedirectRepository $repository */
+-          $repository = \Drupal::service('redirect.repository');
++          // $repository = \Drupal::service('redirect.repository');
++          $repository = $this->redirectRepository;
+           $redirects = $repository->findBySourcePath($path);
+           if (!empty($redirects)) {
+             $redirect = array_shift($redirects);
+diff --git a/modules/contrib/redirect/src/RedirectChecker.php b/modules/contrib/redirect/src/RedirectChecker.php
+index 02da7ad..e8775ff 100644
+--- a/modules/contrib/redirect/src/RedirectChecker.php
++++ b/modules/contrib/redirect/src/RedirectChecker.php
+@@ -7,7 +7,8 @@
+ use Drupal\Core\Session\AccountInterface;
+ use Drupal\Core\State\StateInterface;
+ use Symfony\Cmf\Component\Routing\RouteObjectInterface;
+-use Symfony\Cmf\Component\Routing\RouteProviderInterface;
++use \Drupal\Core\Routing\RouteProvider;
++// use Symfony\Cmf\Component\Routing\RouteProviderInterface;
+ use Symfony\Component\HttpFoundation\Request;
+ 
+ /**
+@@ -40,7 +41,7 @@ class RedirectChecker {
+    */
+   protected $routeProvider;
+ 
+-  public function __construct(ConfigFactoryInterface $config, StateInterface $state, AccessManager $access_manager, AccountInterface $account, RouteProviderInterface $route_provider) {
++  public function __construct(ConfigFactoryInterface $config, StateInterface $state, AccessManager $access_manager, AccountInterface $account, RouteProvider $route_provider) {
+     $this->config = $config->get('redirect.settings');
+     $this->accessManager = $access_manager;
+     $this->state = $state;
+diff --git a/modules/contrib/redirect/src/RedirectRepository.php b/modules/contrib/redirect/src/RedirectRepository.php
+index ff1ccf8..babb8cf 100644
+--- a/modules/contrib/redirect/src/RedirectRepository.php
++++ b/modules/contrib/redirect/src/RedirectRepository.php
+@@ -8,6 +8,8 @@
+ use Drupal\Core\Language\Language;
+ use Drupal\redirect\Entity\Redirect;
+ use Drupal\redirect\Exception\RedirectLoopException;
++use Symfony\Component\HttpFoundation\RequestStack;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ class RedirectRepository {
+ 
+@@ -33,6 +35,13 @@ class RedirectRepository {
+    */
+   protected $foundRedirects = [];
+ 
++  /**
++   * An array of found redirect IDs to avoid recursion.
++   *
++   * @var Symfony\Component\HttpFoundation\RequestStack
++   */
++  protected $requestStack;
++
+   /**
+    * Constructs a \Drupal\redirect\EventSubscriber\RedirectRequestSubscriber object.
+    *
+@@ -40,11 +49,28 @@ class RedirectRepository {
+    *   The entity type manager.
+    * @param \Drupal\Core\Database\Connection $connection
+    *   The database connection.
++   * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
++   *   The Config Factory.
++   * @param Symfony\Component\HttpFoundation\RequestStack $requestStack
++   *   The Request Stack.
+    */
+-  public function __construct(EntityTypeManagerInterface $manager, Connection $connection, ConfigFactoryInterface $config_factory) {
++  public function __construct(EntityTypeManagerInterface $manager, Connection $connection, ConfigFactoryInterface $config_factory, RequestStack $requestStack) {
+     $this->manager = $manager;
+     $this->connection = $connection;
+     $this->config = $config_factory->get('redirect.settings');
++    $this->requestStack = $requestStack;
++  }
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function create(ContainerInterface $container) {
++    return new static(
++      $container->get('entity_type.manager'),
++      $container->get('database'),
++      $container->get('config.factory'),
++      $container->get('request_stack')
++    );
+   }
+ 
+   /**
+@@ -114,7 +140,8 @@ public function findMatchingRedirect($source_path, array $query = [], $language
+    */
+   protected function findByRedirect(Redirect $redirect, $language) {
+     $uri = $redirect->getRedirectUrl();
+-    $base_url = \Drupal::request()->getBaseUrl();
++    // $base_url = \Drupal::request()->getBaseUrl();
++    $base_url = $this->requestStack->getBaseUrl();
+     $generated_url = $uri->toString(TRUE);
+     $path = ltrim(substr($generated_url->getGeneratedUrl(), strlen($base_url)), '/');
+     $query = $uri->getOption('query') ?: [];

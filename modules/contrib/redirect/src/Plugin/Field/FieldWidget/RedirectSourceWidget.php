@@ -10,10 +10,6 @@ use Drupal\Core\Url;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
-use Drupal\redirect\RedirectRepository;
-use Drupal\Core\Routing\CurrentRouteMatch;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\DependencyInjection\ContainerFactoryPluginInterface;
 
 /**
  * Plugin implementation of the 'link' widget for the redirect module.
@@ -33,41 +29,7 @@ use Symfony\Component\DependencyInjection\ContainerFactoryPluginInterface;
  *   }
  * )
  */
-class RedirectSourceWidget extends WidgetBase implements ContainerFactoryPluginInterface {
-
-  /** @var  \Drupal\redirect\RedirectRepository */
-  protected $redirectRepository;
-
-  /** @var  Drupal\Core\Routing\CurrentRouteMatch */
-  protected $routeMatch;
-
-  /**
-   * Constructs a Drupal\redirect\Plugin\Field\FieldWidget object.
-   *
-   * @param \Drupal\redirect\RedirectRepository $redirect_repository
-   *   The redirect entity repository.
-   * @param Drupal\Core\Routing\CurrentRouteMatch $route_match
-   *   The redirect entity repository.
-   */
-
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, RedirectRepository $redirect_repository, CurrentRouteMatch $route_match) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition);
-    $this->redirectRepository = $redirect_repository;
-    $this->routeMatch = $route_match;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $container->get('redirect.repository'),
-      $container->get('current_route_match')
-    );
-  }
+class RedirectSourceWidget extends WidgetBase {
 
   /**
    * {@inheritdoc}
@@ -103,8 +65,7 @@ class RedirectSourceWidget extends WidgetBase implements ContainerFactoryPluginI
         // @todo - Hmm... exception driven logic. Find a better way how to
         //   determine if we have a valid path.
         try {
-          // \Drupal::service('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
-          $this->routeMatch->get('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
+          \Drupal::service('router')->match('/' . $form_state->getValue(['redirect_source', 0, 'path']));
           $element['status_box'][]['#markup'] = '<div class="messages messages--warning">' . $this->t('The source path %path is likely a valid path. It is preferred to <a href="@url-alias">create URL aliases</a> for existing paths rather than redirects.',
               ['%path' => $source_path, '@url-alias' => Url::fromRoute('entity.path_alias.add_form')->toString()]) . '</div>';
         }
@@ -120,8 +81,7 @@ class RedirectSourceWidget extends WidgetBase implements ContainerFactoryPluginI
         $path = isset($parsed_url['path']) ? $parsed_url['path'] : NULL;
         if (!empty($path)) {
           /** @var \Drupal\redirect\RedirectRepository $repository */
-          // $repository = \Drupal::service('redirect.repository');
-          $repository = $this->redirectRepository;
+          $repository = \Drupal::service('redirect.repository');
           $redirects = $repository->findBySourcePath($path);
           if (!empty($redirects)) {
             $redirect = array_shift($redirects);
