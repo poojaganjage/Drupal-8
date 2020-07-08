@@ -6,12 +6,75 @@ use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Routing\MatchingRouteNotFoundException;
 use Drupal\Core\Url;
 use Drupal\redirect\Entity\Redirect;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+
 
 class RedirectForm extends ContentEntityForm {
+
+  /**
+   * The Entity Type Manager.
+   *
+   * @var Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+    
+    protected $entityTypeManager;
+
+  /**
+   * The language manager service.
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+   
+   protected $languageManager;
+
+   /**
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $config;
+
+  /**
+   * Constructs an RedirectForm object.
+   *
+   * @param $entityTypeManager The Entity Type Manager.
+   */
+
+  /**
+   * Constructs an RedirectForm object.
+   *
+   * @param $languageManager The Language Manager.
+   */
+
+  /**
+   * Constructs an RedirectForm object.
+   *
+   * @param $config The Config Factory Interface.
+   */
+
+  public function __construct(
+      EntityTypeManagerInterface $entityTypeManager, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config
+  ) {
+      $this->entityTypeManager = $entityTypeManager;
+      $this->languageManager = $language_manager;
+      $this->config = $config->get('redirect.settings');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('language_manager'),
+      $container->get('config.factory')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -68,13 +131,15 @@ class RedirectForm extends ContentEntityForm {
 
     // Only add the configured languages and a single key for all languages.
     if (isset($form['language']['widget'][0]['value']))  {
-      foreach (\Drupal::languageManager()->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language) {
+      // foreach (\Drupal::languageManager()->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language)
+      foreach ($this->languageManager->getLanguages(LanguageInterface::STATE_CONFIGURABLE) as $langcode => $language){
         $form['language']['widget'][0]['value']['#options'][$langcode] = $language->getName();
       }
       $form['language']['widget'][0]['value']['#options'][LanguageInterface::LANGCODE_NOT_SPECIFIED] = $this->t('- All languages -');
     }
 
-    $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : \Drupal::config('redirect.settings')->get('default_status_code');
+    // $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : \Drupal::config('redirect.settings')->get('default_status_code');
+    $default_code = $redirect->getStatusCode() ? $redirect->getStatusCode() : $this->config->get('default_status_code');
 
     $form['status_code'] = [
       '#type' => 'select',
@@ -130,9 +195,10 @@ class RedirectForm extends ContentEntityForm {
     $hash = Redirect::generateHash($path, $query, $form_state->getValue('language')[0]['value']);
 
     // Search for duplicate.
-    $redirects = \Drupal::entityTypeManager()
-      ->getStorage('redirect')
-      ->loadByProperties(['hash' => $hash]);
+    // $redirects = \Drupal::entityTypeManager()
+    //   ->getStorage('redirect')
+    //   ->loadByProperties(['hash' => $hash]);
+    $redirects = $this->entityTypeManager->getStorage('redirect')->loadByProperties(['hash' => $hash]);
 
     if (!empty($redirects)) {
       $redirect = array_shift($redirects);

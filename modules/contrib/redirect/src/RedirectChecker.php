@@ -7,7 +7,8 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\State\StateInterface;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
-use Symfony\Cmf\Component\Routing\RouteProviderInterface;
+use \Drupal\Core\Routing\RouteProvider;
+// use Symfony\Cmf\Component\Routing\RouteProviderInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -40,7 +41,7 @@ class RedirectChecker {
    */
   protected $routeProvider;
 
-  public function __construct(ConfigFactoryInterface $config, StateInterface $state, AccessManager $access_manager, AccountInterface $account, RouteProviderInterface $route_provider) {
+  public function __construct(ConfigFactoryInterface $config, StateInterface $state, AccessManager $access_manager, AccountInterface $account, RouteProvider $route_provider) {
     $this->config = $config->get('redirect.settings');
     $this->accessManager = $access_manager;
     $this->state = $state;

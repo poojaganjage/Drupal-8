@@ -8,6 +8,8 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\Language;
 use Drupal\redirect\Entity\Redirect;
 use Drupal\redirect\Exception\RedirectLoopException;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class RedirectRepository {
 
@@ -34,17 +36,41 @@ class RedirectRepository {
   protected $foundRedirects = [];
 
   /**
+   * An array of found redirect IDs to avoid recursion.
+   *
+   * @var Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
    * Constructs a \Drupal\redirect\EventSubscriber\RedirectRequestSubscriber object.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $manager
    *   The entity type manager.
    * @param \Drupal\Core\Database\Connection $connection
    *   The database connection.
+   * @param Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The Config Factory.
+   * @param Symfony\Component\HttpFoundation\RequestStack $requestStack
+   *   The Request Stack.
    */
-  public function __construct(EntityTypeManagerInterface $manager, Connection $connection, ConfigFactoryInterface $config_factory) {
+  public function __construct(EntityTypeManagerInterface $manager, Connection $connection, ConfigFactoryInterface $config_factory, RequestStack $requestStack) {
     $this->manager = $manager;
     $this->connection = $connection;
     $this->config = $config_factory->get('redirect.settings');
+    $this->requestStack = $requestStack;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('database'),
+      $container->get('config.factory'),
+      $container->get('request_stack')
+    );
   }
 
   /**
@@ -114,7 +140,8 @@ class RedirectRepository {
    */
   protected function findByRedirect(Redirect $redirect, $language) {
     $uri = $redirect->getRedirectUrl();
-    $base_url = \Drupal::request()->getBaseUrl();
+    // $base_url = \Drupal::request()->getBaseUrl();
+    $base_url = $this->requestStack->getBaseUrl();
     $generated_url = $uri->toString(TRUE);
     $path = ltrim(substr($generated_url->getGeneratedUrl(), strlen($base_url)), '/');
     $query = $uri->getOption('query') ?: [];

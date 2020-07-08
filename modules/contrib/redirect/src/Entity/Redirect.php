@@ -9,6 +9,8 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\link\LinkItemInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 
 /**
  * The redirect entity class.
@@ -45,6 +47,20 @@ use Drupal\link\LinkItemInterface;
  * )
  */
 class Redirect extends ContentEntityBase {
+
+  /**
+   * Drupal\Core\Session\AccountProxyInterface definition.
+   *
+   * @var AccountProxyInterface $currentUser
+   */
+  protected $currentUser;
+
+  /**
+   * Class constructor.
+   */
+  public function __construct(AccountProxyInterface $current_user) {
+    $this->currentUser = $current_user;
+  }
 
   /**
    * Generates a unique hash for identification purposes.
@@ -341,7 +357,8 @@ class Redirect extends ContentEntityBase {
    *   An array of default values.
    */
   public static function getCurrentUserId() {
-    return [\Drupal::currentUser()->id()];
+    // return [\Drupal::currentUser()->id()];
+    return [$this->currentUser->id()];
   }
 
 }

@@ -19,6 +19,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\HttpKernel\Event\GetResponseEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\RequestContext;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Redirect subscriber for controller requests.
@@ -71,6 +73,13 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
   protected $pathProcessor;
 
   /**
+   * The LoggerFactory service.
+   *
+   * @var \Drupal\Core\Logger\LoggerChannelFactoryInterface
+   */
+  protected $loggerFactory;
+
+  /**
    * Constructs a \Drupal\redirect\EventSubscriber\RedirectRequestSubscriber object.
    *
    * @param \Drupal\redirect\RedirectRepository $redirect_repository
@@ -89,8 +98,10 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
    *   The redirect checker service.
    * @param \Symfony\Component\Routing\RequestContext
    *   Request context.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger service.
    */
-  public function __construct(RedirectRepository $redirect_repository, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config, AliasManagerInterface $alias_manager, ModuleHandlerInterface $module_handler, EntityTypeManagerInterface $entity_type_manager, RedirectChecker $checker, RequestContext $context, InboundPathProcessorInterface $path_processor) {
+  public function __construct(RedirectRepository $redirect_repository, LanguageManagerInterface $language_manager, ConfigFactoryInterface $config, AliasManagerInterface $alias_manager, ModuleHandlerInterface $module_handler, EntityTypeManagerInterface $entity_type_manager, RedirectChecker $checker, RequestContext $context, InboundPathProcessorInterface $path_processor, LoggerChannelFactoryInterface $logger_factory = NULL) {
     $this->redirectRepository = $redirect_repository;
     $this->languageManager = $language_manager;
     $this->config = $config->get('redirect.settings');
@@ -100,6 +111,25 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
     $this->checker = $checker;
     $this->context = $context;
     $this->pathProcessor = $path_processor;
+    $this->loggerFactory = $logger_factory;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('redirect_repository'),
+      $container->get('language_manager'),
+      $container->get('config.factory'),
+      $container->get('path_alias.manager'),
+      $container->get('module_handler'),
+      $container->get('entity_type.manager'),
+      $container->get('redirect.checker'),
+      $container->get('router.request_context'),
+      $container->get('path_processor_manager'),
+      $container->get('logger.factory')
+    );
   }
 
   /**
@@ -145,7 +175,8 @@ class RedirectRequestSubscriber implements EventSubscriberInterface {
       $redirect = $this->redirectRepository->findMatchingRedirect($path, $request_query, $this->languageManager->getCurrentLanguage()->getId());
     }
     catch (RedirectLoopException $e) {
-      \Drupal::logger('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
+      // \Drupal::logger('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
+      $this->loggerFactory->get('redirect')->warning('Redirect loop identified at %path for redirect %rid', ['%path' => $e->getPath(), '%rid' => $e->getRedirectId()]);
       $response = new Response();
       $response->setStatusCode(503);
       $response->setContent('Service unavailable');
