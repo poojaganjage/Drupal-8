@@ -1,0 +1,19 @@
+{
+	"name": "drupal/password_field",
+	"description": "A basic password field for Drupal 8",
+	"type": "drupal-module",
+	"license": "GPL-2.0-or-later",
+	"readme": "README.txt",
+	"homepage": "https://www.drupal.org/project/password_field",
+	"authors": [
+    {
+      "name": "Gaurav Kapoor",
+      "homepage": "https://www.drupal.org/u/gauravkapoor",
+      "role": "Maintainer"
+    }
+    ],
+	"support": {
+	    "issues": "https://www.drupal.org/project/issues/password_field",
+	    "source": "https://git.drupalcode.org/project/password_field"
+	}
+}
