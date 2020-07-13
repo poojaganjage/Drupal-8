@@ -1,0 +1,19 @@
+{
+	"name": "drupal/switch_page_theme",
+	"description": "Switches active theme on specific pages.",
+	"type": "drupal-module",
+	"license": "GPL-2.0-or-later",
+	"readme": "README.txt",
+	"homepage": "https://www.drupal.org/project/switch_page_theme",
+	"authors": [
+    {
+      "name": "Deepali Agarwal",
+      "homepage": "https://www.drupal.org/u/deepali_agarwal",
+      "role": "Maintainer"
+    }
+    ],
+	"support": {
+	    "issues": "https://www.drupal.org/project/issues/switch_page_theme",
+	    "source": "https://git.drupalcode.org/project/switch_page_theme"
+	}
+}
