@@ -6,11 +6,11 @@
 	"readme": "README.txt",
 	"homepage": "https://www.drupal.org/project/switch_page_theme",
 	"authors": [
-    {
-      "name": "Deepali Agarwal",
-      "homepage": "https://www.drupal.org/u/deepali_agarwal",
-      "role": "Maintainer"
-    }
+      {
+        "name": "Deepali Agarwal",
+        "homepage": "https://www.drupal.org/u/deepali_agarwal",
+        "role": "Maintainer"
+      }
     ],
 	"support": {
 	    "issues": "https://www.drupal.org/project/issues/switch_page_theme",
