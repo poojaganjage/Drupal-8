@@ -6,6 +6,7 @@ live_css.save:
     _controller: '\Drupal\simple_live_css\Controller\LiveCssController::save'
   requirements:
     _permission: 'edit live css'
+
 live_css.get:
   path: '/live_css/get'
   defaults:
