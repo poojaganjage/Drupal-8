@@ -1,0 +1,16 @@
+diff --git a/modules/contrib/simple_live_css/simple_live_css.routing.yml b/modules/contrib/simple_live_css/simple_live_css.routing.yml
+index e12a8b2..ac800d5 100644
+--- a/modules/contrib/simple_live_css/simple_live_css.routing.yml
++++ b/modules/contrib/simple_live_css/simple_live_css.routing.yml
+@@ -1,10 +1,10 @@
+ live_css.save:
+   path: '/live_css/save'
++  methods: [POST]
+   defaults:
+     _title: 'Save live css'
+     _controller: '\Drupal\simple_live_css\Controller\LiveCssController::save'
+   requirements:
+-    _method: 'POST'
+     _permission: 'edit live css'
+ live_css.get:
+   path: '/live_css/get'
