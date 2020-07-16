@@ -9,7 +9,7 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
-class FloodUnblockManager {
+class FloodUnblockManager implements FloodUnblockManagerInterface  {
 
   use StringTranslationTrait;
 
