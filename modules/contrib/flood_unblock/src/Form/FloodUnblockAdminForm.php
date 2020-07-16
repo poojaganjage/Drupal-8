@@ -76,7 +76,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $header = [
       'blocked' => $this->t('Blocked'),
-      'type' => $this->t('Type of block'),
+      'type' => $this->t('Block Type'),
       'count' => $this->t('Count'),
       'uid' => $this->t('Account name'),
       'ip' => $this->t('IP Address'),
@@ -95,19 +95,19 @@ class FloodUnblockAdminForm extends FormBase {
     }
 
     $form['top_markup'] = [
-      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear seperate items.</p>'),
+      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear separate items.</p>'),
     ];
 
     $form['table'] = [
       '#type' => 'tableselect',
       '#header' => $header,
       '#options' => $options,
-      '#empty' => $this->t('There are no failed logins at this time.'),
+      '#empty' => $this->t('There are no failed users logins at this time.'),
     ];
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Clear flood'),
+      '#value' => $this->t('Remove flood'),
     ];
 
     if (count($entries) == 0) {
@@ -128,7 +128,7 @@ class FloodUnblockAdminForm extends FormBase {
       return $selected !== 0;
     });
     if (empty($selected_entries)) {
-      $form_state->setErrorByName('table', $this->t('Please make a selection.'));
+      $form_state->setErrorByName('table', $this->t('Please make a selection entries.'));
     }
   }
 

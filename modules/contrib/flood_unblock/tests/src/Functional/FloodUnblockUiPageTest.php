@@ -50,7 +50,7 @@ class FloodUnblockUiPageTest extends BrowserTestBase {
 
     // Test that there is an empty flood list.
     $this->assertSession()
-      ->pageTextContains('There are no failed logins at this time.');
+      ->pageTextContains('There are no failed users logins at this time.');
   }
 
   public function testFloodUnblockUiPageSimpleUser() {
