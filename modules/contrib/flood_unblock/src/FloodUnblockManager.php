@@ -104,7 +104,7 @@ class FloodUnblockManager implements FloodUnblockManagerInterface  {
             $user_link = $user->toLink($user->getAccountName());
           }
           else {
-            $user_link = $this->t('Deleted User: @user', ['@user' => $result->uid]);
+            $user_link = $this->t('Deleted user: @user', ['@user' => $result->uid]);
           }
           $entries[$result->identifier]['username'] = $user_link ?? NULL;
         }

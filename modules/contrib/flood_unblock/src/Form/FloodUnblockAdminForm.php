@@ -107,7 +107,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Remove flood'),
+      '#value' => $this->t('Selected items is clear from the flood table.'),
     ];
 
     if (count($entries) == 0) {
