@@ -8,7 +8,7 @@ namespace Drupal\fragments\InlineEntityForm;
  * NOTE: This is a left-over from the D7 version and probably will not work
  * as-is on D8.
  */
-class FragmentInlineEntityFormController extends \EntityInlineEntityFormController {
+class FragmentInlineEntityFormController extends EntityInlineEntityFormController {
 
   /**
    * {@inheritdoc}
@@ -20,7 +20,8 @@ class FragmentInlineEntityFormController extends \EntityInlineEntityFormControll
     $extra_fields = field_info_extra_fields('fragment', $fragment->type, 'form');
 
     $entity_form['title'] = [
-      '#type' => 'textfield',
+      // '#type' => 'textfield',
+      '#type' => 'inline_entity_form_complex',
       '#title' => t('Title'),
       '#default_value' => $fragment->title,
       '#maxlength' => 255,

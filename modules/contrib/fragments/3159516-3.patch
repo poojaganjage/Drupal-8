@@ -1,0 +1,61 @@
+diff --git a/modules/contrib/fragments/composer.json b/modules/contrib/fragments/composer.json
+index 72616ec..826bce0 100644
+--- a/modules/contrib/fragments/composer.json
++++ b/modules/contrib/fragments/composer.json
+@@ -1,18 +1,24 @@
+ {
+     "name": "drupal/fragments",
+     "description": "Re-usable content fragments.",
++    "type": "drupal-module",
+     "homepage": "https://www.drupal.org/project/fragments",
++    "keywords": ["Drupal", "fragments"],
++    "license": "GPL-2.0+",
+     "support": {
++        "issues": "https://www.drupal.org/project/issues/fragments",
+         "source": "http://cgit.drupalcode.org/fragments"
+     },
+-    "require": {
+-        "drupal/core": "^8.0"
+-    },
+-    "type": "drupal-module",
+     "authors": [
+         {
+-            "name": "eelkeblok",
+-            "homepage": "https://www.drupal.org/user/423078"
++            "name": "Eelke Blok (eelkeblok)",
++            "homepage": "https://www.drupal.org/u/eelkeblok",
++            "role": "Maintainer"
+         }
+-    ]
++    ],
++    "require": {
++        "drupal/core": "^8 || ^9",
++        "drupal/core": "^8.0"
++    },
++    
+ }
+diff --git a/modules/contrib/fragments/fragments.info.yml b/modules/contrib/fragments/fragments.info.yml
+index c6abf28..a692a8a 100644
+--- a/modules/contrib/fragments/fragments.info.yml
++++ b/modules/contrib/fragments/fragments.info.yml
+@@ -3,6 +3,7 @@ type: module
+ description: 'Re-usable content fragments.'
+ core: 8.x
+ package: 'Fragments'
++core_version_requirement: ^8 || ^9
+ 
+ # Information added by Drupal.org packaging script on 2019-12-24
+ version: '8.x-1.0-beta2'
+diff --git a/modules/contrib/fragments/src/InlineEntityForm/FragmentInlineEntityFormController.php b/modules/contrib/fragments/src/InlineEntityForm/FragmentInlineEntityFormController.php
+index bc5cfef..6d21690 100644
+--- a/modules/contrib/fragments/src/InlineEntityForm/FragmentInlineEntityFormController.php
++++ b/modules/contrib/fragments/src/InlineEntityForm/FragmentInlineEntityFormController.php
+@@ -8,7 +8,7 @@
+  * NOTE: This is a left-over from the D7 version and probably will not work
+  * as-is on D8.
+  */
+-class FragmentInlineEntityFormController extends \EntityInlineEntityFormController {
++class FragmentInlineEntityFormController extends EntityInlineEntityFormController {
+ 
+   /**
+    * {@inheritdoc}
