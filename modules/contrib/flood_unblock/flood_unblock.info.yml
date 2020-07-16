@@ -1,6 +1,6 @@
 name: Flood Unblock
 type: module
-description: "Interface for unblocking ip's that are blocked by the flood table"
+description: "Unblocks IP addresses and user ID's that are blocked after multiple failed login attempts."
 package: user
 configure: flood_unblock.form
 # version: VERSION

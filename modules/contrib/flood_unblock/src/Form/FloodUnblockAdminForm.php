@@ -10,7 +10,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
 
 /**
- * Admin form of Flood unblock.
+ * Admin form of Flood Unblock.
  */
 class FloodUnblockAdminForm extends FormBase {
 
@@ -78,9 +78,9 @@ class FloodUnblockAdminForm extends FormBase {
 
     $header = [
       'blocked' => $this->t('Blocked'),
-      'type' => $this->t('Type of block'),
+      'type' => $this->t('Type'),
       'count' => $this->t('Count'),
-      'uid' => $this->t('Account name'),
+      'uid' => $this->t('Account'),
       'ip' => $this->t('IP Address'),
     ];
 
@@ -96,7 +96,7 @@ class FloodUnblockAdminForm extends FormBase {
     }
 
     $form['top_markup'] = [
-      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear seperate items.</p>'),
+      '#markup' => $this->t("<p>List of IP addresses and user ID's that are blocked after multiple failed login attempts. You can remove separate entries.</p>"),
     ];
 
     $form['table'] = [
@@ -108,7 +108,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Clear flood'),
+      '#value' => $this->t('Remove'),
     ];
 
     if (count($entries) == 0) {
