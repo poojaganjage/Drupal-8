@@ -9,28 +9,37 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
-class FloodUnblockManager implements FloodUnblockManagerInterface {
+/**
+ * Class FloodUnblockManager.
+ */
+class FloodUnblockManager {
 
   use StringTranslationTrait;
 
   /**
-   * The Database Connection
+   * The Database Connection.
    *
    * @var \Drupal\Core\Database\Connection
    */
   protected $database;
 
   /**
+   * The Entity Type Manager Interface.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
+   * The Flood Interface.
+   *
    * @var \Drupal\Core\Flood\FloodInterface
    */
   protected $flood;
 
   /**
+   * The Immutable Config.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
@@ -46,7 +55,15 @@ class FloodUnblockManager implements FloodUnblockManagerInterface {
    * FloodUnblockAdminForm constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
+   * @param \Drupal\Core\Flood\FloodInterface $flood
+   *   The flood interface.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The Config Factory Interface.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The Entity Type Manager Interface.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The Messenger Interface.
    */
   public function __construct(Connection $database, FloodInterface $flood, ConfigFactoryInterface $configFactory, EntityTypeManagerInterface $entityTypeManager, MessengerInterface $messenger) {
     $this->database = $database;
@@ -57,7 +74,10 @@ class FloodUnblockManager implements FloodUnblockManagerInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * Generate rows from the entries in the flood table.
+   *
+   * @return array
+   *   Entries of the flood table grouped by identifier (UID/IP).
    */
   public function getEntries() {
     $entries = [];
@@ -141,9 +161,9 @@ class FloodUnblockManager implements FloodUnblockManagerInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * The function that clear the flood.
    */
-  public function flood_unblock_clear_event($event, $identifier) {
+  public function floodUnblockClearEvent($event, $identifier) {
     $txn = $this->database->startTransaction('flood_unblock_clear');
     try {
       $query = $this->database->delete('flood')
@@ -155,7 +175,8 @@ class FloodUnblockManager implements FloodUnblockManagerInterface {
       if ($success) {
         \Drupal::messenger()->addMessage($this->t('Flood entries cleared.'), 'status', FALSE);
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       // Something went wrong somewhere, so roll back now.
       $txn->rollback();
       // Log the exception to watchdog.
@@ -163,4 +184,5 @@ class FloodUnblockManager implements FloodUnblockManagerInterface {
       \Drupal::messenger()->addMessage($this->t('Error: @error', ['@error' => (string) $e]), 'error');
     }
   }
+
 }

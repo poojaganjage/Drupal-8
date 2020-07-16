@@ -7,7 +7,6 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\flood_unblock\FloodUnblockManager;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Url;
 
 /**
  * Admin form of Flood unblock.
@@ -15,15 +14,27 @@ use Drupal\Core\Url;
 class FloodUnblockAdminForm extends FormBase {
 
   /**
+   * The FloodUnblockManager service.
+   *
    * @var \Drupal\flood_unblock\FloodUnblockManager
    */
   protected $floodUnblockManager;
 
   /**
+   * The Module Handler service.
+   *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
+  /**
+   * FloodUnblockAdminForm constructor.
+   *
+   * @param \Drupal\flood_unblock\FloodUnblockManager $floodUnblockManager
+   *   The FloodUnblockManager service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The Module Handler service.
+   */
   public function __construct(FloodUnblockManager $floodUnblockManager, ModuleHandlerInterface $moduleHandler) {
 
     $this->floodUnblockManager = $floodUnblockManager;
@@ -76,7 +87,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $header = [
       'blocked' => $this->t('Blocked'),
-      'type' => $this->t('Block Type'),
+      'type' => $this->t('Type of block'),
       'count' => $this->t('Count'),
       'uid' => $this->t('Account name'),
       'ip' => $this->t('IP Address'),
@@ -95,19 +106,19 @@ class FloodUnblockAdminForm extends FormBase {
     }
 
     $form['top_markup'] = [
-      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear separate items.</p>'),
+      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear seperate items.</p>'),
     ];
 
     $form['table'] = [
       '#type' => 'tableselect',
       '#header' => $header,
       '#options' => $options,
-      '#empty' => $this->t('There are no failed users logins at this time.'),
+      '#empty' => $this->t('There are no failed logins at this time.'),
     ];
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Selected items is clear from the flood table.'),
+      '#value' => $this->t('Clear flood'),
     ];
 
     if (count($entries) == 0) {
@@ -116,7 +127,6 @@ class FloodUnblockAdminForm extends FormBase {
 
     return $form;
   }
-
 
   /**
    * {@inheritdoc}
@@ -128,7 +138,7 @@ class FloodUnblockAdminForm extends FormBase {
       return $selected !== 0;
     });
     if (empty($selected_entries)) {
-      $form_state->setErrorByName('table', $this->t('Please make a selection entries.'));
+      $form_state->setErrorByName('table', $this->t('Please make a selection.'));
     }
   }
 
@@ -140,8 +150,9 @@ class FloodUnblockAdminForm extends FormBase {
       if ($value !== 0) {
         $event = $form['table']['#options'][$value]['event'];
         $identifier = $value;
-        $this->floodUnblockManager->flood_unblock_clear_event($event, $identifier);
+        $this->floodUnblockManager->floodUnblockClearEvent($event, $identifier);
       }
     }
   }
+
 }

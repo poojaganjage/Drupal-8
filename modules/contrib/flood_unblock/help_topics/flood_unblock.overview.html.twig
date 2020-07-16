@@ -9,12 +9,12 @@ related:
 {% set perms_url = render_var(url('user.admin_permissions')) %}
 <h2>{% trans %}Goal{% endtrans %}</h2>
 <p>{% trans %}Flood Unblock provides an <a href="{{ fu_url }}">interface</a> that
-  makes possible for site administrators to remove IP addresses and user ID's from the
+  makes possible for site administrators to remove IP adresses and user ID's from the
   flood table.{% endtrans %}</p>
 <p>{% trans %}Drupal prevents brute force attacks on accounts. It does so by
     refusing login attempts when more than 5 attempts failed. The amount
     of failed logins is recorded in the table 'flood'. You can either
-    wait before trying to login again or clear the flood table with the
+    wait before trying to login again or clean the flood table with the
     procedure below.{% endtrans %}</p>
 <h3>{% trans %}Permissions{% endtrans %}</h3>
 <p>{% trans %}Users with the <em>access flood unblock</em> <a href="{{ perms_url }}">permission</a> can access the <a href="{{ fu_url}}"><em>Flood Unblock</em></a> page.{% endtrans %}</p>
