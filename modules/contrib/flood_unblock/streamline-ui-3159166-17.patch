@@ -1,0 +1,52 @@
+diff --git a/modules/contrib/flood_unblock/flood_unblock.permissions.yml b/modules/contrib/flood_unblock/flood_unblock.permissions.yml
+index 19b5a58..c42c40d 100644
+--- a/modules/contrib/flood_unblock/flood_unblock.permissions.yml
++++ b/modules/contrib/flood_unblock/flood_unblock.permissions.yml
+@@ -1,5 +1,5 @@
+ # In my_module.permissions.yml file.
+ access flood unblock:
+   title: 'Access the flood unblock module'
+-  description: 'Allow user to flood unblock.'
++  description: 'Allow user to unblock IP addresses from flood table.'
+   restrict access: TRUE
+diff --git a/modules/contrib/flood_unblock/help_topics/flood_unblock.overview.html.twig b/modules/contrib/flood_unblock/help_topics/flood_unblock.overview.html.twig
+index bfdd787..59d5a23 100644
+--- a/modules/contrib/flood_unblock/help_topics/flood_unblock.overview.html.twig
++++ b/modules/contrib/flood_unblock/help_topics/flood_unblock.overview.html.twig
+@@ -9,12 +9,12 @@ related:
+ {% set perms_url = render_var(url('user.admin_permissions')) %}
+ <h2>{% trans %}Goal{% endtrans %}</h2>
+ <p>{% trans %}Flood Unblock provides an <a href="{{ fu_url }}">interface</a> that
+-  makes possible for site administrators to remove IP adresses and user ID's from the
++  makes possible for site administrators to remove IP addresses and user ID's from the
+   flood table.{% endtrans %}</p>
+ <p>{% trans %}Drupal prevents brute force attacks on accounts. It does so by
+     refusing login attempts when more than 5 attempts failed. The amount
+     of failed logins is recorded in the table 'flood'. You can either
+-    wait before trying to login again or clean the flood table with the
++    wait before trying to login again or clear the flood table with the
+     procedure below.{% endtrans %}</p>
+ <h3>{% trans %}Permissions{% endtrans %}</h3>
+ <p>{% trans %}Users with the <em>access flood unblock</em> <a href="{{ perms_url }}">permission</a> can access the <a href="{{ fu_url}}"><em>Flood Unblock</em></a> page.{% endtrans %}</p>
+diff --git a/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php b/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
+index 5abf3bb..a5ea766 100644
+--- a/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
++++ b/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
+@@ -118,7 +118,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
+ 
+     $form['submit'] = [
+       '#type' => 'submit',
+-      '#value' => $this->t('Remove'),
++      '#value' => $this->t('Selected items is clear from the flood table.'),
+     ];
+ 
+     if (count($entries) == 0) {
+@@ -138,7 +138,7 @@ public function validateForm(array &$form, FormStateInterface $form_state) {
+       return $selected !== 0;
+     });
+     if (empty($selected_entries)) {
+-      $form_state->setErrorByName('table', $this->t('Please make a selection.'));
++      $form_state->setErrorByName('table', $this->t('Please make a selection entries.'));
+     }
+   }
+ 

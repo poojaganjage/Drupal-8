@@ -12,7 +12,7 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
 /**
  * Class FloodUnblockManager.
  */
-class FloodUnblockManager {
+class FloodUnblockManager implements FloodUnblockManagerInterface {
 
   use StringTranslationTrait;
 
@@ -74,10 +74,7 @@ class FloodUnblockManager {
   }
 
   /**
-   * Generate rows from the entries in the flood table.
-   *
-   * @return array
-   *   Entries of the flood table grouped by identifier (UID/IP).
+   * {@inheritdoc}
    */
   public function getEntries() {
     $entries = [];
@@ -161,7 +158,7 @@ class FloodUnblockManager {
   }
 
   /**
-   * The function that clear the flood.
+   * {@inheritdoc}
    */
   public function floodUnblockClearEvent($event, $identifier) {
     $txn = $this->database->startTransaction('flood_unblock_clear');
