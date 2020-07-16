@@ -1,0 +1,53 @@
+diff --git a/modules/contrib/flood_unblock/src/FloodUnblockManagerInterface.php b/modules/contrib/flood_unblock/src/FloodUnblockManagerInterface.php
+index fed4334..f93776c 100644
+--- a/modules/contrib/flood_unblock/src/FloodUnblockManagerInterface.php
++++ b/modules/contrib/flood_unblock/src/FloodUnblockManagerInterface.php
+@@ -1,3 +1,4 @@
++
+ <?php
+ 
+ namespace Drupal\flood_unblock;
+@@ -7,21 +8,25 @@
+  */
+ interface FloodUnblockManagerInterface {
+ 
+-    /**
+-     * Generate rows from the entries in the flood table.
+-     *
+-     * @return array
+-     *   Entries of the flood table grouped by identifier (UID/IP).
+-     */
+-    public function getEntries();
++  /**
++   * Generate rows from the entries in the flood table.
++   *
++   * @return array
++   *   Entries of the flood table grouped by identifier (UID/IP).
++   */
++  public function getEntries();
++
++  /**
++   * The function that clear the flood.
++   *
++   * @param string $event
++   *   The event variable.
++   * @param int $identifier
++   *   The identifier variable.
++   *
++   * @return string
++   *   Returns the cleared entries from the flood table.
++   */
++  public function floodUnblockClearEvent($event, $identifier);
+ 
+-    /**
+-     * The function that clear the flood.
+-     *
+-     * @param $event       The event variable.
+-     * @param $identifier The identifier variable.
+-     *
+-     * @return string
+-     */
+-    public function flood_unblock_clear_event($event, $identifier);
+-}
++}
+\ No newline at end of file
