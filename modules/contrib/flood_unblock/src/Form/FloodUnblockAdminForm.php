@@ -7,23 +7,34 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\flood_unblock\FloodUnblockManager;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Url;
 
 /**
- * Admin form of Flood Unblock.
+ * Admin form of Flood unblock.
  */
 class FloodUnblockAdminForm extends FormBase {
 
   /**
+   * The FloodUnblockManager service.
+   *
    * @var \Drupal\flood_unblock\FloodUnblockManager
    */
   protected $floodUnblockManager;
 
   /**
+   * The Module Handler service.
+   *
    * @var \Drupal\Core\Extension\ModuleHandlerInterface
    */
   protected $moduleHandler;
 
+  /**
+   * FloodUnblockAdminForm constructor.
+   *
+   * @param \Drupal\flood_unblock\FloodUnblockManager $floodUnblockManager
+   *   The FloodUnblockManager service.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The Module Handler service.
+   */
   public function __construct(FloodUnblockManager $floodUnblockManager, ModuleHandlerInterface $moduleHandler) {
 
     $this->floodUnblockManager = $floodUnblockManager;
@@ -52,10 +63,7 @@ class FloodUnblockAdminForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     // Get ip entries from flood table.
-    $flood_ip_entries = $this->floodUnblockManager->get_blocked_ip_entries();
-    // Get user entries from flood table.
-    $flood_user_entries = $this->floodUnblockManager->get_blocked_user_entries();
-    $entries = $flood_ip_entries + $flood_user_entries;
+    $entries = $this->floodUnblockManager->getEntries();
 
     $blocks = [];
     foreach ($entries as $identifier => $entry) {
@@ -63,6 +71,7 @@ class FloodUnblockAdminForm extends FormBase {
         'identifier' => $identifier,
         'type' => $entry['type'],
         'count' => $entry['count'],
+        'event' => $entry['event'],
       ];
       if ($entry['type'] == 'ip') {
         $blocks[$identifier]['ip'] = $entry['ip'] . $entry['location'];
@@ -78,9 +87,9 @@ class FloodUnblockAdminForm extends FormBase {
 
     $header = [
       'blocked' => $this->t('Blocked'),
-      'type' => $this->t('Type'),
+      'type' => $this->t('Type of block'),
       'count' => $this->t('Count'),
-      'uid' => $this->t('Account'),
+      'uid' => $this->t('Account name'),
       'ip' => $this->t('IP Address'),
     ];
 
@@ -92,11 +101,12 @@ class FloodUnblockAdminForm extends FormBase {
         'count' => $block['count'],
         'uid' => $block['uid'],
         'ip' => $block['ip'],
+        'event' => $block['event'],
       ];
     }
 
     $form['top_markup'] = [
-      '#markup' => $this->t("<p>List of IP addresses and user ID's that are blocked after multiple failed login attempts. You can remove separate entries.</p>"),
+      '#markup' => $this->t('<p>Use the table below to view the available flood entries. You can clear seperate items.</p>'),
     ];
 
     $form['table'] = [
@@ -108,7 +118,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Remove'),
+      '#value' => $this->t('Clear flood'),
     ];
 
     if (count($entries) == 0) {
@@ -117,7 +127,6 @@ class FloodUnblockAdminForm extends FormBase {
 
     return $form;
   }
-
 
   /**
    * {@inheritdoc}
@@ -139,22 +148,11 @@ class FloodUnblockAdminForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     foreach ($form_state->getValue('table') as $value) {
       if ($value !== 0) {
-        $type = $form['table']['#options'][$value]['type'];
-        switch ($type) {
-          case 'ip':
-            $type = '.failed_login_ip';
-            break;
-
-          case 'user':
-            $type = '.failed_login_user';
-            break;
-
-        }
-
+        $event = $form['table']['#options'][$value]['event'];
         $identifier = $value;
-        $this->floodUnblockManager->flood_unblock_clear_event($type, $identifier);
-
+        $this->floodUnblockManager->floodUnblockClearEvent($event, $identifier);
       }
     }
   }
+
 }

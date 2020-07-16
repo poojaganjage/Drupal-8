@@ -9,28 +9,37 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 
+/**
+ * Class FloodUnblockManager.
+ */
 class FloodUnblockManager {
 
   use StringTranslationTrait;
 
   /**
-   * The Database Connection
+   * The Database Connection.
    *
    * @var \Drupal\Core\Database\Connection
    */
   protected $database;
 
   /**
+   * The Entity Type Manager Interface.
+   *
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
 
   /**
+   * The Flood Interface.
+   *
    * @var \Drupal\Core\Flood\FloodInterface
    */
   protected $flood;
 
   /**
+   * The Immutable Config.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
@@ -46,7 +55,15 @@ class FloodUnblockManager {
    * FloodUnblockAdminForm constructor.
    *
    * @param \Drupal\Core\Database\Connection $database
+   *   The database connection.
+   * @param \Drupal\Core\Flood\FloodInterface $flood
+   *   The flood interface.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The Config Factory Interface.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   The Entity Type Manager Interface.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   The Messenger Interface.
    */
   public function __construct(Connection $database, FloodInterface $flood, ConfigFactoryInterface $configFactory, EntityTypeManagerInterface $entityTypeManager, MessengerInterface $messenger) {
     $this->database = $database;
@@ -60,94 +77,83 @@ class FloodUnblockManager {
    * Generate rows from the entries in the flood table.
    *
    * @return array
-   *   Ip blocked entries in the flood table.
+   *   Entries of the flood table grouped by identifier (UID/IP).
    */
-  public function get_blocked_ip_entries() {
+  public function getEntries() {
     $entries = [];
 
     if ($this->database->schema()->tableExists('flood')) {
       $query = $this->database->select('flood', 'f');
       $query->addField('f', 'identifier');
-      $query->addField('f', 'identifier', 'ip');
+      $query->addField('f', 'event');
       $query->addExpression('count(*)', 'count');
-      $query->condition('f.event', '%failed_login_ip', 'LIKE');
       $query->groupBy('identifier');
+      $query->groupBy('event');
       $results = $query->execute();
 
       foreach ($results as $result) {
-        if (function_exists('smart_ip_get_location')) {
-          $location = smart_ip_get_location($result->ip);
-          $location_string = sprintf(" (%s %s %s)", $location['city'], $location['region'], $location['country_code']);
-        }
-        else {
-          $location_string = '';
-        }
 
-        $blocked = !$this->flood->isAllowed('user.failed_login_ip', $this->config->get('ip_limit'), $this->config->get('ip_window'), $result->ip);
-
+        // Sets defaults for the entries. These will be overridden further down
+        // the line.
+        $ip = $result->identifier;
         $entries[$result->identifier] = [
-          'type' => 'ip',
-          'ip' => $result->ip,
+          'event' => $result->event,
+          'type' => NULL,
+          'ip' => $ip,
           'count' => $result->count,
-          'location' => $location_string,
-          'blocked' => $blocked,
+          'location' => NULL,
+          'blocked' => FALSE,
+          'uid' => NULL,
+          'username' => NULL,
         ];
-      }
-    }
 
-    return $entries;
-  }
-
-  /**
-   * Generate rows from the entries in the flood table.
-   *
-   * @return array
-   *   User blocked entries in the flood table.
-   */
-  public function get_blocked_user_entries() {
-    $entries = [];
-
-    if ($this->database->schema()->tableExists('flood')) {
-      $query = $this->database->select('flood', 'f');
-      $query->addField('f', 'identifier');
-      $query->addExpression('count(*)', 'count');
-      $query->condition('f.event', '%failed_login_user', 'LIKE');
-      $query->groupBy('identifier');
-      $results = $query->execute();
-
-      foreach ($results as $result) {
+        // Extracts IP and user from the identifier.
         $parts = explode('-', $result->identifier);
-        $result->uid = $parts[0];
-        $result->ip = $parts[1] ?? NULL;
-        if (function_exists('smart_ip_get_location') && $result->ip) {
-          $location = smart_ip_get_location($result->ip);
+        if (isset($parts[0]) && isset($parts[1])) {
+          $result->uid = $parts[0];
+          $ip = $parts[1] ?? NULL;
+          $entries[$result->identifier]['ip'] = $ip;
+
+          /** @var \Drupal\user\Entity\User $user */
+          $user = $this->entityTypeManager->getStorage('user')
+            ->load($result->uid);
+          if (isset($user)) {
+            $user_link = $user->toLink($user->getAccountName());
+          }
+          else {
+            $user_link = $this->t('Deleted user: @user', ['@user' => $result->uid]);
+          }
+          $entries[$result->identifier]['username'] = $user_link ?? NULL;
+        }
+
+        // Fetches location string and assigns to entries.
+        if (function_exists('smart_ip_get_location')) {
+          $location = smart_ip_get_location($ip);
           $location_string = sprintf(" (%s %s %s)", $location['city'], $location['region'], $location['country_code']);
         }
         else {
           $location_string = '';
         }
+        $entries[$result->identifier]['location'] = $location_string;
 
-        $blocked = !$this->flood->isAllowed('user.failed_login_user', $this->config->get('user_limit'), $this->config->get('user_window'), $result->identifier);
+        // Fetches blocking status.
+        switch ($result->event) {
+          case 'user.failed_login_ip':
+            $blocked = !$this->flood->isAllowed('user.failed_login_ip', $this->config->get('ip_limit'), $this->config->get('ip_window'), $ip);
+            $entries[$result->identifier]['type'] = 'ip';
+            break;
 
-        /** @var \Drupal\user\Entity\User $user */
-        $user = $this->entityTypeManager->getStorage('user')
-          ->load($result->uid);
+          case 'user.failed_login_user':
+            $blocked = !$this->flood->isAllowed('user.failed_login_user', $this->config->get('user_limit'), $this->config->get('user_window'), $result->identifier);
+            $entries[$result->identifier]['type'] = 'user';
+            break;
 
-        if (isset($user)) {
-          $user_link = $user->toLink($user->getAccountName());
-        } else {
-          $user_link = $this->t('Deleted user: @user', ['@user' => $result->uid]);
+          case 'user.http_login':
+            $blocked = !$this->flood->isAllowed('user.http_login', $this->config->get('user_limit'), $this->config->get('user_window'), $result->identifier);
+            $entries[$result->identifier]['type'] = 'user';
+            break;
         }
-
-        $entries[$result->identifier] = [
-          'type' => 'user',
-          'uid' => $result->uid,
-          'ip' => $result->ip,
-          'username' => $user_link,
-          'count' => $result->count,
-          'location' => $location_string,
-          'blocked' => $blocked,
-        ];
+        $entries[$result->identifier]['blocked'] = $blocked;
       }
     }
 
@@ -157,11 +163,11 @@ class FloodUnblockManager {
   /**
    * The function that clear the flood.
    */
-  public function flood_unblock_clear_event($type, $identifier) {
+  public function floodUnblockClearEvent($event, $identifier) {
     $txn = $this->database->startTransaction('flood_unblock_clear');
     try {
       $query = $this->database->delete('flood')
-        ->condition('event', '%' . $type, 'LIKE');
+        ->condition('event', $event);
       if (isset($identifier)) {
         $query->condition('identifier', $identifier);
       }
@@ -169,7 +175,8 @@ class FloodUnblockManager {
       if ($success) {
         \Drupal::messenger()->addMessage($this->t('Flood entries cleared.'), 'status', FALSE);
       }
-    } catch (\Exception $e) {
+    }
+    catch (\Exception $e) {
       // Something went wrong somewhere, so roll back now.
       $txn->rollback();
       // Log the exception to watchdog.
@@ -177,4 +184,5 @@ class FloodUnblockManager {
       \Drupal::messenger()->addMessage($this->t('Error: @error', ['@error' => (string) $e]), 'error');
     }
   }
+
 }
