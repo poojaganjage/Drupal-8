@@ -1,0 +1,26 @@
+{
+    "name": "drupal/drush9_batch_processing",
+    "description": "An example module for Drush 9 batch processing.",
+    "type": "drupal-drush",
+    "authors": [
+        {
+            "name": "Ilcho Vuchkov",
+            "email": "ilchovuchkov@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Drupal\\drush9_batch_processing\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=5.6.0"
+    },
+    "extra": {
+        "drush": {
+            "services": {
+                "drush.services.yml": "^9"
+            }
+        }
+    }
+}

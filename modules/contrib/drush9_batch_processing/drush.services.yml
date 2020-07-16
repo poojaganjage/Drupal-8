@@ -1,0 +1,6 @@
+services:
+  drush9_batch_processing.commands:
+    class: Drupal\drush9_batch_processing\Commands\Drush9BatchProcessingCommands
+    tags:
+      - { name: drush.command }
+    arguments: ['@entity_type.manager', '@logger.factory']
