@@ -1,0 +1,18 @@
+diff --git a/modules/contrib/simple_live_css/simple_live_css.routing.yml b/modules/contrib/simple_live_css/simple_live_css.routing.yml
+index ac800d5..8af5220 100644
+--- a/modules/contrib/simple_live_css/simple_live_css.routing.yml
++++ b/modules/contrib/simple_live_css/simple_live_css.routing.yml
+@@ -6,10 +6,11 @@ live_css.save:
+     _controller: '\Drupal\simple_live_css\Controller\LiveCssController::save'
+   requirements:
+     _permission: 'edit live css'
++
+ live_css.get:
+   path: '/live_css/get'
+   defaults:
+     _title: 'Get live css'
+     _controller: '\Drupal\simple_live_css\Controller\LiveCssController::get'
+   requirements:
+-    _permission: 'edit live css'
++    _permission: 'edit live css'
+\ No newline at end of file

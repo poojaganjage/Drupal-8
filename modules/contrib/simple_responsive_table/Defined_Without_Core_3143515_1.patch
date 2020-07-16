@@ -1,0 +1,16 @@
+diff --git a/modules/contrib/simple_responsive_table/simple_responsive_table.info.yml b/modules/contrib/simple_responsive_table/simple_responsive_table.info.yml
+index 7992a45..22984ae 100644
+--- a/modules/contrib/simple_responsive_table/simple_responsive_table.info.yml
++++ b/modules/contrib/simple_responsive_table/simple_responsive_table.info.yml
+@@ -1,9 +1,10 @@
+ name: Simple Responsive Table
+ type: module
+ description: Simple module to make table responsive.
+-core: 8.x
++# core: 8.x
+ core_version_requirement: ^8 || ^9
+ package: Other
++configure: simple_responsive_table.settings
+ 
+ # Information added by Drupal.org packaging script on 2020-05-05
+ version: '8.x-2.3'

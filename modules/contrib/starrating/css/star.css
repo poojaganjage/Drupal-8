@@ -1,0 +1,98 @@
+.star-off {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px 0px;
+}
+.star1-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -14px;
+}
+.star2-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -28px;
+}
+.star3-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -42px;
+}
+.star4-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -56px;
+}
+.star5-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -70px;
+}
+.star6-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -84px;
+}
+.star7-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -98px;
+}
+.star8-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('star.png') no-repeat 0px -112px;
+}
+
+.clear,
+.field--type-starrating {
+  clear: both;
+}
+.overflow-hidden {
+  overflow: hidden;
+}
+
+/*.starrating {
+    padding: 2px;   
+}
+
+.starrating s:hover,
+.starrating s.active {
+    color: red;
+}
+
+.starrating s {
+    color: black;
+    font-size: 50px;
+    cursor: default;
+    text-decoration: none;
+    line-height: 50px;
+}
+
+.starrating s:hover:before,
+.starrating s.rated:before,
+.starrating s.active:before {
+    content: "\2605";
+}
+
+.starrating s:before {
+    content: "\2606";
+}

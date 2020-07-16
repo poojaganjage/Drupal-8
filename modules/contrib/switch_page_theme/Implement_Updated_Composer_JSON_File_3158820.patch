@@ -1,0 +1,21 @@
+diff --git a/modules/contrib/switch_page_theme/composer.json b/modules/contrib/switch_page_theme/composer.json
+index 91c3e7a..7c30002 100644
+--- a/modules/contrib/switch_page_theme/composer.json
++++ b/modules/contrib/switch_page_theme/composer.json
+@@ -6,11 +6,11 @@
+ 	"readme": "README.txt",
+ 	"homepage": "https://www.drupal.org/project/switch_page_theme",
+ 	"authors": [
+-    {
+-      "name": "Deepali Agarwal",
+-      "homepage": "https://www.drupal.org/u/deepali_agarwal",
+-      "role": "Maintainer"
+-    }
++      {
++        "name": "Deepali Agarwal",
++        "homepage": "https://www.drupal.org/u/deepali_agarwal",
++        "role": "Maintainer"
++      }
+     ],
+ 	"support": {
+ 	    "issues": "https://www.drupal.org/project/issues/switch_page_theme",

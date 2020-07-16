@@ -1,0 +1,869 @@
+<?php
+
+/**
+ * @file
+ * Hook implementation code for the Rate module.
+ */
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Template\Attribute;
+use Drupal\Core\Url;
+use Drupal\node\NodeInterface;
+
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\core\Entity\EntityTypeInterface;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\views\ViewExecutable;
+
+use Drupal\field\Entity\FieldConfig;
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function rate_entity_extra_field_info() {
+  $extra = [];
+  $config = \Drupal::config('rate.settings');
+  $enabled_types_widgets = $config->get('enabled_types_widgets');
+  if (!empty($enabled_types_widgets)) {
+    foreach ($enabled_types_widgets as $entity_type_id => $entities) {
+      foreach ($entities as $bundle => $settings) {
+        $extra[$entity_type_id][$bundle]['display']['rate_vote_widget'] = [
+          'label' => t('Rate Vote Widget'),
+          'description' => t('Displays the rate voting widget selected from the settings page.'),
+          'weight' => 100,
+          'visible' => TRUE,
+        ];
+      }
+    }
+  }
+  // Rate widgets pseudo fields definitions.
+  $widgets = \Drupal::service('entity_type.manager')->getStorage('rate_widget')->loadMultiple();
+  $field_manager = \Drupal::service('entity_field.manager');
+
+  // No need to continue without widgets.
+  if (empty($widgets)) {
+    return $extra;
+  }
+
+  $comment_module_enabled = \Drupal::service('module_handler')->moduleExists('comment');
+
+  if ($comment_module_enabled) {
+    $comment_manager = \Drupal::service('comment.manager');
+  }
+
+  foreach ($widgets as $widget => $widget_variables) {
+    $entities = $widget_variables->get('entity_types');
+    $comments = $widget_variables->get('comment_types');
+    if ($entities && count($entities) > 0) {
+      foreach ($entities as $id => $entity) {
+        $parameter = explode('.', $entity);
+        $widget_name = 'rate-' . $widget;
+        $widget_label = 'Rate ' . $widget_variables->label();
+        $extra[$parameter[0]][$parameter[1]]['display'][$widget_name] = [
+          // Create a label based on the rate widget name (duplicates are OK).
+          'label' => t($widget_label),
+          'description' => t('Displays the rate voting widget assigned to this entity.'),
+          'weight' => 100,
+          'visible' => TRUE,
+        ];
+      }
+    }
+    if ($comment_module_enabled && $comments && count($comments) > 0) {
+      foreach ($comments as $id => $comment) {
+        $parameter = explode('.', $comment);
+        $fields = $comment_manager->getFields($parameter[0]);
+        $field_definitions = $field_manager->getFieldDefinitions($parameter[0], $parameter[1]);
+
+        foreach ($fields as $fid => $field) {
+          if (in_array($parameter[1], $field['bundles'])) {
+            $comment_settings = $field_definitions[$fid]->getFieldStorageDefinition()->get('settings');
+            $comment_type = $comment_settings['comment_type'];
+            $widget_name = 'rate-comment-' . $widget;
+            $widget_label = 'Rate comment ' . $widget_variables->label();
+            $extra['comment'][$comment_type]['display'][$widget_name] = [
+              // Create a label from the rate widget name (duplicates are OK).
+              'label' => t($widget_label),
+              'description' => t('Displays the rate voting widget assigned to this entity.'),
+              'weight' => 100,
+              'visible' => TRUE,
+            ];
+          }
+        }
+      }
+    }
+  }
+
+  return $extra;
+}
+
+/**
+ * Implements hook_entity_view().
+ */
+function rate_entity_view(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode) {
+  if (($widget_config = $display->getComponent('rate_vote_widget')) && $view_mode == 'full') {
+    $vote_widget_service = \Drupal::service('rate.entity.vote_widget');
+    $vote_widget = $vote_widget_service->buildRateVotingWidget(
+      $entity->id(),
+      $entity->getEntityTypeId(),
+      $entity->bundle()
+    );
+    if (isset($vote_widget['rate_vote_widget'])) {
+      $vote_widget['rate_vote_widget']['#weight'] = isset($widget_config['weight']) ? $widget_config['weight'] : 2;
+    }
+
+    $build = array_merge($build, $vote_widget);
+  }
+  // Rate widgets definitions.
+  $display_components = $display->getComponents();
+  $widgets = \Drupal::service('entity_type.manager')->getStorage('rate_widget');
+  $rate_widget_base_service = \Drupal::service('rate.vote_widget_base');
+  $entity_type = $entity->getEntityTypeId();
+  $entity_bundle = $entity->bundle();
+  $entity_id = $entity->id();
+
+  foreach ($display_components as $component => $component_settings) {
+    // Check if we have a comment or node related widget.
+    if (substr($component, 0, 5) == 'rate-') {
+      if (substr($component, 0, 13) == 'rate-comment-') {
+        // This is for comments.
+        $widget_name = substr($component, 13);
+      }
+      elseif (substr($component, 0, 5) == 'rate-') {
+        // This is for nodes.
+        $widget_name = substr($component, 5);
+      }
+      else {
+        return;
+      }
+      // Generate the voting form for each widget.
+      $generate_widget = FALSE;
+      $widget = $widgets->load($widget_name);
+      $entities_enabled = $widget->get('entity_types');
+      $comments_enabled = $widget->get('comment_types');
+
+      // Generate the form only if the widget is enabled in the config entity.
+      if (isset($entities_enabled) && count($entities_enabled) > 0 && $entity_type != 'comment') {
+        if (in_array(($entity_type . '.' . $entity_bundle), $entities_enabled)) {
+          $generate_widget = TRUE;
+        }
+      }
+      if (isset($comments_enabled) && count($comments_enabled) > 0 && $entity_type == 'comment') {
+        if (in_array(($entity->getCommentedEntityTypeId() . '.' . $entity->getCommentedEntity()->bundle()), $comments_enabled)) {
+          $generate_widget = TRUE;
+        }
+      }
+
+      if ($generate_widget === TRUE) {
+        $widget_template = $widget->get('template');
+        $settings = $widget;
+        $vote_type = ($widget_template == 'fivestar') ? $widget_template : 'updown';
+        $form = $rate_widget_base_service->getForm($entity_type, $entity_bundle, $entity_id, $vote_type, $widget_name, $settings);
+
+        $form_container = [
+          'rating' => [
+            '#theme' => 'container',
+            '#attributes' => [
+              'class' => ['rate-widget', $widget_template],
+            ],
+            '#children' => [
+              'form' => $form,
+            ],
+          ],
+          '#attached' => [
+            'library' => ['rate/w-' . $widget_template],
+          ],
+        ];
+        $build[$component] = $form_container;
+
+        // Create a date field in each linked content entity (node).
+        // This field allows voting until the date set by the user.
+        // "Use deadline" must be checked in the widget voting settings.
+        $voting_settings = $widget->get('voting');
+        $use_deadline = isset($voting_settings['use_deadline']) ? $voting_settings['use_deadline'] : 0;
+        if ($entity_type == 'node' && $use_deadline == 1) {
+          $field_name = 'field_rate_vote_deadline';
+
+          // Create the field to hold the date, if it does not exist yet.
+          if (empty($rate_date_storage = FieldStorageConfig::loadByName($entity_type, $field_name))) {
+            $rate_date_storage = FieldStorageConfig::create(
+              [
+                'field_name' => $field_name,
+                'langcode' => 'en',
+                'status' => TRUE,
+                'dependencies' => [
+                  'module' => ['datetime', $entity_type],
+                ],
+                'entity_type' => $entity_type,
+                'type' => 'datetime',
+                'settings' => ['datetime_type' => 'date'],
+                'module' => 'datetime',
+                'locked' => FALSE,
+                'cardinality' => 1,
+                'translatable' => TRUE,
+                'persist_with_no_fields' => TRUE,
+                'custom_storage' => FALSE,
+              ]
+            )->save();
+          }
+          // Add the field to the entity, which has the rate widget enabled.
+          if (empty($rate_date_field = FieldConfig::loadByName($entity_type, $entity_bundle, $field_name))) {
+            $rate_date_field = FieldConfig::create(
+            [
+              'field_name' => $field_name,
+              'field_type' => 'datetime',
+              'langcode' => 'en',
+              'status' => TRUE,
+              'dependencies' => [
+                'config' => [
+                  'field.storage.' . $entity_type . '.' . $field_name,
+                  $entity_type . '.type.' . $entity_bundle,
+                ],
+                'module' => ['datetime'],
+              ],
+              'entity_type' => $entity_type,
+              'bundle' => $entity_bundle,
+              'label' => 'Rate vote deadline',
+              'description' => '',
+              'required' => FALSE,
+              'translatable' => FALSE,
+              'default_value' => [
+                'default_date_type' => 'now',
+                'default_date' => 'now',
+              ],
+            ])->save();
+          }
+          // Add the rate date field to the form mode of the entity in question.
+          /** @var \Drupal\Core\Entity\EntityDisplayRepositoryInterface $display_repository */
+          $display_repository = \Drupal::service('entity_display.repository');
+          // Assign widget settings for the default form mode.
+          $display_repository->getFormDisplay($entity_type, $entity_bundle)
+            ->setComponent($field_name, [
+              'weight' => 300,
+            ])->save();
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ *
+ * This unsets Voting Results tab for non-voting-enabled node types.
+ */
+function rate_menu_local_tasks_alter(&$data, $route_name) {
+  if (isset($data['tabs'][0]) && isset($data['tabs'][0]['entity.node.canonical'])) {
+    $node = Drupal::request()->attributes->get('node');
+    if (!$node instanceof NodeInterface) {
+      $node = Drupal::entityTypeManager()->getStorage('node')->load($node);
+    }
+    if ($node) {
+      $config = \Drupal::config('rate.settings');
+      $enabled_types_widgets = $config->get('enabled_types_widgets');
+      if (!empty($enabled_types_widgets)) {
+        foreach ($enabled_types_widgets as $entity_type_id => $entity_types) {
+          foreach ($entity_types as $bundle => $settings) {
+            if ($entity_type_id !== 'node') {
+              continue;
+            }
+            if (!in_array($node->bundle(), array_keys($entity_types))) {
+              unset($data['tabs'][0]['rate.results_page']);
+              break;
+            }
+          }
+        }
+      }
+      elseif (isset($data['tabs'][0]['rate.results_page'])) {
+        unset($data['tabs'][0]['rate.results_page']);
+      }
+    }
+
+    // Rate widgets settings - disable results if no widgets enabled on node.
+    $entity_type_id = $node->getEntityTypeId();
+    $bundle = $node->bundle();
+    $widgets = \Drupal::service('entity_type.manager')->getStorage('rate_widget')->loadMultiple();
+    if (!empty($widgets)) {
+      $enabled_widgets = 0;
+      foreach ($widgets as $widget => $widget_variables) {
+        $entities = $widget_variables->get('entity_types');
+        $comments = $widget_variables->get('comment_types');
+        if ($entities && count($entities) > 0) {
+          foreach ($entities as $id => $entity) {
+            // Check if at least one widget is enabled.
+            if ($entity == $entity_type_id . '.' . $bundle) {
+              $enabled_widgets++;
+            }
+          }
+        }
+      }
+      // Unset the results tab if no widgets linked to this node bundle.
+      if ($enabled_widgets == 0) {
+        unset($data['tabs'][0]['rate.node_results_page']);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function rate_theme($existing, $type, $theme, $path) {
+  return [
+    // Templates for default widget types.
+    'rate_template_info_description' => [
+      'variables' => [
+        'info' => '',
+        'description' => '',
+      ],
+      'template' => 'rate-template-info-description',
+    ],
+    'rate_template_thumbs_up' => [
+      'variables' => [
+        'results' => 0,
+        'use_ajax' => FALSE,
+        'can_vote' => FALSE,
+        'has_voted' => FALSE,
+        'user_voted' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'widget_type' => NULL,
+      ],
+      'template' => 'rate-template-thumbs-up',
+    ],
+    'rate_template_thumbs_up_down' => [
+      'variables' => [
+        'results' => 0,
+        'use_ajax' => FALSE,
+        'can_vote' => FALSE,
+        'has_voted' => FALSE,
+        'user_voted' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'widget_type' => NULL,
+      ],
+      'template' => 'rate-template-thumbs-up-down',
+    ],
+    'rate_template_number_up_down' => [
+      'variables' => [
+        'results' => 0,
+        'use_ajax' => FALSE,
+        'can_vote' => FALSE,
+        'has_voted' => FALSE,
+        'user_voted' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'widget_type' => NULL,
+      ],
+      'template' => 'rate-template-number-up-down',
+    ],
+    'rate_template_fivestar' => [
+      'variables' => [
+        'results' => 0,
+        'use_ajax' => FALSE,
+        'can_vote' => FALSE,
+        'has_voted' => FALSE,
+        'user_voted' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'widget_type' => NULL,
+      ],
+      'template' => 'rate-template-fivestar',
+    ],
+    'rate_template_yesno' => [
+      'variables' => [
+        'results' => 0,
+        'use_ajax' => FALSE,
+        'can_vote' => FALSE,
+        'has_voted' => FALSE,
+        'user_voted' => NULL,
+        'entity_id' => NULL,
+        'entity_type_id' => NULL,
+        'widget_type' => NULL,
+      ],
+      'template' => 'rate-template-yesno',
+    ],
+    // Rate widgets theme.
+    'rate_widgets_summary' => [
+      'variables' => [
+        'results' => [],
+        'vote'    => NULL,
+        'rate_widget'  => NULL,
+        'widget_template'  => NULL,
+      ],
+    ],
+    'rate_widget' => [
+      'template' => 'rate-widget',
+      'render element' => 'form',
+    ],
+    'form_element__rating' => [
+      'base hook' => 'form_element',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-template-number-up-down.html.twig.
+ */
+function template_preprocess_rate_template_number_up_down(&$variables) {
+  $vote_types = ['up', 'down'];
+  foreach ($vote_types as $vote_type) {
+    $variables[$vote_type . '_attributes'] = new Attribute();
+    $variables[$vote_type . '_attributes']['class'] = [];
+    $variables[$vote_type . '_attributes']['class'][] = 'rate-number-up-down-btn-' . $vote_type;
+
+    if ($variables['use_ajax'] && !$variables['has_voted'] && $variables['can_vote']) {
+      $variables[$vote_type . '_attributes']['class'][] = 'use-ajax';
+    }
+  }
+
+  $score = isset($variables['results']['updown']['vote_sum']) ? $variables['results']['updown']['vote_sum'] : 0;
+  if ($score > 0) {
+    $score = '+' . $score;
+    $score_class = 'positive';
+  }
+  elseif ($score < 0) {
+    $score_class = 'negative';
+  }
+  else {
+    $score_class = 'neutral';
+  }
+  $variables['score'] = $score;
+  $variables['score_attributes'] = new Attribute();
+  $variables['score_attributes']['class'] = [];
+  $variables['score_attributes']['class'][] = 'rate-number-up-down-rating';
+  $variables['score_attributes']['class'][] = $score_class;
+
+  $variables['up_votes'] = isset($variables['results']['updown']['rate_count_up']) ? $variables['results']['updown']['rate_count_up'] : 0;
+  $variables['down_votes'] = isset($variables['results']['updown']['vote_count']) ? $variables['results']['updown']['vote_count'] - $variables['up_votes'] : 0;
+
+  _rate_set_common_theme_variables($variables);
+  _rate_get_undo_link($variables);
+  $variables['#attached']['library'][] = 'rate/number-up-down';
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-template-fivestar.html.twig.
+ */
+function template_preprocess_rate_template_fivestar(&$variables) {
+  $variables['stars'] = [];
+
+  // Calculate the score.
+  $score = isset($variables['results']['fivestar']['vote_average']) ? $variables['results']['fivestar']['vote_average'] : 0;
+
+  // Set up the links.
+  for ($counter = 1; $counter < 6; $counter++) {
+    $variables['stars'][$counter]['star_attributes'] = new Attribute();
+    $variables['stars'][$counter]['star_attributes']['class'] = [];
+
+    if ($counter <= $score) {
+      $variables['stars'][$counter]['star_attributes']['class'][] = 'rate-fivestar-btn-filled';
+    }
+    else {
+      $variables['stars'][$counter]['star_attributes']['class'][] = 'rate-fivestar-btn-empty';
+    }
+    $variables['stars'][$counter]['star_attributes']['class'][] = ' rate-fivestar-' . $counter;
+
+    if ($variables['use_ajax'] && !$variables['has_voted'] && $variables['can_vote']) {
+      $variables['stars'][$counter]['star_attributes']['class'][] = 'use-ajax';
+    }
+
+    if ($variables['entity_id']) {
+      $variables['stars'][$counter]['star_link'] = Url::fromRoute('rate.vote', [
+        'entity_type_id' => $variables['entity_type_id'],
+        'vote_type_id' => 'fivestar',
+        'value' => $counter,
+        'entity_id' => $variables['entity_id'],
+        'widget_type' => $variables['widget_type'],
+        'destination' => \Drupal::destination()->getAsArray()['destination'],
+      ]);
+    }
+
+  }
+
+  _rate_set_common_theme_variables($variables, FALSE);
+  _rate_get_undo_link($variables);
+  $variables['#attached']['library'][] = 'rate/fivestar';
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-template-thumbs_up_down.html.twig.
+ */
+function template_preprocess_rate_template_thumbs_up_down(&$variables) {
+  $vote_types = [
+    'up' => '1',
+    'down' => '-1',
+  ];
+
+  foreach ($vote_types as $vote_type => $value) {
+    $variables[$vote_type . '_li_attributes'] = new Attribute();
+    $variables[$vote_type . '_li_attributes']['class'] = [];
+    $variables[$vote_type . '_li_attributes']['class'] = 'thumb-' . $vote_type;
+
+    $variables[$vote_type . '_attributes'] = new Attribute();
+    $variables[$vote_type . '_attributes']['class'] = [];
+    $variables[$vote_type . '_attributes']['class'][] = 'rate-thumbs-up-down-btn-' . $vote_type;
+
+    // Add a class if the current user has voted on this item.
+    if ($variables['user_voted'] === $value) {
+      $variables[$vote_type . '_li_attributes']['class'][] = 'rate-voted';
+    }
+
+    if ($variables['use_ajax'] && !$variables['has_voted'] && $variables['can_vote']) {
+      $variables[$vote_type . '_attributes']['class'][] = 'use-ajax';
+    }
+  }
+
+  $variables['percent_attributes'] = new Attribute();
+  $variables['percent_attributes']['class'] = [];
+  $variables['percent_attributes']['class'][] = 'percent';
+
+  $total_votes = isset($variables['results']['updown']['vote_count']) ? $variables['results']['updown']['vote_count'] : 0;
+  $variables['up_votes'] = isset($variables['results']['updown']['rate_count_up']) ? $variables['results']['updown']['rate_count_up'] : 0;
+  $variables['down_votes'] = $total_votes - $variables['up_votes'];
+
+  if (!empty($total_votes)) {
+    $variables['up_percent'] = round(($variables['up_votes'] / $total_votes) * 100);
+    $variables['down_percent'] = round(($variables['down_votes'] / $total_votes) * 100);
+  }
+  else {
+    $variables['up_percent'] = 0;
+    $variables['down_percent'] = 0;
+  }
+
+  _rate_set_common_theme_variables($variables);
+  _rate_get_undo_link($variables);
+  $variables['#attached']['library'][] = 'rate/thumbs-up-down';
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-template-thumbs_up.html.twig.
+ */
+function template_preprocess_rate_template_thumbs_up(&$variables) {
+  $variables['up_attributes'] = new Attribute();
+  $variables['up_attributes']['class'] = [];
+  $variables['up_attributes']['class'][] = 'rate-thumbs-up-btn-up';
+
+  if ($variables['use_ajax'] && !$variables['has_voted'] && $variables['can_vote']) {
+    $variables['up_attributes']['class'][] = 'use-ajax';
+  }
+  $variables['score_attributes'] = new Attribute();
+  $variables['score_attributes']['class'] = [];
+  $variables['score_attributes']['class'][] = 'rate-score';
+
+  $variables['up_votes'] = isset($variables['results']['updown']['rate_count_up']) ? $variables['results']['updown']['rate_count_up'] : 0;
+
+  _rate_set_common_theme_variables($variables);
+  _rate_get_undo_link($variables);
+  $variables['#attached']['library'][] = 'rate/thumbs-up';
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-template-yes_no.html.twig.
+ */
+function template_preprocess_rate_template_yesno(&$variables) {
+  $vote_types = [
+    'yes' => '1',
+    'no' => '-1',
+  ];
+
+  foreach ($vote_types as $vote_type => $value) {
+    $variables[$vote_type . '_li_attributes'] = new Attribute();
+    $variables[$vote_type . '_li_attributes']['class'] = [];
+    $variables[$vote_type . '_li_attributes']['class'][] = 'rate-' . $vote_type;
+
+    $variables[$vote_type . '_attributes'] = new Attribute();
+    $variables[$vote_type . '_attributes']['class'] = [];
+    $variables[$vote_type . '_attributes']['class'][] = 'rate-yesno-btn';
+    $variables[$vote_type . '_attributes']['class'][] = 'rate-' . $vote_type . '-btn';
+
+    // Add a class if the current user has voted on this item.
+    if ($variables['user_voted'] === $value) {
+      $variables[$vote_type . '_li_attributes']['class'][] = 'rate-voted';
+    }
+
+    if ($variables['use_ajax'] && !$variables['has_voted'] && $variables['can_vote']) {
+      $variables[$vote_type . '_attributes']['class'][] = 'use-ajax';
+    }
+  }
+
+  $variables['up_votes'] = isset($variables['results']['updown']['rate_count_up']) ? $variables['results']['updown']['rate_count_up'] : 0;
+  $variables['down_votes'] = isset($variables['results']['updown']['vote_count']) ? $variables['results']['updown']['vote_count'] - $variables['up_votes'] : 0;
+
+  $variables['score_attributes'] = new Attribute();
+  $variables['score_attributes']['class'] = [];
+  $variables['score_attributes']['class'][] = 'rate-yesno-votes';
+
+  _rate_set_common_theme_variables($variables, TRUE);
+  _rate_get_undo_link($variables);
+  $variables['#attached']['library'][] = 'rate/yesno';
+}
+
+/**
+ * Helper function to return an undo link.
+ */
+function _rate_get_undo_link(&$variables) {
+  if (!$variables['entity_id']) {
+    $variables['can_vote'] = FALSE;
+    return;
+  }
+  $variables['undo'] = '';
+  $variables['undo_attributes'] = new Attribute();
+  $variables['undo_attributes']['class'] = [];
+  $variables['undo_attributes']['class'][] = 'rate-undo-vote';
+
+  $undo_link_class = 'rate-undo';
+  if ($variables['use_ajax']) {
+    $undo_link_class .= ' use-ajax';
+  }
+  if ($variables['has_voted']) {
+    $variables['undo'] = Link::fromTextAndUrl(
+      t('Undo'),
+      Url::fromRoute('rate.undo_vote', [
+        'entity_type_id' => $variables['entity_type_id'],
+        'entity_id' => $variables['entity_id'],
+        'widget_type' => $variables['widget_type'],
+        'destination' => \Drupal::destination()->getAsArray()['destination'],
+      ], [
+        'attributes' => ['class' => $undo_link_class],
+      ])
+    );
+  }
+}
+
+/**
+ * Helper function to set common themeing variables.
+ */
+function _rate_set_common_theme_variables(&$variables, $generate_links = TRUE) {
+  $destination = \Drupal::destination()->getAsArray();
+  if (!$variables['entity_id']) {
+    $variables['can_vote'] = FALSE;
+    return;
+  }
+  if ($generate_links) {
+    $variables['up_url'] = Url::fromRoute('rate.vote', [
+      'entity_type_id' => $variables['entity_type_id'],
+      'vote_type_id' => 'updown',
+      'value' => 1,
+      'entity_id' => $variables['entity_id'],
+      'widget_type' => $variables['widget_type'],
+      'destination' => $destination['destination'],
+    ]);
+
+    $variables['down_url'] = Url::fromRoute('rate.vote', [
+      'entity_type_id' => $variables['entity_type_id'],
+      'vote_type_id' => 'updown',
+      'value' => -1,
+      'entity_id' => $variables['entity_id'],
+      'widget_type' => $variables['widget_type'],
+      'destination' => $destination['destination'],
+    ]);
+  }
+
+  $output['info_description'] = [
+    // @Todo: Add info and description to to settings form.
+    '#theme' => 'info_description',
+    '#info' => '',
+    '#description' => '',
+  ];
+  $variables['destination'] = $destination['destination'];
+
+  $variables['widget_attributes'] = new Attribute();
+  $variables['widget_attributes']['data-drupal-selector'] = 'rate-' . $variables['entity_type_id'] . '-' . $variables['entity_id'];
+  $variables['widget_attributes']['class'] = [];
+  $class = str_ireplace('rate_template_', '', $variables['theme_hook_original']);
+  $variables['widget_attributes']['class'][] = 'rate-widget-' . str_ireplace('_', '-', $class);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_access().
+ */
+function rate_vote_type_access(EntityInterface $vote_type, $operation, AccountInterface $account) {
+  // If the user has the 'view rate results page' permission, we grant 'view'
+  // access to all of the vote_type configuration entities defined
+  // by the Rate module.
+  $rate_types = ['updown', 'fivestar'];
+
+  // Allow users with the permission 'view rate results page' to view metadata
+  // about any of the vote types provided by this module.
+  if (in_array($vote_type->id(), $rate_types)) {
+    switch ($operation) {
+      case 'view':
+        return AccessResult::allowedIf($account->hasPermission('view rate results page'))
+          ->cachePerPermissions()
+          ->cachePerUser();
+
+      default:
+        return AccessResult::neutral();
+    }
+  }
+  else {
+    return AccessResult::neutral();
+  }
+}
+
+/**
+ * ####################################
+ * Hooks for rate widgets.
+ * ####################################
+ */
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function rate_entity_type_build(array &$entity_types) {
+  // Enables the RateWidgetBaseForm for the vote entity.
+  $entity_types['vote']->setFormClass('rate_vote', 'Drupal\rate\Form\RateWidgetBaseForm');
+}
+
+/**
+ * Implements hook_entity_base_field_info().
+ */
+function rate_entity_base_field_info(EntityTypeInterface $entity_type) {
+  // Add the rate_widget as a base field.
+  // @ToDo: Need to run drush entity:update - update rate.install instead.
+  if ($entity_type->id() == 'vote') {
+    $fields = [];
+
+    $fields['rate_widget'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Rate widget'))
+      ->setName('rate_widget')
+      ->setRevisionable(FALSE)
+      ->setCustomStorage(FALSE)
+      ->setRequired(FALSE)
+      ->setDescription(t('Holds the Rate field name.'))
+      ->setPropertyConstraints('value', ['Length' => ['max' => FieldStorageConfig::NAME_MAX_LENGTH]]);
+
+    return $fields;
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_alter().
+ */
+function rate_theme_suggestions_alter(array &$suggestions, array $variables, $hook) {
+  if ($hook == 'rate_widgets_summary') {
+    $entity = $variables['vote'];
+    $content = \Drupal::service('entity_type.manager')->getStorage($entity->getVotedEntityType())->load($entity->getVotedEntityId());
+    $plugin = \Drupal::service('entity_type.manager')->getStorage('rate_widget')->load($entity->rate_widget->value)->get('template');
+
+    $suggestions[] = $hook . '__' . $plugin;
+    $suggestions[] = $hook . '__' . $plugin . '__' . $entity->rate_widget->value;
+    $suggestions[] = $hook . '__' . $plugin . '__' . $content->getEntityTypeId();
+    $suggestions[] = $hook . '__' . $plugin . '__' . $content->getEntityTypeId() . '__' . $content->bundle() . '__' . $entity->rate_widget->value;
+    $suggestions[] = $hook . '__' . $plugin . '__' . $content->getEntityTypeId() . '__' . $content->bundle();
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for rate-widget.html.twig.
+ */
+function template_preprocess_rate_widget(&$variables) {
+  $variables['widget_template'] = $variables['form']['#widget_template'];
+  $variables['display_settings'] = $variables['form']['#display_settings'];
+  $variables['results_settings'] = $variables['form']['#results_settings'];
+  $label_class = isset($variables['display_settings']['label_class']) ? $variables['display_settings']['label_class'] : '';
+  $description_class = isset($variables['display_settings']['description_class']) ? $variables['display_settings']['description_class'] : '';
+  $variables['label_attributes'] = new Attribute();
+  $variables['label_attributes']['class'] = [];
+  $variables['label_attributes']['class'][] = $label_class;
+  if (isset($variables['display_settings']['label_position']) && $variables['display_settings']['label_position'] == 'above') {
+    if ($variables['display_settings']['description_position'] == 'right' && $variables['results_settings']['result_position'] == 'right') {
+      $variables['label_attributes']['colspan'] = [];
+      $variables['label_attributes']['colspan'][] = 3;
+    }
+    elseif ($variables['display_settings']['description_position'] == 'right' || $variables['results_settings']['result_position'] == 'right') {
+      $variables['label_attributes']['colspan'] = [];
+      $variables['label_attributes']['colspan'][] = 2;
+    }
+  }
+  $variables['description_attributes'] = new Attribute();
+  $variables['description_attributes']['class'] = [];
+  $variables['description_attributes']['class'][] = $description_class;
+  if (isset($variables['results_settings']['result_position']) && $variables['results_settings']['result_position'] == 'below') {
+    if ($variables['display_settings']['description_position'] && $variables['display_settings']['description_position'] == 'right') {
+      $variables['result_attributes'] = new Attribute();
+      $variables['result_attributes']['colspan'] = [];
+      $variables['result_attributes']['colspan'][] = 2;
+    }
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter().
+ */
+function rate_theme_suggestions_form_element_alter(array &$suggestions, array $variables) {
+  if ($variables['element']['#type'] == 'radio' && isset($variables['element']['#attributes']['twig-suggestion'])) {
+    if ($variables['element']['#attributes']['twig-suggestion'] == 'rating-input') {
+      $suggestions[] = 'form_element__rating';
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for form-element--rating.html.twig.
+ */
+function template_preprocess_form_element__rating(&$variables) {
+  $element = $variables['element'];
+  $variables['option_result'] = isset($element['#option_result']) ? $element['#option_result'] : '';
+  $variables['label_attributes'] = isset($element['#label_attributes']) ? $element['#label_attributes'] : '';
+  $variables['title'] = isset($element['#title']) ? $element['#title'] : '';
+  $variables['children'] = isset($element['#children']) ? $element['#children'] : '';
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function rate_views_pre_render(ViewExecutable $view) {
+  // Used for the blocks, which show the results of rate widget votings.
+  // Currently used for nodes.
+  if (in_array($view->id(), ['rate_widgets_results'])) {
+    if (in_array($view->current_display, ['node_summary_block'])) {
+      $widget_id = $view->args[2];
+      $widget = \Drupal::service('entity_type.manager')->getStorage('rate_widget')->load($widget_id);
+      $options = isset($widget) ? $widget->get('options') : [];
+      $template = isset($widget) ? $widget->get('template') : '';
+      $labels = [];
+
+      // Add missing options if not all options were used to vote.
+      if (isset($view->total_rows) && $view->total_rows < count($options) && $view->total_rows > 0) {
+        $options = ($template == 'fivestar') ? array_reverse($options) : $options;
+        foreach ($options as $key => $option) {
+          $new_row = new $view->result[0]();
+          $new_row->_entity = $view->result[0]->_entity;
+          // Set the variables.
+          $new_row->index = $key;
+          $new_row->votingapi_vote_value = $options[$key]['value'];
+          $new_row->votingapi_vote_value_1 = 0;
+          $new_row->node_field_data_votingapi_vote_nid = $view->result[0]->node_field_data_votingapi_vote_nid;
+          $temp[$key] = $new_row;
+        }
+        foreach ($view->result as $key => $value) {
+          $vote_value = $value->votingapi_vote_value;
+          $temp_key = array_search($vote_value, array_column($temp, 'votingapi_vote_value'));
+          if (isset($temp_key)) {
+            $temp[$temp_key] = $value;
+          }
+        }
+        $view->result = $temp;
+      }
+      foreach ($view->result as $row_num => $row_data) {
+        // Remove the empty rows.
+        $vote_value = $row_data->_entity->getValue();
+        if ($vote_value == 0) {
+          unset($view->result[$row_num]);
+          $view->total_rows = $view->total_rows - 1;
+        }
+        // Replace the vote value with the correct rate widget option label.
+        else {
+          $vote_value = $row_data->votingapi_vote_value;
+          $option_key = array_search($vote_value, array_column($options, 'value'));
+          $row_data->votingapi_vote_value = (string) $options[$option_key]['label'];
+        }
+      }
+    }
+  }
+}

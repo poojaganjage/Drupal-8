@@ -1,0 +1,25 @@
+diff --git a/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.links.menu.yml b/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.links.menu.yml
+index 62dab92..914fbf1 100644
+--- a/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.links.menu.yml
++++ b/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.links.menu.yml
+@@ -6,4 +6,4 @@ layout_builder_bgcolor.settings:
+   title: 'Layout Builder BGColor'
+   route_name: layout_builder_bgcolor.settings
+   description: 'Configure various options for the Layout Builder BGColor Module.'
+-  parent: system.admin_config_ui
+\ No newline at end of file
++  parent: system.admin_config_content
+\ No newline at end of file
+diff --git a/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.routing.yml b/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.routing.yml
+index 2fb2d6e..eeba6ba 100644
+--- a/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.routing.yml
++++ b/modules/contrib/layout_builder_bgcolor/layout_builder_bgcolor.routing.yml
+@@ -3,7 +3,7 @@
+ 
+ # Settings form.
+ layout_builder_bgcolor.settings:
+-  path: '/admin/config/ui/layout-builder-bgcolor'
++  path: '/admin/config/content/layout-builder-bgcolor'
+   defaults:
+     _form: '\Drupal\layout_builder_bgcolor\Form\Settings'
+     _title: 'Layout Builder BGColor settings'
