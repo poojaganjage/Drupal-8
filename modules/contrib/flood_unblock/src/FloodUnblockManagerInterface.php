@@ -8,20 +8,12 @@ namespace Drupal\flood_unblock;
 interface FloodUnblockManagerInterface {
 
     /**
-     * Generate rows from the entries in the flood table.
-     *
-     * @return array
-     *   Entries of the flood table grouped by identifier (UID/IP).
+     * {@inheritdoc}
      */
     public function getEntries();
 
     /**
-     * The function that clear the flood.
-     *
-     * @param $type       The type variable.
-     * @param $identifier The identifier variable.
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function flood_unblock_clear_event($event, $identifier);
 }

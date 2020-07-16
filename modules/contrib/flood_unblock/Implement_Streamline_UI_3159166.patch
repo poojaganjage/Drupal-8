@@ -1,0 +1,26 @@
+diff --git a/modules/contrib/flood_unblock/src/FloodUnblockManager.php b/modules/contrib/flood_unblock/src/FloodUnblockManager.php
+index 24abce6..9cfc21f 100644
+--- a/modules/contrib/flood_unblock/src/FloodUnblockManager.php
++++ b/modules/contrib/flood_unblock/src/FloodUnblockManager.php
+@@ -104,7 +104,7 @@ public function getEntries() {
+             $user_link = $user->toLink($user->getAccountName());
+           }
+           else {
+-            $user_link = $this->t('Deleted User: @user', ['@user' => $result->uid]);
++            $user_link = $this->t('Deleted user: @user', ['@user' => $result->uid]);
+           }
+           $entries[$result->identifier]['username'] = $user_link ?? NULL;
+         }
+diff --git a/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php b/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
+index d95452c..004b652 100644
+--- a/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
++++ b/modules/contrib/flood_unblock/src/Form/FloodUnblockAdminForm.php
+@@ -107,7 +107,7 @@ public function buildForm(array $form, FormStateInterface $form_state) {
+ 
+     $form['submit'] = [
+       '#type' => 'submit',
+-      '#value' => $this->t('Remove flood'),
++      '#value' => $this->t('Selected items is clear from the flood table.'),
+     ];
+ 
+     if (count($entries) == 0) {
