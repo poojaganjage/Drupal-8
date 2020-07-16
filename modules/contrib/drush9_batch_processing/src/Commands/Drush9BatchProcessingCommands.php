@@ -4,7 +4,7 @@ namespace Drupal\drush9_batch_processing\Commands;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
-use Drupal\Core\StringTranslation\StringTranslationTrait;
+// use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drush\Commands\DrushCommands;
 
 /**
@@ -20,7 +20,7 @@ use Drush\Commands\DrushCommands;
  */
 class Drush9BatchProcessingCommands extends DrushCommands {
 
-  use StringTranslationTrait;
+  // use StringTranslationTrait;
 
   /**
    * Entity type service.
@@ -65,7 +65,7 @@ class Drush9BatchProcessingCommands extends DrushCommands {
    */
   public function updateNode($type = '') {
     // 1. Log the start of the script.
-    $this->loggerChannelFactory->get('drush9_batch_processing')->info($this->t('Update nodes batch operations start'));
+    $this->loggerChannelFactory->get('drush9_batch_processing')->info(t('Update nodes batch operations start'));
     // Check the type of node given as argument, if not, set article as default.
     if (strlen($type) == 0) {
       $type = 'article';
@@ -80,7 +80,7 @@ class Drush9BatchProcessingCommands extends DrushCommands {
     }
     catch (\Exception $e) {
       $this->output()->writeln($e);
-      $this->loggerChannelFactory->get('drush9_batch_processing')->warning($this->t('Error found @e', ['@e' => $e,]));
+      $this->loggerChannelFactory->get('drush9_batch_processing')->warning(t('Error found @e', ['@e' => $e,]));
     }
     // 3. Create the operations array for the batch.
     $operations = [];
@@ -89,11 +89,11 @@ class Drush9BatchProcessingCommands extends DrushCommands {
     if (!empty($nids)) {
       foreach ($nids as $nid) {
         // Prepare the operation. Here we could do other operations on nodes.
-        $this->output()->writeln($this->t('Preparing batch: ') . $batchId);
+        $this->output()->writeln(t('Preparing batch: ') . $batchId);
         $operations[] = [
           '\Drupal\drush9_batch_processing\BatchService::processMyNode', [
             $batchId,
-            $this->t('Updating node @nid', ['@nid' => $nid,]),
+            t('Updating node @nid', ['@nid' => $nid,]),
           ],
         ];
         $batchId++;
@@ -101,11 +101,11 @@ class Drush9BatchProcessingCommands extends DrushCommands {
       }
     }
     else {
-      $this->logger()->warning($this->t('No nodes of this type @type', ['@type' => $type,]));
+      $this->logger()->warning(t('No nodes of this type @type', ['@type' => $type,]));
     }
     // 4. Create the batch.
     $batch = [
-      'title' => $this->t('Updating @num node(s)', ['@num' => $numOperations,]),
+      'title' => t('Updating @num node(s)', ['@num' => $numOperations,]),
       'operations' => $operations,
       'finished' => '\Drupal\drush9_batch_processing\BatchService::processMyNodeFinished',
     ];
@@ -114,9 +114,9 @@ class Drush9BatchProcessingCommands extends DrushCommands {
     // 6. Process the batch sets.
     drush_backend_batch_process();
     // 6. Show some information.
-    $this->logger()->notice($this->t('Batch operations end.'));
+    $this->logger()->notice(t('Batch operations end.'));
     // 7. Log some information.
-    $this->loggerChannelFactory->get('drush9_batch_processing')->info($this->t('Update batch operations end.'));
+    $this->loggerChannelFactory->get('drush9_batch_processing')->info(t('Update batch operations end.'));
   }
 
 }
