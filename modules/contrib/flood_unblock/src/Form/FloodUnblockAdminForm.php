@@ -118,7 +118,7 @@ class FloodUnblockAdminForm extends FormBase {
 
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => $this->t('Remove'),
+      '#value' => $this->t('Selected items is clear from the flood table.'),
     ];
 
     if (count($entries) == 0) {
@@ -138,7 +138,7 @@ class FloodUnblockAdminForm extends FormBase {
       return $selected !== 0;
     });
     if (empty($selected_entries)) {
-      $form_state->setErrorByName('table', $this->t('Please make a selection.'));
+      $form_state->setErrorByName('table', $this->t('Please make a selection entries.'));
     }
   }
 
