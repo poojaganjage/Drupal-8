@@ -1,0 +1,390 @@
+From c0d32b189b82736b65a5145feadf2a919df0fa7e Mon Sep 17 00:00:00 2001
+From: Shelane French <french8@llnl.gov>
+Date: Thu, 16 Jul 2020 20:30:16 -0700
+Subject: [PATCH] Issue #3159749: coding standards
+
+---
+ README.md                                  |  1 -
+ matomo_reports.module                      | 10 +++----
+ src/Controller/MatomoReportsController.php | 26 +++++++----------
+ src/Form/MatomoReportsSettings.php         |  2 +-
+ src/Form/ReportsForm.php                   | 34 ++++++++++++----------
+ src/MatomoData.php                         | 19 ++++++------
+ src/Plugin/Block/MatomoReportsBlock.php    | 16 +++++-----
+ 7 files changed, 53 insertions(+), 55 deletions(-)
+
+diff --git a/README.md b/README.md
+index 7e79739..7aecc31 100644
+--- a/README.md
++++ b/README.md
+@@ -44,4 +44,3 @@ enable the block and place it in the region you desire.
+ Matomo Matomo Web Analytics
+ Matomo Matomo Web Analytics (https://drupal.org/project/matomo) is not a dependency
+ any more, but matomo is required to track your site.
+-
+diff --git a/matomo_reports.module b/matomo_reports.module
+index f776d19..6cba1fd 100644
+--- a/matomo_reports.module
++++ b/matomo_reports.module
+@@ -27,7 +27,7 @@ function matomo_reports_theme() {
+     'matomo_reports' => [
+       'variables' => [
+         'data_url' => NULL,
+-        ]
++      ],
+     ],
+   ];
+ }
+@@ -41,21 +41,21 @@ function matomo_reports_form_user_form_alter(&$form, $form_state, $form_id) {
+   $userData = \Drupal::service('user.data');
+   if ($account->hasPermission('access matomo reports') && ($config->get('matomo_reports_token_auth') == '')) {
+     $account = \Drupal::currentUser();
+-    $form['matomo_reports'] = array(
++    $form['matomo_reports'] = [
+       '#type' => 'fieldset',
+       '#title' => t('Matomo reports configuration'),
+       '#weight' => 3,
+       '#collapsible' => TRUE,
+       '#collapsed' => TRUE,
+-    );
+-    $form['matomo_reports']['matomo_reports_token_auth'] = array(
++    ];
++    $form['matomo_reports']['matomo_reports_token_auth'] = [
+       '#type' => 'textfield',
+       '#title' => t('Matomo authentication string'),
+       '#default_value' => (!empty($userData->get('matomo_reports', $account->id(), 'matomo_reports_token_auth')) ? $userData->get('matomo_reports', $account->id(), 'matomo_reports_token_auth') : ''),
+       '#size' => 40,
+       '#maxlength' => 40,
+       '#description' => t('Click the <strong>Settings</strong> link in your Matomo account, then the <strong>Users</strong> tab and copy and paste your personal <strong>token_auth</strong> value into this field. If anonymous users have view permissions in Matomo you can set this value to <strong>anonymous</strong>. Or just ask the Matomo server administrator.'),
+-    );
++    ];
+     // hook_user_update() is missing in D8, add custom submit handler.
+     $form['actions']['submit']['#submit'][] = 'matomo_reports_user_profile_form_submit';
+   }
+diff --git a/src/Controller/MatomoReportsController.php b/src/Controller/MatomoReportsController.php
+index 113e638..88e3a69 100644
+--- a/src/Controller/MatomoReportsController.php
++++ b/src/Controller/MatomoReportsController.php
+@@ -1,10 +1,5 @@
+ <?php
+ 
+-/**
+- * @file
+- * Contains \Drupal\matomo_reports\Controller\MatomoReportsController.
+- */
+-
+ namespace Drupal\matomo_reports\Controller;
+ 
+ use Drupal\Core\Controller\ControllerBase;
+@@ -56,7 +51,6 @@ class MatomoReportsController extends ControllerBase {
+     $this->messenger = $messenger;
+   }
+ 
+-
+   /**
+    * Reports.
+    *
+@@ -86,13 +80,13 @@ class MatomoReportsController extends ControllerBase {
+     if ($period == 1) {
+       // Special handling for "yesterday" = 1.
+       // The yesterday date value is required.
+-      $date = $this->matomo_reports_select_period($period);
++      $date = $this->selectPeriod($period);
+     }
+     else {
+       // Otherwise it returns the today date value.
+-      $date = $this->matomo_reports_select_period(0);
++      $date = $this->selectPeriod(0);
+     }
+-    $period_name = $this->matomo_reports_get_period_name($period);
++    $period_name = $this->getPeriodName($period);
+ 
+     // Create an array of URL parameters for easier maintenance.
+     $data_params[0] = [];
+@@ -273,7 +267,7 @@ class MatomoReportsController extends ControllerBase {
+         break;
+ 
+       case 'goals':
+-        $goals = $this->matomo_reports_get_goals($token_auth, $session->get('matomo_reports_site'));
++        $goals = $this->getGoals($token_auth, $session->get('matomo_reports_site'));
+         if (count($goals) == 0) {
+           $empty_text = $this->t('No goals have been set. Check with your Matomo server administrator if you desire some.');
+           $title[0] = NULL;
+@@ -320,7 +314,7 @@ class MatomoReportsController extends ControllerBase {
+    * @return array|string|bool
+    *   Goals returned from Matomo reports API.
+    */
+-  private function matomo_reports_get_goals($token_auth, $site) {
++  private function getGoals($token_auth, $site) {
+     $matomo_url = MatomoData::getUrl();
+     if ($matomo_url) {
+       return MatomoData::getResponse($matomo_url . 'index.php?module=API&method=Goals.getGoals&idSite=' . (int) $site . '&format=JSON&token_auth=' . $token_auth);
+@@ -331,8 +325,9 @@ class MatomoReportsController extends ControllerBase {
+   }
+ 
+   /**
+-   * Helper function to return the starting and ending dates according to the
+-   * selected period.
++   * Helper function.
++   *
++   * Returns the starting and ending dates according to the selected period.
+    *
+    * @param int $period
+    *   Selected period.
+@@ -340,7 +335,7 @@ class MatomoReportsController extends ControllerBase {
+    * @return string
+    *   Formatted date.
+    */
+-  private function matomo_reports_select_period($period) {
++  private function selectPeriod($period) {
+     switch ($period) {
+       case 0:
+         $date = date("Y-m-d");
+@@ -378,7 +373,7 @@ class MatomoReportsController extends ControllerBase {
+    * @return string
+    *   Name of period.
+    */
+-  private function matomo_reports_get_period_name($period) {
++  private function getPeriodName($period) {
+     // Possible periods are day, week, month, year.
+     switch ($period) {
+       case 0:
+@@ -403,4 +398,5 @@ class MatomoReportsController extends ControllerBase {
+     }
+     return $p;
+   }
++
+ }
+diff --git a/src/Form/MatomoReportsSettings.php b/src/Form/MatomoReportsSettings.php
+index 16a69f7..dfefaa5 100644
+--- a/src/Form/MatomoReportsSettings.php
++++ b/src/Form/MatomoReportsSettings.php
+@@ -74,7 +74,7 @@ class MatomoReportsSettings extends ConfigFormBase {
+       else {
+         $allowed_sites_desc .= ' ' . $this->t('Sites current accessible as anonymous are:');
+       }
+-      foreach ($sites as $site){
++      foreach ($sites as $site) {
+         $allowed_sites_desc .= '<br />' . (int) $site['idsite'] . ' - ' . Html::escape($site['name']);
+       }
+     }
+diff --git a/src/Form/ReportsForm.php b/src/Form/ReportsForm.php
+index 8fd23e4..f834d46 100644
+--- a/src/Form/ReportsForm.php
++++ b/src/Form/ReportsForm.php
+@@ -40,6 +40,9 @@ class ReportsForm extends FormBase {
+     $this->messenger = $messenger;
+   }
+ 
++  /**
++   * {@inheritdoc}
++   */
+   public static function create(ContainerInterface $container) {
+     return new static(
+       $container->get('user.data'),
+@@ -66,7 +69,7 @@ class ReportsForm extends FormBase {
+       'class' => [
+         'search-form',
+         'container-inline',
+-      ]
++      ],
+     ];
+     $form['matomo_filters'] = [
+       '#type' => 'fieldset',
+@@ -90,12 +93,19 @@ class ReportsForm extends FormBase {
+     ];
+     if ($sites) {
+       if (!function_exists('array_key_first')) {
++
++        // @codingStandardsIgnoreStart
++        /**
++         * Provides fallback function for PHP < 7.3.
++         */
+         function array_key_first(array $arr) {
+-          foreach($arr as $key => $unused) {
++          foreach ($arr as $key => $unused) {
+             return $key;
+           }
+           return NULL;
+         }
++        // @codingStandardsIgnoreEnd
++
+       }
+       foreach ($sites as $site) {
+         if (empty($allowed_keys[0]) || in_array($site['idsite'], $allowed_keys)) {
+@@ -110,30 +120,30 @@ class ReportsForm extends FormBase {
+         $session->set('matomo_reports_site', array_key_first($allowed_sites));
+       }
+       if (count($allowed_sites) > 1) {
+-        $form['matomo_filters']['site'] = array(
++        $form['matomo_filters']['site'] = [
+           '#type' => 'select',
+           '#title' => $this->t('Site'),
+           '#weight' => -5,
+           '#default_value' => $session->get('matomo_reports_site'),
+           '#options' => $allowed_sites,
+-        );
++        ];
+       }
+       elseif (count($allowed_sites) == 1) {
+         foreach ($allowed_sites as $siteid => $sitename) {
+           break;
+         }
+-        $form['matomo_filters']['site'] = array(
++        $form['matomo_filters']['site'] = [
+           '#type' => 'hidden',
+           '#value' => $siteid,
+-        );
+-        $form['matomo_filters']['sitename'] = array(
++        ];
++        $form['matomo_filters']['sitename'] = [
+           '#type' => 'textfield',
+           '#title' => $this->t('Site'),
+           '#weight' => -5,
+           '#size' => 25,
+           '#value' => $sitename,
+           '#disabled' => TRUE,
+-        );
++        ];
+         $form['matomo_filters']['period']['#attributes'] = ['onchange' => 'this.form.submit();'];
+       }
+     }
+@@ -144,13 +154,6 @@ class ReportsForm extends FormBase {
+     return $form;
+   }
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function validateForm(array &$form, FormStateInterface $form_state) {
+-    parent::validateForm($form, $form_state);
+-  }
+-
+   /**
+    * {@inheritdoc}
+    */
+@@ -159,4 +162,5 @@ class ReportsForm extends FormBase {
+     $session->set('matomo_reports_period', $form_state->getValue('period'));
+     $session->set('matomo_reports_site', $form_state->getValue('site'));
+   }
++
+ }
+diff --git a/src/MatomoData.php b/src/MatomoData.php
+index c18bc1c..ed09d90 100644
+--- a/src/MatomoData.php
++++ b/src/MatomoData.php
+@@ -1,22 +1,20 @@
+ <?php
+-/**
+- * @file
+- * Contains \Drupal\matomo_reports\MatomoData.
+- */
+ 
+ namespace Drupal\matomo_reports;
+ 
+ use Drupal\Component\Utility\Html;
+ use Drupal\Component\Serialization\Json;
+ 
+-
++/**
++ * Utility class for data retrieved by reports.
++ */
+ class MatomoData {
+ 
+   /**
+    * Return matomo token auth from global or user.
+    *
+    * @return string
+-   *  Matomo token auth.
++   *   Matomo token auth.
+    */
+   public static function getToken() {
+     $config = \Drupal::config('matomo_reports.matomoreportssettings');
+@@ -32,10 +30,10 @@ class MatomoData {
+    * Return server request results.
+    *
+    * @param string $query_url
+-   *  URL and query string to pass to matomo server.
++   *   URL and query string to pass to matomo server.
+    *
+    * @return string
+-   *  Decoded server response.
++   *   Decoded server response.
+    */
+   public static function getResponse($query_url) {
+     try {
+@@ -84,7 +82,7 @@ class MatomoData {
+     $url = \Drupal::config('matomo_reports.matomoreportssettings')->get('matomo_server_url');
+     if ($url == '') {
+       if (\Drupal::moduleHandler()->moduleExists('matomo')) {
+-        //get https url if available first
++        // Get https url if available first.
+         $url = \Drupal::config('matomo.settings')->get('url_http');
+         $url = (\Drupal::config('matomo.settings')->get('url_https') ? \Drupal::config('matomo.settings')->get('url_https') : $url);
+       }
+@@ -94,4 +92,5 @@ class MatomoData {
+     }
+     return $url;
+   }
+-}
+\ No newline at end of file
++
++}
+diff --git a/src/Plugin/Block/MatomoReportsBlock.php b/src/Plugin/Block/MatomoReportsBlock.php
+index b0b6b97..148c3db 100644
+--- a/src/Plugin/Block/MatomoReportsBlock.php
++++ b/src/Plugin/Block/MatomoReportsBlock.php
+@@ -2,6 +2,7 @@
+ 
+ namespace Drupal\matomo_reports\Plugin\Block;
+ 
++use Drupal\user\Entity\User;
+ use Drupal\Core\Block\BlockBase;
+ use Drupal\Core\Access\AccessResult;
+ use Drupal\Core\Session\AccountInterface;
+@@ -21,8 +22,7 @@ class MatomoReportsBlock extends BlockBase {
+    * {@inheritdoc}
+    */
+   public function defaultConfiguration() {
+-    return [
+-          ] + parent::defaultConfiguration();
++    return [] + parent::defaultConfiguration();
+   }
+ 
+   /**
+@@ -42,17 +42,16 @@ class MatomoReportsBlock extends BlockBase {
+     $build = [];
+ 
+     if (!\Drupal::moduleHandler()->moduleExists('matomo')) {
+-      $build['#markup'] = $this->t('To use this block, you need to install the <a href=":url">Matomo</a> module', array(':url' => 'https://www.drupal.org/project/matomo'));
++      $build['#markup'] = $this->t('To use this block, you need to install the <a href=":url">Matomo</a> module', [':url' => 'https://www.drupal.org/project/matomo']);
+       return $build;
+     }
+ 
+     // Build the data URL with all params.
+     $token_auth = MatomoData::getToken();
+     $matomo_url = MatomoData::getUrl();
+-    // message when no token?
+-
+-    if(empty($matomo_url)) {
+-      $build['#markup'] = $this->t('Please configure the <a href=":url">Matomo settings</a> to use this block.', array(':url' => '/admin/config/system/matomo'));
++    // Message when no token?
++    if (empty($matomo_url)) {
++      $build['#markup'] = $this->t('Please configure the <a href=":url">Matomo settings</a> to use this block.', [':url' => '/admin/config/system/matomo']);
+       return $build;
+     }
+ 
+@@ -77,8 +76,9 @@ class MatomoReportsBlock extends BlockBase {
+       'user',
+       'url',
+     ];
+-    $renderer->addCacheableDependency($build, \Drupal\user\Entity\User::load($current_user->id()));
++    $renderer->addCacheableDependency($build, User::load($current_user->id()));
+ 
+     return $build;
+   }
++
+ }
+-- 
+2.21.1 (Apple Git-122.3)
+
