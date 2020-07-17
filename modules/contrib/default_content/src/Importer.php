@@ -123,10 +123,15 @@ class Importer implements ImporterInterface {
       $this->accountSwitcher->switchTo($root_user);
       $file_map = [];
       foreach ($this->entityTypeManager->getDefinitions() as $entity_type_id => $entity_type) {
-        $reflection = new \ReflectionClass($entity_type->getClass());
-        // We are only interested in importing content entities.
-        if ($reflection->implementsInterface(ConfigEntityInterface::class)) {
-          continue;
+        // $reflection = new \ReflectionClass($entity_type->getClass());
+        // // We are only interested in importing content entities.
+        // if ($reflection->implementsInterface(ConfigEntityInterface::class)) {
+        //   continue;
+        // }
+        $entityType = new \Drupal\Core\Entity\EntityType($entity_type->getGroup());
+         // We are only interested in importing content entities.
+        if ($entityType->implementsInterface(EntityTypeInterface::getGroup())) {
+           continue;
         }
         if (!file_exists($folder . '/' . $entity_type_id)) {
           continue;
