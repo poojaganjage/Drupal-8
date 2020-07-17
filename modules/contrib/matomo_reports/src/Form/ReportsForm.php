@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\user\UserDataInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use \Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
  * Class ReportsForm.
@@ -28,22 +29,33 @@ class ReportsForm extends FormBase {
   protected $messenger;
 
   /**
+   * The Config Factory.
+   *
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
    * Constructs a new ReportsForm object.
    *
    * @param \Drupal\user\UserDataInterface $user_data
    *   The user data service.
    * @param \Drupal\Core\Messenger\MessengerInterface $messenger
    *   The messenger.
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $configFactory
+   *   The config factory.
    */
-  public function __construct(UserDataInterface $user_data, MessengerInterface $messenger) {
+  public function __construct(UserDataInterface $user_data, MessengerInterface $messenger, ConfigFactoryInterface $configFactory) {
     $this->userData = $user_data;
     $this->messenger = $messenger;
+    $this->configFactory = $configFactory;
   }
 
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('user.data'),
-      $container->get('messenger')
+      $container->get('messenger'),
+      $container->get('config.factory')
     );
   }
 
@@ -58,7 +70,8 @@ class ReportsForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, array $sites = NULL) {
-    $config = \Drupal::config('matomo_reports.matomoreportssettings');
+    // $config = \Drupal::config('matomo_reports.matomoreportssettings');
+    $config = $this->configFactory->get('matomo_reports.matomoreportssettings');
     $session = $this->getRequest()->getSession();
     $allowed_sites = [];
     $allowed_keys = explode(',', $config->get('matomo_reports_allowed_sites'));

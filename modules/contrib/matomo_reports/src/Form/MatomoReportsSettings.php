@@ -8,11 +8,39 @@ use Drupal\Component\Utility\Html;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\matomo_reports\MatomoData;
 use GuzzleHttp\Exception\RequestException;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use GuzzleHttp\ClientInterface;
 
 /**
  * Class MatomoReportsSettings.
  */
 class MatomoReportsSettings extends ConfigFormBase {
+
+  /**
+   * The HttpClient.
+   *
+   * @var \GuzzleHttp\ClientInterface
+   */
+  protected $httpClient;
+
+  /**
+   * Constructs a MatomoReportsSettings object.
+   *
+   * @param \GuzzleHttp\ClientInterface $httpClient
+   *   The HttpClient.
+   */
+  public function __construct(ClientInterface $httpClient) {
+    $this->httpClient = $httpClient;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('http_client')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -107,7 +135,8 @@ class MatomoReportsSettings extends ConfigFormBase {
       }
       $url = $url . 'piwik.php';
       try {
-        $result = \Drupal::httpClient()->get($url);
+        // $result = \Drupal::httpClient()->get($url);
+        $result = $this->httpClient->request($url);
         if ($result->getStatusCode() != 200) {
           $form_state->setErrorByName('matomo_server_url', $this->t('The validation of "@url" failed with error "@error" (HTTP code @code).', [
             '@url' => UrlHelper::filterBadProtocol($url),
