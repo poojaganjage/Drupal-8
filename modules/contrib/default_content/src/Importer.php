@@ -129,11 +129,10 @@ class Importer implements ImporterInterface {
         // if ($reflection->implementsInterface(ConfigEntityInterface::class)) {
         //   continue;
         // }
-        $entity_type_id = $entity_type->getGroup();
          // We are only interested in importing content entities.
-        // if ($entityType->implementsInterface(EntityTypeInterface::class)) {
-        //    continue;
-        // }
+        if ($entity_type->getGroup() != 'content') {
+           continue;
+        }
         if (!file_exists($folder . '/' . $entity_type_id)) {
           continue;
         }
