@@ -10,6 +10,7 @@ use Drupal\flag\FlagServiceInterface;
 use Drupal\flag\Plugin\Action\FlagAction;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\UserInterface;
+use Drupal\Tests\migrate\Unit\process\CallbackTest;
 
 /**
  * Unit tests for the flag action plugin.
@@ -34,7 +35,7 @@ class FlagActionTest extends UnitTestCase {
     parent::setUp();
 
     $flag = $this->prophesize(FlagInterface::class);
-    $flag->id()->willReturn(mb_strtolower($this->randomMachineName()));
+    $flag->id()->willReturn(strToLower($this->randomMachineName()));
     $this->flag = $flag->reveal();
   }
 
@@ -79,7 +80,7 @@ class FlagActionTest extends UnitTestCase {
     $entity = $this->prophesize(EntityInterface::class)->reveal();
     $account = $this->prophesize(UserInterface::class)->reveal();
     $flag = $this->prophesize(FlagInterface::class);
-    $flag->id()->willReturn(mb_strtolower($this->randomMachineName()));
+    $flag->id()->willReturn(strToLower($this->randomMachineName()));
     $denied = $this->prophesize(AccessResultForbidden::class);
     $denied->isAllowed()->willReturn(FALSE);
     $denied = $denied->reveal();
@@ -98,7 +99,7 @@ class FlagActionTest extends UnitTestCase {
 
     // Test access allowed.
     $flag = $this->prophesize(FlagInterface::class);
-    $flag->id()->willReturn(mb_strtolower($this->randomMachineName()));
+    $flag->id()->willReturn(strToLower($this->randomMachineName()));
     $allowed = $this->prophesize(AccessResult::class);
     $allowed->isAllowed()->willReturn(TRUE);
     $allowed = $allowed->reveal();
