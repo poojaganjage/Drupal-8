@@ -30,12 +30,6 @@ use Drupal\simple_access\SimpleAccessProfileInterface;
  *   links = {
  *     "edit-form" = "/admin/config/content/simple-access/profiles/{simple_access_group}/edit",
  *     "delete-form" = "/admin/config/content/simple-access/profiles/{simple_access_group}/delete"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "weight",
- *     "access"
  *   }
  * )
  */

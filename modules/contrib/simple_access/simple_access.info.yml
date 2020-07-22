@@ -10,6 +10,5 @@ files:
 # Information added by Drupal.org packaging script on 2019-03-09
 version: '8.x-3.0-alpha6+1-dev'
 core: '8.x'
-core_version_requirement: ^8 || ^9
 project: 'simple_access'
 datestamp: 1552110188

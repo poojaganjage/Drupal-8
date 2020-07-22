@@ -34,12 +34,6 @@ use Drupal\simple_access\SimpleAccessGroupInterface;
  *   links = {
  *     "edit-form" = "/admin/config/content/simple-access/groups/{simple_access_group}/edit",
  *     "delete-form" = "/admin/config/content/simple-access/groups/{simple_access_group}/delete"
- *   },
- *   config_export = {
- *     "id",
- *     "label",
- *     "roles",
- *     "weight"
  *   }
  * )
  */
