@@ -1,0 +1,45 @@
+diff --git a/modules/contrib/simple_access/simple_access.info.yml b/modules/contrib/simple_access/simple_access.info.yml
+index 61eaeaa..0c9e0b6 100644
+--- a/modules/contrib/simple_access/simple_access.info.yml
++++ b/modules/contrib/simple_access/simple_access.info.yml
+@@ -10,5 +10,6 @@ files:
+ # Information added by Drupal.org packaging script on 2019-03-09
+ version: '8.x-3.0-alpha6+1-dev'
+ core: '8.x'
++core_version_requirement: ^8 || ^9
+ project: 'simple_access'
+ datestamp: 1552110188
+diff --git a/modules/contrib/simple_access/src/Entity/SimpleAccessGroup.php b/modules/contrib/simple_access/src/Entity/SimpleAccessGroup.php
+index f2268ae..2eee0bb 100644
+--- a/modules/contrib/simple_access/src/Entity/SimpleAccessGroup.php
++++ b/modules/contrib/simple_access/src/Entity/SimpleAccessGroup.php
+@@ -34,6 +34,12 @@
+  *   links = {
+  *     "edit-form" = "/admin/config/content/simple-access/groups/{simple_access_group}/edit",
+  *     "delete-form" = "/admin/config/content/simple-access/groups/{simple_access_group}/delete"
++ *   },
++ *   config_export = {
++ *     "id",
++ *     "label",
++ *     "roles",
++ *     "weight"
+  *   }
+  * )
+  */
+diff --git a/modules/contrib/simple_access/src/Entity/SimpleAccessProfile.php b/modules/contrib/simple_access/src/Entity/SimpleAccessProfile.php
+index 36ce51c..87e35cb 100644
+--- a/modules/contrib/simple_access/src/Entity/SimpleAccessProfile.php
++++ b/modules/contrib/simple_access/src/Entity/SimpleAccessProfile.php
+@@ -30,6 +30,12 @@
+  *   links = {
+  *     "edit-form" = "/admin/config/content/simple-access/profiles/{simple_access_group}/edit",
+  *     "delete-form" = "/admin/config/content/simple-access/profiles/{simple_access_group}/delete"
++ *   },
++ *   config_export = {
++ *     "id",
++ *     "label",
++ *     "weight",
++ *     "access"
+  *   }
+  * )
+  */
