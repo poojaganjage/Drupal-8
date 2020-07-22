@@ -16,9 +16,7 @@ use Drupal\entity_export_csv\Plugin\FieldTypeExportBase;
  *   entity_type = {},
  *   bundle = {},
  *   field_name = {},
- *   exclusive = {
- *     FALSE,
- *   },
+ *   exclusive = FALSE,
  * )
  */
 class DefaultExport extends FieldTypeExportBase {

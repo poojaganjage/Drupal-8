@@ -23,9 +23,7 @@ use Drupal\Core\Field\FieldItemInterface;
  *   entity_type = {},
  *   bundle = {},
  *   field_name = {},
- *   exclusive = {
- *     FALSE,
- *   },
+ *   exclusive = FALSE,
  * )
  */
 class DateTimeExport extends FieldTypeExportBase {
