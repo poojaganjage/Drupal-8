@@ -122,9 +122,10 @@ class FilterScriptTags extends FilterBase
 
         // Set flag to indicate whether we have modified $html_input and therefore need to return it.
         $send_new_html = false;
+        $options = LIBXML_HTML_NOIMPLIED;
 
         $dom = new \DOMDocument();
-        $dom->loadHTML($html_input);
+        $dom->loadHTML($html_input ? $options : false);
         $body = $dom->getElementsByTagName('body');
         $body = $body[0];
 
