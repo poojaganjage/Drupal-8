@@ -1,0 +1,165 @@
+diff --git a/modules/contrib/entity_export_csv/src/Annotation/FieldTypeExport.php b/modules/contrib/entity_export_csv/src/Annotation/FieldTypeExport.php
+index 386e313..02720dc 100644
+--- a/modules/contrib/entity_export_csv/src/Annotation/FieldTypeExport.php
++++ b/modules/contrib/entity_export_csv/src/Annotation/FieldTypeExport.php
+@@ -78,8 +78,8 @@ class FieldTypeExport extends Plugin {
+   /**
+    * The first exclusive plugin found win and is the only one available.
+    *
+-   * @var array
++   * @var bool
+    */
+-  public $exclusive = [];
++  public $exclusive = FALSE;
+ 
+ }
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/AddressExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/AddressExport.php
+index 0c19ffe..1948889 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/AddressExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/AddressExport.php
+@@ -21,9 +21,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class AddressExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateRangeExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateRangeExport.php
+index 12b64d3..e2c6aa3 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateRangeExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateRangeExport.php
+@@ -23,9 +23,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class DateRangeExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateTimeExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateTimeExport.php
+index d9ec9fa..a6c6eda 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateTimeExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DateTimeExport.php
+@@ -23,9 +23,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class DateTimeExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DefaultExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DefaultExport.php
+index 17edc1e..ad99630 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DefaultExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/DefaultExport.php
+@@ -16,9 +16,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class DefaultExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/EntityReferenceExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/EntityReferenceExport.php
+index 9cd1d37..5fe76eb 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/EntityReferenceExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/EntityReferenceExport.php
+@@ -21,9 +21,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class EntityReferenceExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/FileExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/FileExport.php
+index d1d5760..ed7659f 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/FileExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/FileExport.php
+@@ -22,9 +22,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class FileExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/GeolocationExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/GeolocationExport.php
+index eff0cf8..f8919a9 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/GeolocationExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/GeolocationExport.php
+@@ -21,9 +21,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class GeolocationExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/LinkExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/LinkExport.php
+index 2b1c9af..a9365c7 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/LinkExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/LinkExport.php
+@@ -20,9 +20,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class LinkExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/ListExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/ListExport.php
+index 4174dfc..156eca0 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/ListExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/ListExport.php
+@@ -22,9 +22,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class ListExport extends FieldTypeExportBase {
+diff --git a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/TimestampExport.php b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/TimestampExport.php
+index 0e9dd4b..1c1c73c 100644
+--- a/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/TimestampExport.php
++++ b/modules/contrib/entity_export_csv/src/Plugin/FieldTypeExport/TimestampExport.php
+@@ -23,9 +23,7 @@
+  *   entity_type = {},
+  *   bundle = {},
+  *   field_name = {},
+- *   exclusive = {
+- *     FALSE,
+- *   },
++ *   exclusive = FALSE,
+  * )
+  */
+ class TimestampExport extends FieldTypeExportBase {
