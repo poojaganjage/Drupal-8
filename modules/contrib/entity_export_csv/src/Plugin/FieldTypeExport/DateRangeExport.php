@@ -23,7 +23,9 @@ use Drupal\Core\Field\FieldItemInterface;
  *   entity_type = {},
  *   bundle = {},
  *   field_name = {},
- *   exclusive = FALSE,
+ *   exclusive = {
+ *     FALSE,
+ *   },
  * )
  */
 class DateRangeExport extends FieldTypeExportBase {
@@ -34,6 +36,20 @@ class DateRangeExport extends FieldTypeExportBase {
    * @var array
    */
   protected $dateFormats = [];
+
+  /**
+   * start_date.
+   *
+   * @var date
+   */
+  protected $start_date;
+
+  /**
+   * end_date.
+   *
+   * @var date
+   */
+  protected $end_date;
 
   /**
    * {@inheritdoc}

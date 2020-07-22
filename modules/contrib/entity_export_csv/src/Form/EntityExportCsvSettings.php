@@ -260,7 +260,7 @@ class EntityExportCsvSettings extends ConfigFormBase {
   /**
    * Get element property value.
    *
-   * @param $property
+   * @param array $property
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    * @param mixed $default
    *

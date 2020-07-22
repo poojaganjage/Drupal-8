@@ -22,7 +22,9 @@ use Drupal\file\FileInterface;
  *   entity_type = {},
  *   bundle = {},
  *   field_name = {},
- *   exclusive = FALSE,
+ *   exclusive = {
+ *     FALSE,
+ *   },
  * )
  */
 class FileExport extends FieldTypeExportBase {

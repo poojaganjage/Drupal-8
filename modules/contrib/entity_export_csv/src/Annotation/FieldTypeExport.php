@@ -80,6 +80,6 @@ class FieldTypeExport extends Plugin {
    *
    * @var array
    */
-  public $exclusive = FALSE;
+  public $exclusive = [];
 
 }
