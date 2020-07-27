@@ -1,0 +1,11 @@
+name: 'CMIS'
+type: module
+description: 'CMIS implementation for interacting with a CMIS compliant repository.'
+core_version_requirement: ^8.8 || ^9
+package: 'CMIS'
+configure: entity.cmis_connection_entity.collection
+
+# Information added by Drupal.org packaging script on 2020-07-24
+version: '8.x-2.x-dev'
+project: 'cmis'
+datestamp: 1595607354

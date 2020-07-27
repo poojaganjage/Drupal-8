@@ -1,0 +1,180 @@
+<?php
+
+/**
+ * @file
+ * Contains cmis.module.
+ */
+
+declare(strict_types = 1);
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function cmis_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the cmis module.
+    case 'help.page.cmis':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('CMIS implementation for interacting with a CMIS compliant repository') . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function cmis_page_attachments(array &$attachments) {
+  if (\Drupal::currentUser()->hasPermission('access cmis browser')) {
+    $attachments['#attached']['library'][] = 'core/drupal.ajax';
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function cmis_theme() {
+  return [
+    'cmis_browser_folder_item' => [
+      'variables' => [
+        'element' => NULL,
+      ],
+    ],
+    'cmis_browser_document_item' => [
+      'variables' => [
+        'element' => NULL,
+        'mime_type' => NULL,
+        'title' => NULL,
+      ],
+    ],
+    'cmis_browser_other_item' => [
+      'variables' => [
+        'element' => NULL,
+      ],
+    ],
+    'cmis_browser_document_details' => [
+      'variables' => [
+        'title' => NULL,
+        'mime_type' => NULL,
+        'size' => NULL,
+      ],
+      'template' => 'cmis-browser-details',
+    ],
+    'cmis_browser' => [
+      'variables' => [
+        'elements' => NULL,
+        'header' => NULL,
+        'breadcrumbs' => NULL,
+        'operations' => NULL,
+      ],
+    ],
+    'cmis_content_properties' => [
+      'variables' => [
+        'object' => NULL,
+        'download' => NULL,
+      ],
+    ],
+    'cmis_object_delete_verify' => [
+      'variables' => [
+        'title' => NULL,
+        'description' => NULL,
+        'link' => NULL,
+      ],
+    ],
+    'cmis_query' => [
+      'variables' => [
+        'elements' => NULL,
+        'header' => NULL,
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_preprocess_cmis_browser().
+ */
+function template_preprocess_cmis_browser(&$variables) {
+  if (!empty($variables['elements'])) {
+    $breadcrumbs = [
+      '#theme' => 'item_list',
+      '#items' => $variables['breadcrumbs'],
+      '#type' => 'ul',
+    ];
+
+    $variables['breadcrumbs'] = render($breadcrumbs);
+
+    $table = [
+      '#theme' => 'table',
+      '#header' => $variables['header'],
+      '#rows' => $variables['elements'],
+      '#sticky' => TRUE,
+    ];
+
+    $variables['table'] = render($table);
+  }
+}
+
+/**
+ * Implements hook_preprocess_cmis_content_properties().
+ */
+function template_preprocess_cmis_content_properties(&$variables) {
+  $object = $variables['object'];
+  $rows = [];
+  foreach ($object->getProperties() as $key => $property) {
+    if ($property) {
+      $rows[] = [$key, _cmis_get_property($key, $property)];
+    }
+  }
+
+  $variables['properties'] = '';
+  if (!empty($rows)) {
+    $table = [
+      '#theme' => 'table',
+      '#header' => [t('Property'), t('Value')],
+      '#rows' => $rows,
+    ];
+    $variables['properties'] = render($table);
+  }
+}
+
+/**
+ * Get configuration entity to private variable.
+ */
+function cmis_get_configurations() {
+  $storage = \Drupal::entityTypeManager()->getStorage('cmis_connection_entity');
+  $configs = $storage->loadMultiple();
+  $options = ['_none' => t('None')];
+  foreach ($configs as $key => $config) {
+    $options[$key] = $config->get('label');
+  }
+
+  return $options;
+}
+
+/**
+ * Helper function.
+ *
+ * @param string $key
+ *   The property key.
+ * @param type $property
+ *   The property to get values from.
+ *
+ * @return string
+ *   The property key's value.
+ */
+function _cmis_get_property($key, $property) {
+  $values = $property->getValues();
+  if (!empty($values)) {
+    foreach ($values as &$value) {
+      if (!empty($value) &&
+          ($key == 'cmis:creationDate' || $key == 'cmis:lastModificationDate')) {
+        $value = $value->format(\DateTime::ATOM);
+      }
+    }
+    return implode(', ', $values);
+  }
+
+  return '';
+}

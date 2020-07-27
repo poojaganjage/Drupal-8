@@ -1,0 +1,87 @@
+cmis.cmis_repository_controller_browser:
+  path: 'cmis/browser/{config}/{folder_id}'
+  defaults:
+    _controller: '\Drupal\cmis\Controller\CmisRepositoryController::browse'
+    _title: 'CMIS Browser'
+    config: ''
+    folder_id: ''
+  requirements:
+    _permission: 'access cmis browser'
+
+cmis.cmis_browser_ajax_callback:
+  path: 'cmis/browser/ajax/{config}/{folder_id}'
+  defaults:
+    _controller: '\Drupal\cmis\CmisBrowser::ajaxCall'
+    _title: 'CMIS Browser'
+    config: ''
+    folder_id: ''
+  requirements:
+    _permission: 'access cmis browser'
+
+cmis.cmis_document_get_callback:
+  path: 'cmis/document/{config}/{document_id}'
+  defaults:
+    _controller: '\Drupal\cmis\CmisBrowser::getDocument'
+    _title: 'CMIS Browser'
+    config: ''
+    document_id: ''
+  requirements:
+    _permission: 'access cmis browser'
+
+cmis.cmis_object_properties_callback:
+  path: '/cmis/object-properties/{config}/{document_id}'
+  defaults:
+    _controller: '\Drupal\cmis\Controller\CmisRepositoryController::getProperties'
+    _title: 'Document properties'
+    config: ''
+    document_id: ''
+  requirements:
+    _permission: 'access cmis browser'
+
+cmis.cmis_object_delete_verify:
+  path: '/cmis/object-delete-verify/{config}/{object_id}'
+  defaults:
+    _controller: '\Drupal\cmis\Controller\CmisRepositoryController::objectDeleteVerify'
+    _title: 'Object delete verify'
+    config: ''
+    object_id: ''
+  requirements:
+    _permission: 'access cmis operations'
+
+cmis.cmis_object_delete:
+  path: '/cmis/object-delete/{config}/{object_id}'
+  defaults:
+    _controller: '\Drupal\cmis\Controller\CmisRepositoryController::objectDelete'
+    _title: 'Object delete'
+    config: ''
+    object_id: ''
+  requirements:
+    _permission: 'access cmis operations'
+
+cmis.cmis_query_form_callback:
+  path: '/cmis/query'
+  defaults:
+    _form: '\Drupal\cmis\Form\CmisQueryForm'
+    _title: 'CMIS query'
+  requirements:
+    _permission: 'access cmis browser'
+
+cmis.cmis_browser_create_folder_callback:
+  path: '/cmis/browser-create-folder/{config}/{folder_id}'
+  defaults:
+    _form: '\Drupal\cmis\Form\CmisCreateFolderForm'
+    _title: 'Create folder'
+    config: ''
+    folder_id: ''
+  requirements:
+    _permission: 'access cmis operations'
+
+cmis.cmis_browser_upload_document_callback:
+  path: '/cmis/browser-upload-document/{config}/{folder_id}'
+  defaults:
+    _form: '\Drupal\cmis\Form\CmisBrowserDocumentUploadForm'
+    _title: 'Upload document'
+    config: ''
+    folder_id: ''
+  requirements:
+    _permission: 'access cmis operations'

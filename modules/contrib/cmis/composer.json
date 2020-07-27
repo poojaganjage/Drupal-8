@@ -1,0 +1,15 @@
+{
+  "name": "drupal/cmis",
+  "description": "CMIS implementation for interacting with a CMIS compliant repository.",
+  "type": "drupal-module",
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/cmis",
+  "minimum-stability": "dev",
+  "support": {
+    "issues": "http://drupal.org/project/issues/cmis",
+    "source": "http://cgit.drupalcode.org/cmis"
+  },
+  "require": {
+    "dkd/php-cmis": "dev-master"
+  }
+}
