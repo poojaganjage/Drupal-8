@@ -1,0 +1,24 @@
+diff --git a/modules/contrib/tasty_backend/config/install/views.view.tb_manage_content.yml b/modules/contrib/tasty_backend/config/install/views.view.tb_manage_content.yml
+index 4fb5dd3..b470a01 100644
+--- a/modules/contrib/tasty_backend/config/install/views.view.tb_manage_content.yml
++++ b/modules/contrib/tasty_backend/config/install/views.view.tb_manage_content.yml
+@@ -14,7 +14,6 @@ description: 'Base view for Tasty Backend content management.'
+ tag: ''
+ base_table: node_field_data
+ base_field: nid
+-core: 8.x
+ display:
+   default:
+     display_plugin: default
+diff --git a/modules/contrib/tasty_backend/config/install/views.view.tb_manage_users.yml b/modules/contrib/tasty_backend/config/install/views.view.tb_manage_users.yml
+index 4f72764..8a38c1a 100644
+--- a/modules/contrib/tasty_backend/config/install/views.view.tb_manage_users.yml
++++ b/modules/contrib/tasty_backend/config/install/views.view.tb_manage_users.yml
+@@ -13,7 +13,6 @@ description: 'Find and manage people interacting with your site.'
+ tag: default
+ base_table: users_field_data
+ base_field: uid
+-core: 8.x
+ display:
+   default:
+     display_plugin: default
