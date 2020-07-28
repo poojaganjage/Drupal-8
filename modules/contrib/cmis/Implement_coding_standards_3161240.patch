@@ -1,0 +1,5553 @@
+diff --git a/modules/contrib/cmis/cmis.module b/modules/contrib/cmis/cmis.module
+index fedc1aa..a215d75 100644
+--- a/modules/contrib/cmis/cmis.module
++++ b/modules/contrib/cmis/cmis.module
+@@ -8,6 +8,8 @@
+ declare(strict_types = 1);
+ 
+ use Drupal\Core\Routing\RouteMatchInterface;
++use Drupal\Core\Session\AccountProxyInterface;
++use Drupal\Core\Entity\EntityTypeManagerInterface;
+ 
+ /**
+  * Implements hook_help().
+@@ -26,8 +28,8 @@ function cmis_help($route_name, RouteMatchInterface $route_match) {
+ /**
+  * Implements hook_page_attachments().
+  */
+-function cmis_page_attachments(array &$attachments) {
+-  if (\Drupal::currentUser()->hasPermission('access cmis browser')) {
++function cmis_page_attachments(array &$attachments, AccountProxyInterface &$currentUser) {
++  if ($this->currentUser->get('current_user')->hasPermission('access cmis browser')) {
+     $attachments['#attached']['library'][] = 'core/drupal.ajax';
+   }
+ }
+@@ -141,9 +143,12 @@ function template_preprocess_cmis_content_properties(&$variables) {
+ 
+ /**
+  * Get configuration entity to private variable.
++ *
++ * @return array
++ *   The options array.
+  */
+-function cmis_get_configurations() {
+-  $storage = \Drupal::entityTypeManager()->getStorage('cmis_connection_entity');
++function cmis_get_configurations(EntityTypeManagerInterface &$entityTypeManager) {
++  $storage = $this->entityTypeManager->get('entity_type.manager')->getStorage('cmis_connection_entity');
+   $configs = $storage->loadMultiple();
+   $options = ['_none' => t('None')];
+   foreach ($configs as $key => $config) {
+@@ -156,10 +161,8 @@ function cmis_get_configurations() {
+ /**
+  * Helper function.
+  *
+- * @param string $key
+- *   The property key.
+- * @param type $property
+- *   The property to get values from.
++ * @param string $key The property key.
++ * @param type $property The property to get values from.
+  *
+  * @return string
+  *   The property key's value.
+diff --git a/modules/contrib/cmis/src/CmisBrowser.php b/modules/contrib/cmis/src/CmisBrowser.php
+index 9fcee4c..b8b5e81 100644
+--- a/modules/contrib/cmis/src/CmisBrowser.php
++++ b/modules/contrib/cmis/src/CmisBrowser.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -10,367 +26,463 @@
+ use Drupal\Core\Ajax\HtmlCommand;
+ use Drupal\Core\Link;
+ use Drupal\Core\StringTranslation\StringTranslationTrait;
++use Drupal\Core\StringTranslation\TranslationInterface;
++use Symfony\Component\HttpFoundation\RequestStack;
++use Drupal\Core\Session\AccountProxyInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ use Drupal\Core\Url;
+ use Drupal\sm_cmis\CMISException;
+ use Symfony\Component\HttpFoundation\Response;
+ 
+ /**
+  * Description of CmisBrowser.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisBrowser {
+-
+-  use StringTranslationTrait;
+-
+-  /**
+-   * Configuration id.
+-   *
+-   * @var string
+-   */
+-  protected $config;
+-
+-  /**
+-   * Connection object.
+-   *
+-   * @var object
+-   */
+-  protected $connection;
+-
+-  /**
+-   * The renderable content data.
+-   *
+-   * @var array
+-   */
+-  protected $data;
+-
+-  /**
+-   * Parent folders list data. The renderable breadcrumb data.
+-   *
+-   * @var array
+-   */
+-  protected $breadcrumbs = [];
+-
+-  /**
+-   * Folder id to browse.
+-   *
+-   * @var string
+-   */
+-  protected $folderId;
+-
+-  /**
+-   * Current object.
+-   *
+-   * @var object
+-   */
+-  protected $current;
+-
+-  /**
+-   * The browser popup flag.
+-   *
+-   * @var bool
+-   */
+-  protected $popup;
+-
+-  /**
+-   * The browser cacheable flag.
+-   *
+-   * @var bool
+-   */
+-  protected $cacheable;
+-
+-  /**
+-   * Constructing the object.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   */
+-  public function __construct($config = '', $folder_id = '') {
+-    if (!empty($config)) {
+-      $this->init($config, $folder_id);
+-    }
+-  }
+-
+-  /**
+-   * Call from ajaxify url.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   */
+-  public function ajaxCall($config = '', $folder_id = '') {
+-    $this->init($config, $folder_id);
+-    if ($this->connection && !empty($this->current) && $browse = $this->browse()) {
+-      $response = new AjaxResponse();
+-      $content = render($browse);
+-      $response->addCommand(new HtmlCommand('#cmis-browser-wrapper', $content));
+-
+-      return $response;
++class CmisBrowser
++{
++
++    use StringTranslationTrait;
++
++    /**
++     * Configuration id.
++     *
++     * @var string
++     */
++    protected $config;
++
++    /**
++     * Connection object.
++     *
++     * @var object
++     */
++    protected $connection;
++
++    /**
++     * The renderable content data.
++     *
++     * @var array
++     */
++    protected $data;
++
++    /**
++     * Parent folders list data. The renderable breadcrumb data.
++     *
++     * @var array
++     */
++    protected $breadcrumbs = [];
++
++    /**
++     * Folder id to browse.
++     *
++     * @var string
++     */
++    protected $folderId;
++
++    /**
++     * Current object.
++     *
++     * @var object
++     */
++    protected $current;
++
++    /**
++     * The browser popup flag.
++     *
++     * @var bool
++     */
++    protected $popup;
++
++    /**
++     * The browser cacheable flag.
++     *
++     * @var bool
++     */
++    protected $cacheable;
++
++    /**
++     * The string translation interface.
++     *
++     * @var Drupal\Core\StringTranslation\TranslationInterface
++     */
++    protected $stringTranslation;
++
++    /**
++     * An array of found redirect IDs to avoid recursion.
++     *
++     * @var Symfony\Component\HttpFoundation\RequestStack
++     */
++    protected $requestStack;
++
++    /**
++     * The current user interface.
++     *
++     * @var Drupal\Core\Session\AccountProxyInterface
++     */
++    protected $currentUser;
++
++    /**
++     * Construct.
++     *
++     * @param Drupal\Core\StringTranslation\TranslationInterface $string_translation The string translation interface.
++     * @param Symfony\Component\HttpFoundation\RequestStack $requestStack The Request Stack.
++     * @param Drupal\Core\Session\AccountProxyInterface $currentUser The current user.
++     * @param string $config The configuartion.
++     * @param string $folder_id The folder id.
++     */
++    public function __construct(TranslationInterface $string_translation, RequestStack $requestStack, AccountProxyInterface $currentUser, $config = '', $folder_id = '')
++    {
++        $this->stringTranslation = $string_translation;
++        $this->requestStack = $requestStack;
++        $this->currentUser = $currentUser;
++        if (!empty($config)) {
++            $this->init($config, $folder_id);
++        }
+     }
+-  }
+-
+-  /**
+-   * Get document by id.
+-   *
+-   * @param string $config
+-   * @param string $document_id
+-   */
+-  public function getDocument($config = '', $document_id = '') {
+-    $this->init($config, $document_id, 'cmis:document');
+-    if ($this->connection && !empty($this->current) &&
+-        $this->current->getBaseTypeId()->__toString() == 'cmis:document') {
+-      $id = $this->current->getId();
+-      $content = '';
+-      try {
+-        $content = $this->current->getContentStream($id);
+-      }
+-      catch (CMISException $e) {
+-        // TODO: testing this.
+-        $headers = ['' => 'HTTP/1.1 503 Service unavailable'];
+-        $response = new Response($content, 503, $headers);
+-        $response->send();
+-        exit();
+-      }
+-
+-      $mime = $this->current->getContentStreamMimeType();
+-      $headers = [
+-        'Cache-Control' => 'no-cache, must-revalidate',
+-        'Content-type' => $mime,
+-        'Content-Disposition' => 'attachment; filename="' . $this->current->getName() . '"',
+-      ];
+-      $response = new Response($content, 200, $headers);
+-      $response->send();
+-
+-      // TODO: Why a print and an exit?
+-      print($content);
+-      exit();
++
++    /**
++     * {@inheritdoc}
++     *
++     * @param $container The container variable.
++     *
++     * @return object
++     *   The object.
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('string_translation'),
++            $container->get('request_stack'),
++            $container->get('current_user')
++        );
+     }
+-  }
+-
+-  /**
+-   * Get document properties.
+-   *
+-   * @return array
+-   *   the renderable array
+-   */
+-  public function getDocumentProperties() {
+-    if ($this->connection && !empty($this->current)) {
+-      $type_id = $this->current->getBaseTypeId()->__toString();
+-      $path = [];
+-      if ($type_id == 'cmis:document') {
+-        $url = Url::fromUserInput('/cmis/document/' . $this->config . '/' . $this->current->getId());
+-        $path = Link::fromTextAndUrl($this->t('Download'), $url)->toRenderable();
+-      }
+-
+-      return [
+-        '#theme' => 'cmis_content_properties',
+-        '#object' => $this->current,
+-        '#download' => render($path),
+-      ];
++
++    /**
++     * Call from ajaxify url.
++     *
++     * @param string $config    The configuration.
++     * @param string $folder_id The folder id.
++     *
++     * @return object
++     *   The object.
++     */
++    public function ajaxCall($config = '', $folder_id = '')
++    {
++        $this->init($config, $folder_id);
++        if ($this->connection && !empty($this->current) && $browse = $this->browse()) {
++            $response = new AjaxResponse();
++            $content = render($browse);
++            $response->addCommand(new HtmlCommand('#cmis-browser-wrapper', $content));
++
++            return $response;
++        }
+     }
+-  }
+-
+-  /**
+-   * Init variables.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   */
+-  private function init($config, $folder_id) {
+-    $this->config = $config;
+-    $this->folderId = $folder_id;
+-    $this->connection = new CmisConnectionApi($this->config);
+-    //$cacheable = $this->connection->getConfig()->getCmisCacheable();
+-    // TODO: find out the best cache options.
+-    //$cache_parameters = [
+-    //  'contexts' => ['user'],
+-    //  'max-age' => $cacheable ? 300 : 0,
+-    //];
+-    //$this->cacheable = $cache_parameters;
+-    if (!empty($this->connection->getHttpInvoker())) {
+-      $popup = \Drupal::request()->query->get('type');
+-      $this->popup = ($popup == 'popup');
+-      $this->connection->setDefaultParameters();
+-
+-      if (empty($this->folderId)) {
+-        $root_folder = $this->connection->getRootFolder();
+-        $this->folderId = $root_folder->getId();
+-        $this->current = $root_folder;
+-      }
+-      else {
+-        $this->current = $this->connection->getObjectById($this->folderId);
+-      }
++
++    /**
++     * Get document by id.
++     *
++     * @param string $config      The configuration.
++     * @param string $document_id The document id.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getDocument($config = '', $document_id = '')
++    {
++        $this->init($config, $document_id, 'cmis:document');
++        if ($this->connection && !empty($this->current) 
++            && $this->current->getBaseTypeId()->__toString() == 'cmis:document'
++        ) {
++            $id = $this->current->getId();
++            $content = '';
++            try {
++                $content = $this->current->getContentStream($id);
++            }
++            catch (CMISException $e) {
++                // TODO: testing this.
++                $headers = ['' => 'HTTP/1.1 503 Service unavailable'];
++                $response = new Response($content, 503, $headers);
++                $response->send();
++                exit();
++            }
++
++            $mime = $this->current->getContentStreamMimeType();
++            $headers = [
++            'Cache-Control' => 'no-cache, must-revalidate',
++            'Content-type' => $mime,
++            'Content-Disposition' => 'attachment; filename="' . $this->current->getName() . '"',
++            ];
++            $response = new Response($content, 200, $headers);
++            $response->send();
++
++            // TODO: Why a print and an exit?
++            print($content);
++            exit();
++        }
+     }
+-  }
+-
+-  /**
+-   * Get current object.
+-   *
+-   * @return object
+-   */
+-  public function getCurrent() {
+-    return $this->current;
+-  }
+-
+-  /**
+-   * Get connection.
+-   *
+-   * @return object
+-   */
+-  public function getConnection() {
+-    return $this->connection;
+-  }
+-
+-  /**
+-   * Browse.
+-   *
+-   * @return array
+-   *   Return cmis browser render array.
+-   */
+-  public function browse($reset = FALSE) {
+-    if ($this->connection && !empty($this->current)) {
+-
+-      $this->setBreadcrumbs($this->current, 'last');
+-      $this->printFolderContent($this->current);
+-
+-      $table_header = [
+-        $this->t('Name'),
+-        $this->t('Details'),
+-        $this->t('Author'),
+-        $this->t('Created'),
+-        $this->t('Description'),
+-        $this->t('Operation'),
+-      ];
+-
+-      $browse = [
+-        '#theme' => 'cmis_browser',
+-        '#header' => $table_header,
+-        '#elements' => $this->data,
+-        '#breadcrumbs' => $this->breadcrumbs,
+-        '#operations' => $this->prepareOperations(),
+-        '#attached' => [
+-          'library' => [
+-            'cmis/cmis-browser',
+-          ],
+-        ],
+-      ];
+ 
+-      return $browse;
++    /**
++     * Get document properties.
++     *
++     * @return array
++     *   the renderable array
++     */
++    public function getDocumentProperties()
++    {
++        if ($this->connection && !empty($this->current)) {
++            $type_id = $this->current->getBaseTypeId()->__toString();
++            $path = [];
++            if ($type_id == 'cmis:document') {
++                $url = Url::fromUserInput('/cmis/document/' . $this->config . '/' . $this->current->getId());
++                $path = Link::fromTextAndUrl($this->t('Download'), $url)->toRenderable();
++            }
++
++            return [
++            '#theme' => 'cmis_content_properties',
++            '#object' => $this->current,
++            '#download' => render($path),
++            ];
++        }
+     }
+ 
+-    return [];
+-  }
+-
+-  /**
+-   * Prepare operation links.
+-   *
+-   * @return string
+-   */
+-  private function prepareOperations() {
+-    if (!\Drupal::currentUser()->hasPermission('access cmis operations')) {
+-      return '';
++    /**
++     * Init variables.
++     *
++     * @param string $config    The configuration.
++     * @param string $folder_id The folder id.
++     *
++     * @return object
++     *   The object.
++     */
++    private function init($config, $folder_id)
++    {
++        $this->config = $config;
++        $this->folderId = $folder_id;
++        $this->connection = new CmisConnectionApi($this->config);
++        //$cacheable = $this->connection->getConfig()->getCmisCacheable();
++        // TODO: find out the best cache options.
++        //$cache_parameters = [
++        //  'contexts' => ['user'],
++        //  'max-age' => $cacheable ? 300 : 0,
++        //];
++        //$this->cacheable = $cache_parameters;
++        if (!empty($this->connection->getHttpInvoker())) {
++            $popup = $this->requestStack->getCurrentRequest()->query->get('type');
++            $this->popup = ($popup == 'popup');
++            $this->connection->setDefaultParameters();
++
++            if (empty($this->folderId)) {
++                $root_folder = $this->connection->getRootFolder();
++                $this->folderId = $root_folder->getId();
++                $this->current = $root_folder;
++            } else {
++                $this->current = $this->connection->getObjectById($this->folderId);
++            }
++        }
+     }
+ 
+-    $routes = [
+-      '/cmis/browser-create-folder/' => $this->t('Create folder'),
+-      '/cmis/browser-upload-document/' => $this->t('Add document'),
+-    ];
++    /**
++     * Get current object.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getCurrent()
++    {
++        return $this->current;
++    }
+ 
+-    $links = [];
+-    foreach ($routes as $route => $title) {
+-      $url = Url::fromUserInput($route . $this->config . '/' . $this->current->getId());
+-      $link_options = [
+-        'attributes' => [
+-          'class' => ['use-ajax'],
+-          'data-dialog-type' => 'modal',
+-          'data-dialog-options' => Json::encode([
+-            'height' => 400,
+-            'width' => 700,
+-          ]),
+-        ],
+-      ];
+-      $url->setOptions($link_options);
+-      $path = Link::fromTextAndUrl($title, $url)->toRenderable();
+-      $links[] = [
+-        '#markup' => render($path),
+-        '#wrapper_attributes' => [
+-          'class' => ['object-properties'],
+-        ],
+-      ];
++    /**
++     * Get connection.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getConnection()
++    {
++        return $this->connection;
+     }
+ 
+-    $list = [
+-      '#theme' => 'item_list',
+-      '#items' => $links,
+-      '#type' => 'ul',
+-    ];
+-
+-    return render($list);
+-  }
+-
+-  /**
+-   * Add folder objects to render array.
+-   *
+-   * @param \Dkd\PhpCmis\Data\FolderInterface $folder
+-   *   A CMIS folder object.
+-   */
+-  protected function printFolderContent(FolderInterface $folder) {
+-    $root = $this->connection->getRootFolder();
+-    $element = new CmisElement($this->config, $this->popup, $this->current, '', $root->getId());
+-    foreach ($folder->getChildren() as $children) {
+-      $element->setElement('browser', $children);
+-      $this->data[] = $element->getData();
++    /**
++     * Browse.
++     *
++     * @param bool $reset The reset.
++     *
++     * @return array
++     *   Return cmis browser render array.
++     */
++    public function browse($reset = false)
++    {
++        if ($this->connection && !empty($this->current)) {
++
++            $this->setBreadcrumbs($this->current, 'last');
++            $this->printFolderContent($this->current);
++
++            $table_header = [
++            $this->t('Name'),
++            $this->t('Details'),
++            $this->t('Author'),
++            $this->t('Created'),
++            $this->t('Description'),
++            $this->t('Operation'),
++            ];
++
++            $browse = [
++            '#theme' => 'cmis_browser',
++            '#header' => $table_header,
++            '#elements' => $this->data,
++            '#breadcrumbs' => $this->breadcrumbs,
++            '#operations' => $this->prepareOperations(),
++            '#attached' => [
++            'library' => [
++            'cmis/cmis-browser',
++            ],
++            ],
++            ];
++
++            return $browse;
++        }
++
++        return [];
+     }
+-  }
+-
+-  /**
+-   * Create breadcrumbs from parent folders.
+-   *
+-   * @param type $folder
+-   * @param string $class
+-   */
+-  protected function setBreadcrumbs($folder, $class = '') {
+-    $name = $folder->getName();
+-    $id = $folder->getId();
+-    $this->setBreadcrumb($name, $id, $class);
+-    if ($parent = $folder->getFolderParent()) {
+-      $this->setBreadcrumbs($parent);
++
++    /**
++     * Prepare operation links.
++     *
++     * @return string
++     *   The string.
++     */
++    private function prepareOperations()
++    {
++        if (!$this->currentUser->hasPermission('access cmis operations')) {
++            return '';
++        }
++
++        $routes = [
++        '/cmis/browser-create-folder/' => $this->t('Create folder'),
++        '/cmis/browser-upload-document/' => $this->t('Add document'),
++        ];
++
++        $links = [];
++        foreach ($routes as $route => $title) {
++            $url = Url::fromUserInput($route . $this->config . '/' . $this->current->getId());
++            $link_options = [
++            'attributes' => [
++            'class' => ['use-ajax'],
++            'data-dialog-type' => 'modal',
++            'data-dialog-options' => Json::encode(
++                [
++                'height' => 400,
++                'width' => 700,
++                ]
++            ),
++            ],
++            ];
++            $url->setOptions($link_options);
++            $path = Link::fromTextAndUrl($title, $url)->toRenderable();
++            $links[] = [
++            '#markup' => render($path),
++            '#wrapper_attributes' => [
++            'class' => ['object-properties'],
++            ],
++            ];
++        }
++
++        $list = [
++        '#theme' => 'item_list',
++        '#items' => $links,
++        '#type' => 'ul',
++        ];
++
++        return render($list);
+     }
+-    else {
+-      $this->breadcrumbs[0]['#wrapper_attributes']['class'] = ['first'];
++
++    /**
++     * Add folder objects to render array.
++     *
++     * @param \Dkd\PhpCmis\Data\FolderInterface $folder A CMIS folder object.
++     *
++     * @return object
++     *   The object.
++     */
++    protected function printFolderContent(FolderInterface $folder)
++    {
++        $root = $this->connection->getRootFolder();
++        $element = new CmisElement($this->config, $this->popup, $this->current, '', $root->getId());
++        foreach ($folder->getChildren() as $children) {
++            $element->setElement('browser', $children);
++            $this->data[] = $element->getData();
++        }
+     }
+-  }
+-
+-  /**
+-   * Prepare a breadcrumb url.
+-   *
+-   * @param type $label
+-   * @param string $id
+-   * @param $class
+-   */
+-  protected function setBreadcrumb($label, $id, $class) {
+-    $path = '/cmis/browser/nojs/' . $this->config;
+-    if (!empty($id)) {
+-      $path .= '/' . $id;
++
++    /**
++     * Create breadcrumbs from parent folders.
++     *
++     * @param type   $folder The folder.
++     * @param string $class  The class.
++     *
++     * @return string
++     *   The string.
++     */
++    protected function setBreadcrumbs($folder, $class = '')
++    {
++        $name = $folder->getName();
++        $id = $folder->getId();
++        $this->setBreadcrumb($name, $id, $class);
++        if ($parent = $folder->getFolderParent()) {
++            $this->setBreadcrumbs($parent);
++        } else {
++            $this->breadcrumbs[0]['#wrapper_attributes']['class'] = ['first'];
++        }
+     }
+-    $url = Url::fromUserInput($path);
+-    $link_options = [
+-      'attributes' => [
++
++    /**
++     * Prepare a breadcrumb url.
++     *
++     * @param type   $label The label.
++     * @param string $id    The id.
++     * @param $class The class.
++     *
++     * @return array
++     *   The array.
++     */
++    protected function setBreadcrumb($label, $id, $class)
++    {
++        $path = '/cmis/browser/nojs/' . $this->config;
++        if (!empty($id)) {
++            $path .= '/' . $id;
++        }
++        $url = Url::fromUserInput($path);
++        $link_options = [
++        'attributes' => [
+         'class' => [
+           'use-ajax',
+         ],
+-      ],
+-    ];
+-    if ($this->popup) {
+-      $link_options['query'] = ['type' => 'popup'];
+-    }
+-    $url->setOptions($link_options);
+-
+-    $item = [
+-      'value' => Link::fromTextAndUrl($label, $url)->toRenderable(),
+-      '#wrapper_attributes' => [
++        ],
++        ];
++        if ($this->popup) {
++            $link_options['query'] = ['type' => 'popup'];
++        }
++        $url->setOptions($link_options);
++
++        $item = [
++        'value' => Link::fromTextAndUrl($label, $url)->toRenderable(),
++        '#wrapper_attributes' => [
+         'class' => [$class],
+-      ],
+-    ];
++        ],
++        ];
+ 
+-    array_unshift($this->breadcrumbs, $item);
+-  }
++        array_unshift($this->breadcrumbs, $item);
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/CmisConnectionApi.php b/modules/contrib/cmis/src/CmisConnectionApi.php
+index 31731d4..cb75fd0 100644
+--- a/modules/contrib/cmis/src/CmisConnectionApi.php
++++ b/modules/contrib/cmis/src/CmisConnectionApi.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -8,288 +24,374 @@
+ use Dkd\PhpCmis\SessionFactory;
+ use Dkd\PhpCmis\SessionParameter;
+ use GuzzleHttp\Client;
++use Drupal\Core\Entity\EntityTypeManagerInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Description of CmisConnectionApi.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisConnectionApi {
+-
+-  /**
+-   * The configuration entity.
+-   *
+-   * @var object
+-   */
+-  private $config;
+-
+-  /**
+-   * Http invoker.
+-   *
+-   * @var object
+-   */
+-  private $httpInvoker;
+-
+-  /**
+-   * The parameters for connection type.
+-   *
+-   * @var array
+-   */
+-  private $parameters;
+-
+-  /**
+-   * The session factory for connection.
+-   *
+-   * @var object
+-   */
+-  private $sessionFactory;
+-
+-  /**
+-   * The session of connection.
+-   *
+-   * @var type
+-   */
+-  private $session;
+-
+-  /**
+-   * The root folder of CMIS repository.
+-   *
+-   * @var type
+-   */
+-  private $rootFolder;
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function __construct($config = '') {
+-    $this->checkClient();
+-    $this->setConfig($config);
+-  }
+-
+-  /**
+-   * Check if cmis exists in drupal root vendor.
+-   *
+-   * The module use php-cmis-client library but the current version 1.0
+-   * depend the guzzle 5 version. Drupal use the guzzle 6 version.
+-   * In order to we able using this client we need install it to module vendor
+-   * folder.
+-   *
+-   * To install temporary to time when will ready new version of cmis client
+-   * you need to go to cmis module root folder (eg. modules/cmis or
+-   * modules/contrib/cmis) and call the next command:
+-   *    composer require dkd/php-cmis
+-   */
+-  public function checkClient() {
+-    // If not exists load it from cmis module vendor folder.
+-    if (!class_exists('BindingType')) {
+-      // Load CMIS using classes if composer not able to install them
+-      // to root vendor folder because guzzle 5 dependency.
+-      $path = drupal_get_path('module', 'cmis');
+-      if (file_exists($path . '/vendor/autoload.php')) {
+-        require_once($path . '/vendor/autoload.php');
+-      }
+-      else {
+-        throw new \Exception('Php CMIS Client library is not properly installed.');
+-      }
++class CmisConnectionApi
++{
++
++    /**
++     * The configuration entity.
++     *
++     * @var object
++     */
++    private $config;
++
++    /**
++     * Http invoker.
++     *
++     * @var object
++     */
++    private $httpInvoker;
++
++    /**
++     * The parameters for connection type.
++     *
++     * @var array
++     */
++    private $parameters;
++
++    /**
++     * The session factory for connection.
++     *
++     * @var object
++     */
++    private $sessionFactory;
++
++    /**
++     * The session of connection.
++     *
++     * @var type
++     */
++    private $session;
++
++    /**
++     * The root folder of CMIS repository.
++     *
++     * @var type
++     */
++    private $rootFolder;
++
++    /**
++     * The Entity Type Manager.
++     *
++     * @var Drupal\Core\Entity\EntityTypeManagerInterface
++     */
++    protected $entityTypeManager;
++
++    /**
++     * Constructs an CmisConnectionApi object.
++     *
++     * @param Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager The Entity Type Manager.
++     * @param object $config The configuration object.
++     */
++    public function __construct(EntityTypeManagerInterface $entityTypeManager, $config = '')
++    {
++        $this->entityTypeManager = $entityTypeManager;
++        $this->checkClient();
++        $this->setConfig($config);
+     }
+-  }
+-
+-  /**
+-   * Set the configuration fom configuration id.
+-   *
+-   * @param string $config_id
+-   */
+-  private function setConfig($config_id) {
+-    $storage = \Drupal::entityTypeManager()->getStorage('cmis_connection_entity');
+-    if ($this->config = $storage->load($config_id)) {
+-      $this->setHttpInvoker();
++
++    /**
++     * The create method.
++     *
++     * @param $container The container variable.
++     *
++     * @return object
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('entity_type.manager')
++        );
+     }
+-  }
+-
+-  /**
+-   * Get configuration of this connection.
+-   *
+-   * @return type
+-   */
+-  public function getConfig() {
+-    return $this->config;
+-  }
+-
+-  /**
+-   * Set Http invoker.
+-   */
+-  private function setHttpInvoker() {
+-    $auth = [
+-      'auth' => [
++
++    /**
++     * Check if cmis exists in drupal root vendor.
++     *
++     * The module use php-cmis-client library but the current version 1.0
++     * depend the guzzle 5 version. Drupal use the guzzle 6 version.
++     * In order to we able using this client we need install it to module vendor
++     * folder.
++     *
++     * To install temporary to time when will ready new version of cmis client
++     * you need to go to cmis module root folder (eg. modules/cmis or
++     * modules/contrib/cmis) and call the next command:
++     *    composer require dkd/php-cmis
++     *
++     * @return string
++     *   The string.
++     */
++    public function checkClient()
++    {
++        // If not exists load it from cmis module vendor folder.
++        if (!class_exists('BindingType')) {
++            // Load CMIS using classes if composer not able to install them
++            // to root vendor folder because guzzle 5 dependency.
++            $path = drupal_get_path('module', 'cmis');
++            if (file_exists($path . '/vendor/autoload.php')) {
++                include_once $path . '/vendor/autoload.php';
++            } else {
++                throw new \Exception('Php CMIS Client library is not properly installed.');
++            }
++        }
++    }
++
++    /**
++     * Set the configuration fom configuration id.
++     *
++     * @param string $config_id The Configuration id.
++     *
++     * @return int
++     *   The int.
++     */
++    private function setConfig($config_id)
++    {
++        $storage = $this->entityTypeManager->getStorage('cmis_connection_entity');
++        if ($this->config = $storage->load($config_id)) {
++            $this->setHttpInvoker();
++        }
++    }
++
++    /**
++     * Get configuration of this connection.
++     *
++     * @return type
++     *   The type.
++     */
++    public function getConfig()
++    {
++        return $this->config;
++    }
++
++    /**
++     * Set Http invoker.
++     *
++     * @return object
++     *   The object.
++     */
++    private function setHttpInvoker()
++    {
++        $auth = [
++        'auth' => [
+         $this->config->getCmisUser(),
+         $this->config->getCmisPassword(),
+-      ],
+-    ];
+-    $this->httpInvoker = new Client($auth);
+-  }
+-
+-  /**
+-   * Get Http invoker.
+-   *
+-   * @return object
+-   */
+-  public function getHttpInvoker() {
+-    return $this->httpInvoker;
+-  }
+-
+-  /**
+-   * Set default parameters.
+-   */
+-  public function setDefaultParameters() {
+-    $parameters = [
+-      SessionParameter::BINDING_TYPE => BindingType::BROWSER,
+-      SessionParameter::BROWSER_URL => $this->getConfig()->getCmisUrl(),
+-      SessionParameter::BROWSER_SUCCINCT => FALSE,
+-      SessionParameter::HTTP_INVOKER_OBJECT => $this->getHttpInvoker(),
+-    ];
+-
+-    $this->setParameters($parameters);
+-  }
+-
+-  /**
+-   * Set parameters.
+-   *
+-   * @param array $parameters
+-   */
+-  public function setParameters(array $parameters) {
+-    $this->parameters = $parameters;
+-    $this->setSessionFactory();
+-  }
+-
+-  /**
+-   * Get parameters.
+-   *
+-   * @return array
+-   */
+-  public function getParameters() {
+-    return $this->parameters;
+-  }
+-
+-  /**
+-   * Set session factory.
+-   */
+-  private function setSessionFactory() {
+-    $this->sessionFactory = new SessionFactory();
+-    $this->setRepository();
+-  }
+-
+-  /**
+-   * Get session factory.
+-   *
+-   * @return type
+-   */
+-  public function getSessionFactory() {
+-    return $this->sessionFactory;
+-  }
+-
+-  /**
+-   * Set repository.
+-   */
+-  private function setRepository() {
+-    $repository_id = $this->config->getCmisRepository();
+-    // If no repository id is defined use the first repository
+-    if ($repository_id === NULL || $repository_id == '') {
+-      $repositories = $this->sessionFactory->getRepositories($this->parameters);
+-      $this->parameters[SessionParameter::REPOSITORY_ID] = $repositories[0]->getId();
++        ],
++        ];
++        $this->httpInvoker = new Client($auth);
++    }
++
++    /**
++     * Get Http invoker.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getHttpInvoker()
++    {
++        return $this->httpInvoker;
+     }
+-    else {
+-      $this->parameters[SessionParameter::REPOSITORY_ID] = $repository_id;
++
++    /**
++     * Set default parameters.
++     *
++     * @return object
++     *   The object.
++     */
++    public function setDefaultParameters()
++    {
++        $parameters = [
++        SessionParameter::BINDING_TYPE => BindingType::BROWSER,
++        SessionParameter::BROWSER_URL => $this->getConfig()->getCmisUrl(),
++        SessionParameter::BROWSER_SUCCINCT => false,
++        SessionParameter::HTTP_INVOKER_OBJECT => $this->getHttpInvoker(),
++        ];
++
++        $this->setParameters($parameters);
++    }
++
++    /**
++     * Set parameters.
++     *
++     * @param array $parameters The array of parameters.
++     *
++     * @return array
++     *   The array.
++     */
++    public function setParameters(array $parameters)
++    {
++        $this->parameters = $parameters;
++        $this->setSessionFactory();
+     }
+ 
+-    $this->session = $this->sessionFactory->createSession($this->parameters);
+-    $this->setRootFolder();
+-  }
+-
+-  /**
+-   * Get session.
+-   *
+-   * @return object
+-   */
+-  public function getSession() {
+-    return $this->session;
+-  }
+-
+-  /**
+-   * Set the root folder of the repository.
+-   */
+-  private function setRootFolder() {
+-    $this->rootFolder = $this->session->getRootFolder();
+-  }
+-
+-  /**
+-   * Get root folder of repository.
+-   *
+-   * @return object
+-   */
+-  public function getRootFolder() {
+-    return $this->rootFolder;
+-  }
+-
+-  /**
+-   * Get object by object id.
+-   *
+-   * @param string $id
+-   *
+-   * @return object
+-   *   Return the current object or null.
+-   */
+-  public function getObjectById($id = '') {
+-    if (empty($id)) {
+-      return NULL;
++    /**
++     * Get parameters.
++     *
++     * @return array
++     *   The array.
++     */
++    public function getParameters()
++    {
++        return $this->parameters;
+     }
+ 
+-    if (!empty($this->validObjectId($id) || !empty($this->validObjectId($id, 'cmis:document')))) {
+-      $cid = $this->session->createObjectId($id);
+-      $object = $this->session->getObject($cid);
++    /**
++     * Set session factory.
++     *
++     * @return type
++     *   The type.
++     */
++    private function setSessionFactory()
++    {
++        $this->sessionFactory = new SessionFactory();
++        $this->setRepository();
++    }
+ 
+-      return $object;
++    /**
++     * Get session factory.
++     *
++     * @return type
++     *   The type.
++     */
++    public function getSessionFactory()
++    {
++        return $this->sessionFactory;
+     }
+ 
+-    return NULL;
+-  }
+-
+-  /**
+-   * Check the id is valid object.
+-   *
+-   * @param string $id
+-   * @param string $type
+-   * @param string $parentId
+-   *
+-   * @return object
+-   *   the result object or empty array
+-   */
+-  public function validObjectId($id, $type = 'cmis:folder', $parentId = '') {
+-    $where = "cmis:objectId='$id'";
+-    if (!empty($parentId)) {
+-      $where .= " AND IN_FOLDER('$parentId')";
++    /**
++     * Set repository.
++     *
++     * @return object
++     *   The object.
++     */
++    private function setRepository()
++    {
++        $repository_id = $this->config->getCmisRepository();
++        // If no repository id is defined use the first repository
++        if ($repository_id === null || $repository_id == '') {
++            $repositories = $this->sessionFactory->getRepositories($this->parameters);
++            $this->parameters[SessionParameter::REPOSITORY_ID] = $repositories[0]->getId();
++        } else {
++            $this->parameters[SessionParameter::REPOSITORY_ID] = $repository_id;
++        }
++
++        $this->session = $this->sessionFactory->createSession($this->parameters);
++        $this->setRootFolder();
+     }
+ 
+-    $result = $this->session->queryObjects($type, $where);
+-
+-    return $result;
+-  }
+-
+-  /**
+-   * Check the name is valid object.
+-   *
+-   * @param string $name
+-   * @param string $type
+-   * @param string $parentId
+-   *
+-   * @return object
+-   *   the result object or empty array
+-   */
+-  public function validObjectName($name, $type = 'cmis:folder', $parentId = '') {
+-    $query = "SELECT * FROM $type WHERE cmis:name='$name'";
+-    if (!empty($parentId)) {
+-      $query .= " and IN_FOLDER('$parentId')";
++    /**
++     * Get session.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getSession()
++    {
++        return $this->session;
+     }
+-    $result = $this->session->query($query);
+ 
+-    return $result;
+-  }
++    /**
++     * Set the root folder of the repository.
++     *
++     * @return object
++     *   The object.
++     */
++    private function setRootFolder()
++    {
++        $this->rootFolder = $this->session->getRootFolder();
++    }
++
++    /**
++     * Get root folder of repository.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getRootFolder()
++    {
++        return $this->rootFolder;
++    }
++
++    /**
++     * Get object by object id.
++     *
++     * @param string $id The object id.
++     *
++     * @return object
++     *   Return the current object or null.
++     */
++    public function getObjectById($id = '')
++    {
++        if (empty($id)) {
++            return null;
++        }
++
++        if (!empty($this->validObjectId($id) || !empty($this->validObjectId($id, 'cmis:document')))) {
++            $cid = $this->session->createObjectId($id);
++            $object = $this->session->getObject($cid);
++
++            return $object;
++        }
++
++        return null;
++    }
++
++    /**
++     * Check the id is valid object.
++     *
++     * @param string $id       The Id Object.
++     * @param string $type     The type of folder.
++     * @param string $parentId The parent id.
++     *
++     * @return object
++     *   the result object or empty array
++     */
++    public function validObjectId($id, $type = 'cmis:folder', $parentId = '')
++    {
++        $where = "cmis:objectId='$id'";
++        if (!empty($parentId)) {
++            $where .= " AND IN_FOLDER('$parentId')";
++        }
++
++        $result = $this->session->queryObjects($type, $where);
++
++        return $result;
++    }
++
++    /**
++     * Check the name is valid object.
++     *
++     * @param string $name     The name of object.
++     * @param string $type     The type of folder.
++     * @param string $parentId The Parent id.
++     *
++     * @return object
++     *   the result object or empty array
++     */
++    public function validObjectName($name, $type = 'cmis:folder', $parentId = '')
++    {
++        $query = "SELECT * FROM $type WHERE cmis:name='$name'";
++        if (!empty($parentId)) {
++            $query .= " and IN_FOLDER('$parentId')";
++        }
++        $result = $this->session->query($query);
++
++        return $result;
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/CmisConnectionEntityHtmlRouteProvider.php b/modules/contrib/cmis/src/CmisConnectionEntityHtmlRouteProvider.php
+index 3470006..1939875 100644
+--- a/modules/contrib/cmis/src/CmisConnectionEntityHtmlRouteProvider.php
++++ b/modules/contrib/cmis/src/CmisConnectionEntityHtmlRouteProvider.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -14,88 +30,113 @@
+  * TODO: to test, this whole file can be removed. All routes are in the Entity
+  * annotation. And no apparent override is present.
+  *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
++ *
+  * @see Drupal\Core\Entity\Routing\AdminHtmlRouteProvider
+  * @see Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider
+  */
+-class CmisConnectionEntityHtmlRouteProvider extends AdminHtmlRouteProvider {
++class CmisConnectionEntityHtmlRouteProvider extends AdminHtmlRouteProvider
++{
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getRoutes(EntityTypeInterface $entity_type) {
+-    $collection = parent::getRoutes($entity_type);
++    /**
++     * Gets the route.
++     *
++     * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type The entity type.
++     *
++     * @return \Symfony\Component\Routing\Route|null
++     *   The generated route, if available.
++     */
++    public function getRoutes(EntityTypeInterface $entity_type)
++    {
++        $collection = parent::getRoutes($entity_type);
+ 
+-    $entity_type_id = $entity_type->id();
++        $entity_type_id = $entity_type->id();
+ 
+-    if ($collection_route = $this->getCollectionRoute($entity_type)) {
+-      $collection->add("entity.{$entity_type_id}.collection", $collection_route);
+-    }
++        if ($collection_route = $this->getCollectionRoute($entity_type)) {
++            $collection->add("entity.{$entity_type_id}.collection", $collection_route);
++        }
+ 
+-    if ($add_form_route = $this->getAddFormRoute($entity_type)) {
+-      $collection->add("entity.{$entity_type_id}.add_form", $add_form_route);
+-    }
++        if ($add_form_route = $this->getAddFormRoute($entity_type)) {
++            $collection->add("entity.{$entity_type_id}.add_form", $add_form_route);
++        }
+ 
+-    return $collection;
+-  }
++        return $collection;
++    }
+ 
+-  /**
+-   * Gets the collection route.
+-   *
+-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+-   *   The entity type.
+-   *
+-   * @return \Symfony\Component\Routing\Route|null
+-   *   The generated route, if available.
+-   */
+-  protected function getCollectionRoute(EntityTypeInterface $entity_type) {
+-    if ($entity_type->hasLinkTemplate('collection') && $entity_type->hasListBuilderClass()) {
+-      $entity_type_id = $entity_type->id();
+-      $route = new Route($entity_type->getLinkTemplate('collection'));
+-      $route
+-        ->setDefaults([
+-          '_entity_list' => $entity_type_id,
+-          // Make sure this is not a TranslatableMarkup object as the
+-          // TitleResolver translates this string again.
+-          '_title' => (string) $entity_type->getLabel(),
+-        ])
+-        ->setRequirement('_permission', $entity_type->getAdminPermission())
+-        ->setOption('_admin_route', TRUE);
++    /**
++     * Gets the collection route.
++     *
++     * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type The entity type.
++     *
++     * @return \Symfony\Component\Routing\Route|null
++     *   The generated route, if available.
++     */
++    protected function getCollectionRoute(EntityTypeInterface $entity_type)
++    {
++        if ($entity_type->hasLinkTemplate('collection') && $entity_type->hasListBuilderClass()) {
++            $entity_type_id = $entity_type->id();
++            $route = new Route($entity_type->getLinkTemplate('collection'));
++            $route
++                ->setDefaults(
++                    [
++                    '_entity_list' => $entity_type_id,
++                    // Make sure this is not a TranslatableMarkup object as the
++                    // TitleResolver translates this string again.
++                    '_title' => (string) $entity_type->getLabel(),
++                    ]
++                )
++                ->setRequirement('_permission', $entity_type->getAdminPermission())
++                ->setOption('_admin_route', true);
+ 
+-      return $route;
++            return $route;
++        }
+     }
+-  }
+ 
+-  /**
+-   * Gets the add-form route.
+-   *
+-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+-   *   The entity type.
+-   *
+-   * @return \Symfony\Component\Routing\Route|null
+-   *   The generated route, if available.
+-   */
+-  protected function getAddFormRoute(EntityTypeInterface $entity_type) {
+-    if ($entity_type->hasLinkTemplate('add-form')) {
+-      $entity_type_id = $entity_type->id();
+-      $route = new Route($entity_type->getLinkTemplate('add-form'));
+-      // Use the add form handler, if available, otherwise default.
+-      $operation = 'default';
+-      if ($entity_type->getFormClass('add')) {
+-        $operation = 'add';
+-      }
+-      $route
+-        ->setDefaults([
+-          '_entity_form' => "{$entity_type_id}.{$operation}",
+-          '_title' => "Add {$entity_type->getLabel()}",
+-        ])
+-        ->setRequirement('_entity_create_access', $entity_type_id)
+-        ->setOption('parameters', [
+-          $entity_type_id => ['type' => 'entity:' . $entity_type_id],
+-        ])
+-        ->setOption('_admin_route', TRUE);
++    /**
++     * Gets the add-form route.
++     *
++     * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type The entity type.
++     *
++     * @return \Symfony\Component\Routing\Route|null
++     *   The generated route, if available.
++     */
++    protected function getAddFormRoute(EntityTypeInterface $entity_type)
++    {
++        if ($entity_type->hasLinkTemplate('add-form')) {
++            $entity_type_id = $entity_type->id();
++            $route = new Route($entity_type->getLinkTemplate('add-form'));
++            // Use the add form handler, if available, otherwise default.
++            $operation = 'default';
++            if ($entity_type->getFormClass('add')) {
++                $operation = 'add';
++            }
++            $route
++                ->setDefaults(
++                    [
++                    '_entity_form' => "{$entity_type_id}.{$operation}",
++                    '_title' => "Add {$entity_type->getLabel()}",
++                    ]
++                )
++                ->setRequirement('_entity_create_access', $entity_type_id)
++                ->setOption(
++                    'parameters', [
++                    $entity_type_id => ['type' => 'entity:' . $entity_type_id],
++                    ]
++                )
++                ->setOption('_admin_route', true);
+ 
+-      return $route;
++            return $route;
++        }
+     }
+-  }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/CmisConnectionEntityInterface.php b/modules/contrib/cmis/src/CmisConnectionEntityInterface.php
+index 0c5c93b..5416f57 100644
+--- a/modules/contrib/cmis/src/CmisConnectionEntityInterface.php
++++ b/modules/contrib/cmis/src/CmisConnectionEntityInterface.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -8,15 +24,52 @@
+ 
+ /**
+  * Provides an interface for defining CMIS connection entities.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-interface CmisConnectionEntityInterface extends ConfigEntityInterface {
+-
+-  public function getCmisUrl();
++interface CmisConnectionEntityInterface extends ConfigEntityInterface
++{
++    
++    /**
++     * Get CMIS url.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getCmisUrl();
+ 
+-  public function getCmisUser();
++    /**
++     * Get CMIS user name.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getCmisUser();
+ 
+-  public function getCmisPassword();
++    /**
++     * Get CMIS password.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getCmisPassword();
+ 
+-  public function getCmisRepository();
++    /**
++     * Get CMIS repository id.
++     *
++     * @return int
++     *   The int.
++     */
++    public function getCmisRepository();
+ 
+ }
+diff --git a/modules/contrib/cmis/src/CmisConnectionEntityListBuilder.php b/modules/contrib/cmis/src/CmisConnectionEntityListBuilder.php
+index bc37a35..0cb2b9f 100644
+--- a/modules/contrib/cmis/src/CmisConnectionEntityListBuilder.php
++++ b/modules/contrib/cmis/src/CmisConnectionEntityListBuilder.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -11,29 +27,44 @@
+ 
+ /**
+  * Provides a listing of CMIS connection entities.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisConnectionEntityListBuilder extends ConfigEntityListBuilder {
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function buildHeader() {
+-    $header['label'] = $this->t('CMIS connection');
+-    $header['id'] = $this->t('Machine name');
+-    $header['process'] = $this->t('Browse');
+-    return $header + parent::buildHeader();
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function buildRow(EntityInterface $entity) {
+-    $row['label'] = $entity->label();
+-    $row['id'] = $entity->id();
+-    $url = Url::fromUserInput('/cmis/browser/' . $entity->id());
+-    $link = Link::fromTextAndUrl($this->t('Browse'), $url);
+-    $row['process'] = $link;
+-    return $row + parent::buildRow($entity);
+-  }
++class CmisConnectionEntityListBuilder extends ConfigEntityListBuilder
++{
++
++    /**
++     * {@inheritdoc}
++     */
++    public function buildHeader()
++    {
++        $header['label'] = $this->t('CMIS connection');
++        $header['id'] = $this->t('Machine name');
++        $header['process'] = $this->t('Browse');
++        return $header + parent::buildHeader();
++    }
++
++    /**
++     * {@inheritdoc}
++     */
++    public function buildRow(EntityInterface $entity)
++    {
++        $row['label'] = $entity->label();
++        $row['id'] = $entity->id();
++        $url = Url::fromUserInput('/cmis/browser/' . $entity->id());
++        $link = Link::fromTextAndUrl($this->t('Browse'), $url);
++        $row['process'] = $link;
++        return $row + parent::buildRow($entity);
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/CmisElement.php b/modules/contrib/cmis/src/CmisElement.php
+index 866b7a1..b5ea536 100644
+--- a/modules/contrib/cmis/src/CmisElement.php
++++ b/modules/contrib/cmis/src/CmisElement.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis;
+@@ -8,316 +24,397 @@
+ use Drupal\Component\Serialization\Json;
+ use Drupal\Core\Link;
+ use Drupal\Core\Url;
++use Drupal\Core\StringTranslation\StringTranslationTrait;
++use Drupal\Core\StringTranslation\TranslationInterface;
++use Drupal\Core\Session\AccountProxyInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Description of CmisElement.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisElement {
+-
+-  /**
+-   * Cmis element.
+-   *
+-   * @var object
+-   */
+-  private $element;
+-
+-  /**
+-   * Config.
+-   *
+-   * @var string
+-   */
+-  private $config;
+-
+-  /**
+-   * Popup flag.
+-   *
+-   * @var string
+-   */
+-  private $popup;
+-
+-  /**
+-   * Element parent id.
+-   *
+-   * @var string
+-   */
+-  private $parent;
+-
+-  /**
+-   * The query string from cmis query form.
+-   *
+-   * @var string
+-   */
+-  private $queryString;
+-
+-  /**
+-   * Render array of element.
+-   *
+-   * @var array
+-   */
+-  private $data = [];
+-
+-  /**
+-   * The type of caller.
+-   *
+-   * @var string
+-   */
+-  private $type;
+-
+-  /**
+-   * Root folder id.
+-   *
+-   * @var object
+-   */
+-  private $rootId;
+-
+-  /**
+-   * {@inheritdoc}
+-   *
+-   * @param string $config
+-   * @param bool $popup
+-   * @param \Dkd\PhpCmis\DataObjects\AbstractFileableCmisObject $parent
+-   * @param string $query
+-   * @param string $root_id
+-   */
+-  public function __construct($config, $popup = FALSE, AbstractFileableCmisObject $parent = NULL, $query = '', $root_id = '') {
+-    $this->config = $config;
+-    $this->popup = $popup;
+-    $this->parent = $parent;
+-    $this->queryString = $query;
+-    $this->rootId = $root_id;
+-  }
+-
+-  /**
+-   * Set element.
+-   *
+-   * @param string $type
+-   * @param \Dkd\PhpCmis\DataObjects\AbstractFileableCmisObject $element
+-   */
+-  public function setElement($type, AbstractFileableCmisObject $element) {
+-    $this->type = $type;
+-    $this->element = $element;
+-
+-    $this->prepare();
+-  }
+-
+-  /**
+-   * Prepare element data.
+-   */
+-  protected function prepare() {
+-    $type_id = $this->element->getBaseTypeId()->__toString();
+-    $name = $this->element->getName();
+-    $id = $this->element->getId();
+-    $link_options = [];
+-    switch ($type_id) {
+-      case 'cmis:folder':
+-        switch ($this->type) {
+-          case 'browser':
+-            $url = Url::fromUserInput('/cmis/browser/nojs/' . $this->config . '/' . $id);
+-            $link_options = [
+-              'attributes' => [
++class CmisElement
++{
++
++    use StringTranslationTrait;
++
++    /**
++     * Cmis element.
++     *
++     * @var object
++     */
++    private $element;
++
++    /**
++     * Config.
++     *
++     * @var string
++     */
++    private $config;
++
++    /**
++     * Popup flag.
++     *
++     * @var string
++     */
++    private $popup;
++
++    /**
++     * Element parent id.
++     *
++     * @var string
++     */
++    private $parent;
++
++    /**
++     * The query string from cmis query form.
++     *
++     * @var string
++     */
++    private $queryString;
++
++    /**
++     * Render array of element.
++     *
++     * @var array
++     */
++    private $data = [];
++
++    /**
++     * The type of caller.
++     *
++     * @var string
++     */
++    private $type;
++
++    /**
++     * Root folder id.
++     *
++     * @var object
++     */
++    private $rootId;
++
++    /**
++     * The string translation information.
++     *
++     * @var Drupal\Core\StringTranslation\TranslationInterface
++     */
++    protected $stringTranslation;
++
++    /**
++     * The current user interface.
++     *
++     * @var Drupal\Core\Session\AccountProxyInterface
++     */
++    protected $currentUser;
++
++    /**
++     * Contruct method.
++     *
++     * @param Drupal\Core\StringTranslation\TranslationInterface  $string_translation The string translation information.
++     * @param Drupal\Core\Session\AccountProxyInterface $currentUser The current user.
++     * @param string $config The configuration.
++     * @param bool $popup The popup.
++     * @param \Dkd\PhpCmis\DataObjects\AbstractFileableCmisObject $parent The parent.
++     * @param string $query The query.
++     * @param string $root_id The root id.
++     */
++    public function __construct(TranslationInterface $string_translation, AccountProxyInterface $currentUser, $config, $popup = false, AbstractFileableCmisObject $parent = null, $query = '', $root_id = '')
++    {
++        $this->stringTranslation = $string_translation;
++        $this->currentUser = $currentUser;
++        $this->config = $config;
++        $this->popup = $popup;
++        $this->parent = $parent;
++        $this->queryString = $query;
++        $this->rootId = $root_id;
++    }
++
++    /**
++     * The container Interface.
++     *
++     * @param $container The container variable.
++     *
++     * @return object
++     *   The object.
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('string_translation'),
++            $container->get('current_user')
++        );
++    }
++
++    /**
++     * Set element.
++     *
++     * @param string $type The type.
++     * @param \Dkd\PhpCmis\DataObjects\AbstractFileableCmisObject $element The element.
++     * 
++     * @return array
++     *   The array.
++     */
++    public function setElement($type, AbstractFileableCmisObject $element)
++    {
++        $this->type = $type;
++        $this->element = $element;
++
++        $this->prepare();
++    }
++
++    /**
++     * Prepare element data.
++     *
++     * @return array
++     *   The array.
++     */
++    protected function prepare()
++    {
++        $type_id = $this->element->getBaseTypeId()->__toString();
++        $name = $this->element->getName();
++        $id = $this->element->getId();
++        $link_options = [];
++        switch ($type_id) {
++        case 'cmis:folder':
++            switch ($this->type) {
++            case 'browser':
++                $url = Url::fromUserInput('/cmis/browser/nojs/' . $this->config . '/' . $id);
++                $link_options = [
++                'attributes' => [
+                 'class' => [
+                   'use-ajax',
+                 ],
+-              ],
+-            ];
++                ],
++                ];
++                break;
++
++            case 'query':
++                $url = Url::fromUserInput('/cmis/browser/' . $this->config . '/' . $id);
++                break;
++            }
++
++            if ($this->popup) {
++                $link_options['query'] = ['type' => 'popup'];
++            }
++
++            if (!empty($link_options)) {
++                $url->setOptions($link_options);
++            }
++
++            $link = Link::fromTextAndUrl($name, $url)->toRenderable();
++            $this->prepareElement('cmis_browser_folder_item', $link);
+             break;
+ 
+-          case 'query':
+-            $url = Url::fromUserInput('/cmis/browser/' . $this->config . '/' . $id);
++        case 'cmis:document':
++            $this->prepareElement('cmis_browser_document_item', $name, $id);
+             break;
+-        }
+ 
+-        if ($this->popup) {
+-          $link_options['query'] = ['type' => 'popup'];
++        default:
++            $element = [
++            '#theme' => 'cmis_browser_other_item',
++            '#element' => $name,
++            //'#cache' => $this->cacheable,
++            ];
++            $this->data = [render($element)];
+         }
++    }
+ 
+-        if (!empty($link_options)) {
+-          $url->setOptions($link_options);
++    /**
++     * Get element data.
++     *
++     * @return array
++     *   The array.
++     */
++    public function getData()
++    {
++        return $this->data;
++    }
++
++    /**
++     * Set element to render array.
++     *
++     * @param string $theme The theme.
++     * @param array  $data  The data.
++     * @param string $id    The id.
++     *
++     * @return array
++     *   The array.
++     */
++    protected function prepareElement($theme, array $data, $id = '')
++    {
++        $author = $this->element->getCreatedBy();
++        $created = $this->element->getCreationDate()->format('Y-m-d H:i:s');
++        $description = $this->element->getDescription();
++
++        $title = '';
++        if ($title_property = $this->element->getProperty('cm:title')) {
++            $title = $title_property->getFirstValue();
+         }
+ 
+-        $link = Link::fromTextAndUrl($name, $url)->toRenderable();
+-        $this->prepareElement('cmis_browser_folder_item', $link);
+-        break;
++        $size = 0;
++        if ($size_property = $this->element->getProperty('cmis:contentStreamLength')) {
++            $size = $size_property->getFirstValue();
++        }
+ 
+-      case 'cmis:document':
+-        $this->prepareElement('cmis_browser_document_item', $name, $id);
+-        break;
++        $mime_type = '';
++        $operations = '';
++        if ($theme == 'cmis_browser_document_item') {
++            $this->prepareDocumentElement($data, $operations, $id);
++        }
++        if (!$this->popup) {
++            $this->preparePropertiesLink($operations);
++        }
+ 
+-      default:
+         $element = [
+-          '#theme' => 'cmis_browser_other_item',
+-          '#element' => $name,
+-            //'#cache' => $this->cacheable,
++        '#theme' => $theme,
++        '#element' => $data,
++        //'#cache' => $this->cacheable,
+         ];
+-        $this->data = [render($element)];
+-    }
+-  }
+-
+-  /**
+-   * Get element data.
+-   *
+-   * @return array
+-   */
+-  public function getData() {
+-    return $this->data;
+-  }
+-
+-  /**
+-   * Set element to render array.
+-   *
+-   * @param string $theme
+-   * @param array $data
+-   * @param string $id
+-   */
+-  protected function prepareElement($theme, array $data, $id = '') {
+-    $author = $this->element->getCreatedBy();
+-    $created = $this->element->getCreationDate()->format('Y-m-d H:i:s');
+-    $description = $this->element->getDescription();
+-
+-    $title = '';
+-    if ($title_property = $this->element->getProperty('cm:title')) {
+-      $title = $title_property->getFirstValue();
+-    }
+ 
+-    $size = 0;
+-    if ($size_property = $this->element->getProperty('cmis:contentStreamLength')) {
+-      $size = $size_property->getFirstValue();
+-    }
++        $details = [
++        '#theme' => 'cmis_browser_document_details',
++        '#title' => $title,
++        '#mime_type' => $mime_type,
++        '#size' => number_format($size, 0, '', ' '),
++        //'#cache' => $this->cacheable,
++        ];
+ 
+-    $mime_type = '';
+-    $operations = '';
+-    if ($theme == 'cmis_browser_document_item') {
+-      $this->prepareDocumentElement($data, $operations, $id);
+-    }
+-    if (!$this->popup) {
+-      $this->preparePropertiesLink($operations);
++        $this->data = [
++        render($element),
++        render($details),
++        $author,
++        $created,
++        $description,
++        $operations,
++        ];
+     }
+ 
+-    $element = [
+-      '#theme' => $theme,
+-      '#element' => $data,
+-        //'#cache' => $this->cacheable,
+-    ];
+-
+-    $details = [
+-      '#theme' => 'cmis_browser_document_details',
+-      '#title' => $title,
+-      '#mime_type' => $mime_type,
+-      '#size' => number_format($size, 0, '', ' '),
+-        //'#cache' => $this->cacheable,
+-    ];
+-
+-    $this->data = [
+-      render($element),
+-      render($details),
+-      $author,
+-      $created,
+-      $description,
+-      $operations,
+-    ];
+-  }
+-
+-  /**
+-   * Prepare document element.
+-   *
+-   * @param array $data
+-   * @param string $operations
+-   * @param string $id
+-   */
+-  private function prepareDocumentElement(array &$data, &$operations, $id) {
+-    if ($this->popup) {
+-      $url = Url::fromUserInput('/');
+-      $link_options = [
+-        'attributes' => [
+-          'class' => [
++    /**
++     * Prepare document element.
++     *
++     * @param array  $data       The data.
++     * @param string $operations The operations.
++     * @param string $id         The id.
++     *
++     * @return array
++     *   The array.
++     */
++    private function prepareDocumentElement(array &$data, &$operations, $id)
++    {
++        if ($this->popup) {
++            $url = Url::fromUserInput('/');
++            $link_options = [
++            'attributes' => [
++            'class' => [
+             'cmis-field-insert',
+-          ],
+-          'id' => $this->element->getProperty('cmis:objectId')->getFirstValue(),
+-          'name' => $data,
+-        ],
+-      ];
+-      $url->setOptions($link_options);
+-      $path = Link::fromTextAndUrl($this->t('Choose'), $url)->toRenderable();
+-      $operations = render($path);
++            ],
++            'id' => $this->element->getProperty('cmis:objectId')->getFirstValue(),
++            'name' => $data,
++            ],
++            ];
++            $url->setOptions($link_options);
++            $path = Link::fromTextAndUrl($this->t('Choose'), $url)->toRenderable();
++            $operations = render($path);
++        }
++
++        $url = Url::fromUserInput('/cmis/document/' . $this->config . '/' . $id);
++        $path = Link::fromTextAndUrl($data, $url)->toRenderable();
++        $data = ['#markup' => render($path)];
+     }
+ 
+-    $url = Url::fromUserInput('/cmis/document/' . $this->config . '/' . $id);
+-    $path = Link::fromTextAndUrl($data, $url)->toRenderable();
+-    $data = ['#markup' => render($path)];
+-  }
+-
+-  /**
+-   * Prepare properties link.
+-   *
+-   * @param string $operations
+-   */
+-  private function preparePropertiesLink(&$operations) {
+-    $url = Url::fromUserInput('/cmis/object-properties/' . $this->config . '/' . $this->element->getId());
+-    $link_options = [
+-      'attributes' => [
++    /**
++     * Prepare properties link.
++     *
++     * @param string $operations The operations.
++     *
++     * @return array
++     *   The array.
++     */
++    private function preparePropertiesLink(&$operations)
++    {
++        $url = Url::fromUserInput('/cmis/object-properties/' . $this->config . '/' . $this->element->getId());
++        $link_options = [
++        'attributes' => [
+         'class' => ['use-ajax'],
+         'data-dialog-type' => 'modal',
+-        'data-dialog-options' => Json::encode([
+-          'height' => 400,
+-          'width' => 700,
+-        ]),
+-      ],
+-    ];
+-    $url->setOptions($link_options);
+-    $path = Link::fromTextAndUrl($this->t('Properties'), $url)->toRenderable();
+-    $links[] = [
+-      '#markup' => render($path),
+-      '#wrapper_attributes' => [
++        'data-dialog-options' => Json::encode(
++            [
++            'height' => 400,
++            'width' => 700,
++            ]
++        ),
++        ],
++        ];
++        $url->setOptions($link_options);
++        $path = Link::fromTextAndUrl($this->t('Properties'), $url)->toRenderable();
++        $links[] = [
++        '#markup' => render($path),
++        '#wrapper_attributes' => [
+         'class' => [
+           'object-properties',
+         ],
+-      ],
+-    ];
+-
+-    if ($this->rootId != $this->element->getId() &&
+-        \Drupal::currentUser()->hasPermission('access cmis operations')) {
+-      $url = Url::fromUserInput('/cmis/object-delete-verify/' . $this->config . '/' . $this->element->getId());
+-      $link_options = [
+-        'attributes' => [
+-          'class' => ['use-ajax'],
+-          'data-dialog-type' => 'modal',
+-          'data-dialog-options' => Json::encode([
+-            'height' => 120,
+-            'width' => 600,
+-          ]),
+-        ],
+-        'query' => [
+-          'type' => $this->type,
+         ],
+-      ];
+-      switch ($this->type) {
+-        case 'browser':
+-          $link_options['query']['parent'] = $this->parent->getId();
+-          break;
+-
+-        case 'query':
+-          $link_options['query']['query_string'] = $this->queryString;
+-          break;
+-      }
+-      $url->setOptions($link_options);
+-      $path = Link::fromTextAndUrl($this->t('Delete'), $url)->toRenderable();
+-      $links[] = [
+-        '#markup' => render($path),
+-        '#wrapper_attributes' => [
+-          'class' => [
++        ];
++
++        if ($this->rootId != $this->element->getId() 
++            && $this->currentUser->hasPermission('access cmis operations')
++        ) {
++            $url = Url::fromUserInput('/cmis/object-delete-verify/' . $this->config . '/' . $this->element->getId());
++            $link_options = [
++            'attributes' => [
++            'class' => ['use-ajax'],
++            'data-dialog-type' => 'modal',
++            'data-dialog-options' => Json::encode(
++                [
++                'height' => 120,
++                'width' => 600,
++                ]
++            ),
++            ],
++            'query' => [
++            'type' => $this->type,
++            ],
++            ];
++            switch ($this->type) {
++            case 'browser':
++                $link_options['query']['parent'] = $this->parent->getId();
++                break;
++
++            case 'query':
++                $link_options['query']['query_string'] = $this->queryString;
++                break;
++            }
++            $url->setOptions($link_options);
++            $path = Link::fromTextAndUrl($this->t('Delete'), $url)->toRenderable();
++            $links[] = [
++            '#markup' => render($path),
++            '#wrapper_attributes' => [
++            'class' => [
+             'object-delete',
+-          ],
+-        ],
+-      ];
+-    }
++            ],
++            ],
++            ];
++        }
+ 
+-    $list = [
+-      '#theme' => 'item_list',
+-      '#items' => $links,
+-      '#type' => 'ul',
+-    ];
++        $list = [
++        '#theme' => 'item_list',
++        '#items' => $links,
++        '#type' => 'ul',
++        ];
+ 
+-    $operations = render($list);
+-  }
++        $operations = render($list);
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Controller/CmisRepositoryController.php b/modules/contrib/cmis/src/Controller/CmisRepositoryController.php
+index 3e133ff..826fd50 100644
+--- a/modules/contrib/cmis/src/Controller/CmisRepositoryController.php
++++ b/modules/contrib/cmis/src/Controller/CmisRepositoryController.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Controller;
+@@ -10,262 +26,323 @@
+ use Drupal\Core\Link;
+ use Drupal\Core\Url;
+ use Symfony\Component\HttpFoundation\RedirectResponse;
++use Symfony\Component\HttpFoundation\RequestStack;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Class CmisRepositoryController.
+  *
++ * @category Module
++ *
+  * @package Drupal\cmis\Controller
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisRepositoryController extends ControllerBase {
++class CmisRepositoryController extends ControllerBase
++{
++    /**
++     * The browser .
++     *
++     * @var object
++     */
++    private $browser;
+ 
+-  private $browser;
+-  private $connection;
++    /**
++     * The connection.
++     *
++     * @var object
++     */
++    private $connection;
+ 
+-  /**
+-   * Construct.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   */
+-  public function __construct($config = '', $folder_id = '') {
+-    if (!empty($config) && !empty($folder_id)) {
+-      $this->initBrowser($config, $folder_id);
+-    }
+-  }
++    /**
++     * An array of found redirect IDs to avoid recursion.
++     *
++     * @var Symfony\Component\HttpFoundation\RequestStack
++     */
++    protected $requestStack;
+ 
+-  /**
+-   * Browse.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   *
+-   * @return string
+-   *   Return cmis browser render array or warning.
+-   */
+-  public function browse($config = '', $folder_id = '') {
+-    if (empty($this->browser)) {
+-      $this->initBrowser($config, $folder_id);
+-    }
+-    if (!empty($this->browser->getCurrent())) {
+-      $cacheable = $this->browser->getConnection()->getConfig()->getCmisCacheable();
+-      return $this->browser->browse(!$cacheable);
++    /**
++     * Construct.
++     *
++     * @param Symfony\Component\HttpFoundation\RequestStack $requestStack The Request Stack.
++     * @param string $config The configuartion.
++     * @param string $folder_id The folder id.
++     */
++    public function __construct(RequestStack $requestStack, $config = '', $folder_id = '')
++    {
++        $this->requestStack = $requestStack;
++        if (!empty($config) && !empty($folder_id)) {
++            $this->initBrowser($config, $folder_id);
++        }
+     }
+-  }
+ 
+-  /**
+-   * Get properties.
+-   *
+-   * @param string $config
+-   * @param string $document_id
+-   *
+-   * @return array
+-   *   Return properties table render array.
+-   */
+-  public function getProperties($config = '', $document_id = '') {
+-    if (empty($this->browser)) {
+-      $this->initBrowser($config, $document_id);
++    /**
++     * The create method.
++     *
++     * @param $container The container variable.
++     *
++     * @return object 
++     *   The object.
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('request_stack')
++        );
+     }
+-    if (!empty($this->browser->getCurrent())) {
+-      return $this->browser->getDocumentProperties();
++
++    /**
++     * Browse.
++     *
++     * @param string $config    The configuartion.
++     * @param string $folder_id The folder id.
++     *
++     * @return string
++     *   Return cmis browser render array or warning.
++     */
++    public function browse($config = '', $folder_id = '')
++    {
++        if (empty($this->browser)) {
++            $this->initBrowser($config, $folder_id);
++        }
++        if (!empty($this->browser->getCurrent())) {
++            $cacheable = $this->browser->getConnection()->getConfig()->getCmisCacheable();
++            return $this->browser->browse(!$cacheable);
++        }
+     }
+-  }
+ 
+-  /**
+-   * Object delete verify popup.
+-   *
+-   * @param string $config
+-   * @param string $object_id
+-   */
+-  public function objectDeleteVerify($config = '', $object_id = '') {
+-    $parameters = \Drupal::request()->query->all();
+-    unset($parameters['_wrapper_format']);
+-    $type = '';
+-    $name = '';
+-    if (!empty($parameters['type']) && !empty($config) && !empty($object_id) &&
+-        (!empty($parameters['parent']) || !empty($parameters['query_string']))) {
+-      $this->setConnection($config);
+-      if ($this->connection) {
+-        if ($current = $this->connection->getObjectById($object_id)) {
+-          $type = $current->getBaseTypeId()->__toString();
+-          $name = $current->getName();
++    /**
++     * Get properties.
++     *
++     * @param string $config      The configuartion.
++     * @param string $document_id The document id.
++     *
++     * @return array
++     *   Return properties table render array.
++     */
++    public function getProperties($config = '', $document_id = '')
++    {
++        if (empty($this->browser)) {
++            $this->initBrowser($config, $document_id);
++        }
++        if (!empty($this->browser->getCurrent())) {
++            return $this->browser->getDocumentProperties();
+         }
+-        else {
+-          return [
++    }
++
++    /**
++     * Object delete verify popup.
++     *
++     * @param string $config    The configuartion.
++     * @param string $object_id The object id.
++     *
++     * @return array
++     *   The array.
++     */
++    public function objectDeleteVerify($config = '', $object_id = '')
++    {
++        $parameters = $this->requestStack->getCurrentRequest()->query->all();
++        unset($parameters['_wrapper_format']);
++        $type = '';
++        $name = '';
++        if (!empty($parameters['type']) && !empty($config) && !empty($object_id) 
++            && (!empty($parameters['parent']) || !empty($parameters['query_string']))
++        ) {
++            $this->setConnection($config);
++            if ($this->connection) {
++                if ($current = $this->connection->getObjectById($object_id)) {
++                    $type = $current->getBaseTypeId()->__toString();
++                    $name = $current->getName();
++                } else {
++                    return [
++                    '#theme' => 'cmis_object_delete_verify',
++                    '#title' => $this->t("Object can't delete"),
++                    '#description' => $this->t('Object not found in repository.'),
++                    '#link' => '',
++                    ];
++                }
++            }
++        } else {
++            return [
+             '#theme' => 'cmis_object_delete_verify',
+             '#title' => $this->t("Object can't delete"),
+-            '#description' => $this->t('Object not found in repository.'),
++            '#description' => $this->t('Argument or parameter missed.'),
+             '#link' => '',
+-          ];
++            ];
+         }
+-      }
+-    }
+-    else {
+-      return [
+-        '#theme' => 'cmis_object_delete_verify',
+-        '#title' => $this->t("Object can't delete"),
+-        '#description' => $this->t('Argument or parameter missed.'),
+-        '#link' => '',
+-      ];
+-    }
+ 
+-    $args = [
+-      '@type' => str_replace('cmis:', '', $type),
+-      '@name' => $name,
+-    ];
++        $args = [
++        '@type' => str_replace('cmis:', '', $type),
++        '@name' => $name,
++        ];
+ 
+-    $url = Url::fromUserInput('/cmis/object-delete/' . $config . '/' . $object_id);
++        $url = Url::fromUserInput('/cmis/object-delete/' . $config . '/' . $object_id);
+ 
+-    $link_options = ['query' => $parameters];
+-    $url->setOptions($link_options);
+-    $path = Link::fromTextAndUrl($this->t('Delete'), $url)->toRenderable();
+-    $link = render($path);
++        $link_options = ['query' => $parameters];
++        $url->setOptions($link_options);
++        $path = Link::fromTextAndUrl($this->t('Delete'), $url)->toRenderable();
++        $link = render($path);
+ 
+-    return [
+-      '#theme' => 'cmis_object_delete_verify',
+-      '#title' => $this->t('Are you sure you want to delete @type name @name', $args),
+-      '#description' => $this->t('This action cannot be undone.'),
+-      '#link' => $link,
+-    ];
+-  }
++        return [
++        '#theme' => 'cmis_object_delete_verify',
++        '#title' => $this->t('Are you sure you want to delete @type name @name', $args),
++        '#description' => $this->t('This action cannot be undone.'),
++        '#link' => $link,
++        ];
++    }
+ 
+-  /**
+-   * Object delete popup.
+-   *
+-   * @param string $config
+-   * @param string $object_id
+-   */
+-  public function objectDelete($config = '', $object_id = '') {
+-    $parameters = \Drupal::request()->query->all();
++    /**
++     * Object delete popup.
++     *
++     * @param string $config    The configuartion.
++     * @param string $object_id The object id.
++     * 
++     * @return array
++     *   The array.
++     */
++    public function objectDelete($config = '', $object_id = '')
++    {
++        $parameters = $this->requestStack->getCurrentRequest()->query->all();
+ 
+-    if (
+-      !empty($parameters['type']) &&
+-      !empty($config) &&
+-      !empty($object_id) &&
+-      (!empty($parameters['parent']) || !empty($parameters['query_string']))
+-    ) {
+-      switch ($parameters['type']) {
+-        case 'browser':
+-          $redirect = $this->redirect('cmis.cmis_repository_controller_browser', ['config' => $config]);
+-          break;
++        if (!empty($parameters['type']) 
++            && !empty($config) 
++            && !empty($object_id) 
++            && (!empty($parameters['parent']) || !empty($parameters['query_string']))
++        ) {
++            switch ($parameters['type']) {
++            case 'browser':
++                $redirect = $this->redirect('cmis.cmis_repository_controller_browser', ['config' => $config]);
++                break;
+ 
+-        case 'query':
+-          $parameters += ['config' => $config];
+-          $redirect = $this->redirect('cmis.cmis_query_form_callback', [], ['query' => $parameters]);
+-          break;
++            case 'query':
++                $parameters += ['config' => $config];
++                $redirect = $this->redirect('cmis.cmis_query_form_callback', [], ['query' => $parameters]);
++                break;
+ 
+-        default:
+-          // Back to frontpage if not browser or not query.
+-          $redirect = new RedirectResponse('/');
+-      }
++            default:
++                // Back to frontpage if not browser or not query.
++                $redirect = new RedirectResponse('/');
++            }
+ 
+-      $this->setConnection($config);
+-      if ($this->connection) {
+-        $root = $this->connection->getRootFolder();
+-        if ($root->getId() != $object_id && $current = $this->connection->getObjectById($object_id)) {
+-          // Exists object and not root folder.
+-          $type = $current->getBaseTypeId()->__toString();
+-          $name = $current->getName();
++            $this->setConnection($config);
++            if ($this->connection) {
++                $root = $this->connection->getRootFolder();
++                if ($root->getId() != $object_id && $current = $this->connection->getObjectById($object_id)) {
++                    // Exists object and not root folder.
++                    $type = $current->getBaseTypeId()->__toString();
++                    $name = $current->getName();
+ 
+-          $args = [
+-            '@type' => str_replace('cmis:', '', $type),
+-            '@name' => $name,
+-          ];
++                    $args = [
++                    '@type' => str_replace('cmis:', '', $type),
++                    '@name' => $name,
++                    ];
+ 
+-          $current->delete(TRUE);
++                    $current->delete(true);
+ 
+-          $this->messenger()->addStatus($this->t('The @type name @name has now been deleted.', $args));
+-          if ($parameters['type'] == 'browser') {
+-            $redirect = $this->redirect('cmis.cmis_repository_controller_browser', ['config' => $config, 'folder_id' => $parameters['parent']]);
+-          }
+-        }
+-        else {
+-          if ($root->getId() != $object_id) {
+-            $this->messenger()->addWarning($this->t('Could not delete object. Object is not exists in repository.'));
+-          }
+-          else {
+-            $this->messenger()->addWarning($this->t('Could not delete root folder.'));
+-          }
++                    $this->messenger()->addStatus($this->t('The @type name @name has now been deleted.', $args));
++                    if ($parameters['type'] == 'browser') {
++                        $redirect = $this->redirect('cmis.cmis_repository_controller_browser', ['config' => $config, 'folder_id' => $parameters['parent']]);
++                    }
++                } else {
++                    if ($root->getId() != $object_id) {
++                        $this->messenger()->addWarning($this->t('Could not delete object. Object is not exists in repository.'));
++                    } else {
++                        $this->messenger()->addWarning($this->t('Could not delete root folder.'));
++                    }
++                }
++            }
++        } else {
++            $this->messenger()->addWarning($this->t('Argument or parameter missed.'));
++            // Back to frontpage.
++            $redirect = new RedirectResponse('/');
+         }
+-      }
+-    }
+-    else {
+-      $this->messenger()->addWarning($this->t('Argument or parameter missed.'));
+-      // Back to frontpage.
+-      $redirect = new RedirectResponse('/');
+-    }
+-
+-    return $redirect;
+-  }
+ 
+-  /**
+-   * Set connection.
+-   *
+-   * @param string $config
+-   *   The connection ID.
+-   */
+-  private function setConnection($config = '') {
+-    if (!empty($config)) {
+-      if ($this->connection = new CmisConnectionApi($config)) {
+-        $this->connection->setDefaultParameters();
+-      }
++        return $redirect;
+     }
+-  }
+ 
+-  /**
+-   * Init browser.
+-   *
+-   * @param string $config
+-   * @param string $folder_id
+-   *
+-   * @return array|void
+-   *   A renderable array in case of error.
+-   */
+-  private function initBrowser($config, $folder_id) {
+-    if (!empty($config)) {
+-      $browser = new CmisBrowser($config, $folder_id);
+-      if ($browser->getConnection()) {
+-        $this->browser = $browser;
+-      }
+-      else {
+-        return $this->connectionError($config);
+-      }
++    /**
++     * Set connection.
++     *
++     * @param string $config The connection ID.
++     *
++     * @return object
++     *   The object.
++     */
++    private function setConnection($config = '')
++    {
++        if (!empty($config)) {
++            if ($this->connection = new CmisConnectionApi($config)) {
++                $this->connection->setDefaultParameters();
++            }
++        }
+     }
+-    else {
+-      return $this->configureError();
++
++    /**
++     * Init browser.
++     *
++     * @param string $config    The configuration.
++     * @param string $folder_id The folder id.
++     *
++     * @return array|void
++     *   A renderable array in case of error.
++     */
++    private function initBrowser($config, $folder_id)
++    {
++        if (!empty($config)) {
++            $browser = new CmisBrowser($config, $folder_id);
++            if ($browser->getConnection()) {
++                $this->browser = $browser;
++            } else {
++                return $this->connectionError($config);
++            }
++        } else {
++            return $this->configureError();
++        }
+     }
+-  }
+ 
+-  /**
+-   * Get browser.
+-   *
+-   * @return object
+-   */
+-  public function getBrowser() {
+-    return $this->browser;
+-  }
++    /**
++     * Get browser.
++     *
++     * @return object
++     *   The object.
++     */
++    public function getBrowser()
++    {
++        return $this->browser;
++    }
+ 
+-  /**
+-   * Prepare configure error.
+-   *
+-   * @return array
+-   */
+-  private function configureError() {
+-    return [
+-      '#markup' => $this->t('No configure defined. Please go to CMIS configure page and create configure.'),
+-    ];
+-  }
++    /**
++     * Prepare configure error.
++     *
++     * @return array
++     *   The array.
++     */
++    private function configureError()
++    {
++        return [
++        '#markup' => $this->t('No configure defined. Please go to CMIS configure page and create configure.'),
++        ];
++    }
+ 
+-  /**
+-   * Prepare connection error.
+-   *
+-   * @param string $config
+-   *
+-   * @return array
+-   */
+-  private function connectionError($config) {
+-    return [
+-      '#markup' => $this->t('No connection ready of config: @config. Please go to CMIS configure page and create properly configure.', ['@config' => $config]),
+-    ];
+-  }
++    /**
++     * Prepare connection error.
++     *
++     * @param string $config The configuration.
++     *
++     * @return array
++     *   The array.
++     */
++    private function connectionError($config)
++    {
++        return [
++        '#markup' => $this->t('No connection ready of config: @config. Please go to CMIS configure page and create properly configure.', ['@config' => $config]),
++        ];
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Entity/CmisConnectionEntity.php b/modules/contrib/cmis/src/Entity/CmisConnectionEntity.php
+index 87ffe5b..615a146 100644
+--- a/modules/contrib/cmis/src/Entity/CmisConnectionEntity.php
++++ b/modules/contrib/cmis/src/Entity/CmisConnectionEntity.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Entity;
+@@ -40,100 +56,115 @@
+  *   }
+  * )
+  */
+-class CmisConnectionEntity extends ConfigEntityBase implements CmisConnectionEntityInterface {
+-
+-  /**
+-   * The CMIS connection ID.
+-   *
+-   * @var string
+-   */
+-  protected $id;
+-
+-  /**
+-   * The CMIS connection label.
+-   *
+-   * @var string
+-   */
+-  protected $label;
+-
+-  /**
+-   * The CMIS connection url.
+-   *
+-   * @var string
+-   */
+-  protected $cmis_url;
+-
+-  /**
+-   * The CMIS connection user.
+-   *
+-   * @var string
+-   */
+-  protected $cmis_user;
+-
+-  /**
+-   * The CMIS connection password.
+-   *
+-   * @var string
+-   */
+-  protected $cmis_password;
+-
+-  /**
+-   * The CMIS connection repository id.
+-   *
+-   * @var string
+-   */
+-  protected $cmis_repository;
+-
+-  /**
+-   * The CMIS repository cacheable flag.
+-   *
+-   * @var bool
+-   */
+-  protected $cmis_cacheable;
+-
+-  /**
+-   * Get CMIS url.
+-   *
+-   * @return string
+-   */
+-  public function getCmisUrl() {
+-    return $this->cmis_url;
+-  }
+-
+-  /**
+-   * Get CMIS user name.
+-   *
+-   * @return string
+-   */
+-  public function getCmisUser() {
+-    return $this->cmis_user;
+-  }
+-
+-  /**
+-   * Get CMIS password.
+-   *
+-   * @return string
+-   */
+-  public function getCmisPassword() {
+-    return $this->cmis_password;
+-  }
+-
+-  /**
+-   * Get CMIS repository id.
+-   *
+-   * @return int
+-   */
+-  public function getCmisRepository() {
+-    return $this->cmis_repository;
+-  }
+-
+-  /**
+-   * Get CMIS repository cacheable flag.
+-   *
+-   * @return bool
+-   */
+-  public function getCmisCacheable() {
+-    return $this->cmis_cacheable;
+-  }
++
++/**
++ * Class CmisConnectionEntity.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis\Entity
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
++ */
++class CmisConnectionEntity extends ConfigEntityBase implements CmisConnectionEntityInterface
++{
++
++    /**
++     * The CMIS connection ID.
++     *
++     * @var string
++     */
++    protected $id;
++
++    /**
++     * The CMIS connection label.
++     *
++     * @var string
++     */
++    protected $label;
++
++    /**
++     * The CMIS connection url.
++     *
++     * @var string
++     */
++    protected $cmis_url;
++
++    /**
++     * The CMIS connection user.
++     *
++     * @var string
++     */
++    protected $cmis_user;
++
++    /**
++     * The CMIS connection password.
++     *
++     * @var string
++     */
++    protected $cmis_password;
++
++    /**
++     * The CMIS connection repository id.
++     *
++     * @var string
++     */
++    protected $cmis_repository;
++
++    /**
++     * The CMIS repository cacheable flag.
++     *
++     * @var bool
++     */
++    protected $cmis_cacheable;
++
++    /**
++     * {@inheritdoc}
++     */
++    public function getCmisUrl()
++    {
++        return $this->cmis_url;
++    }
++
++    /**
++     * {@inheritdoc}
++     */
++    public function getCmisUser()
++    {
++        return $this->cmis_user;
++    }
++
++    /**
++     * {@inheritdoc}
++     */
++    public function getCmisPassword()
++    {
++        return $this->cmis_password;
++    }
++
++    /**
++     * {@inheritdoc}
++     */
++    public function getCmisRepository()
++    {
++        return $this->cmis_repository;
++    }
++
++    /**
++     * Get CMIS repository cacheable flag.
++     *
++     * @return bool
++     *   The bool.
++     */
++    public function getCmisCacheable()
++    {
++        return $this->cmis_cacheable;
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Form/CmisBrowserDocumentUploadForm.php b/modules/contrib/cmis/src/Form/CmisBrowserDocumentUploadForm.php
+index 18f3a21..079e93e 100644
+--- a/modules/contrib/cmis/src/Form/CmisBrowserDocumentUploadForm.php
++++ b/modules/contrib/cmis/src/Form/CmisBrowserDocumentUploadForm.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Form;
+@@ -9,129 +25,181 @@
+ use Drupal\Core\Form\FormBase;
+ use Drupal\Core\Form\FormStateInterface;
+ use GuzzleHttp\Stream\Stream;
++use Symfony\Component\HttpFoundation\RequestStack;
+ use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Class CmisBrowserDocumentUploadForm.
+  *
++ * @category Module
++ *
+  * @package Drupal\cmis\Form
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisBrowserDocumentUploadForm extends FormBase {
+-
+-  /**
+-   * The file system.
+-   *
+-   * @var \Drupal\Core\File\FileSystemInterface
+-   */
+-  protected $fileSystem;
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public static function create(ContainerInterface $container) {
+-    $instance = parent::create($container);
+-    $instance->fileSystem = $container->get('file_system');
+-    return $instance;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getFormId() {
+-    return 'cmis_browser_document_upload_form';
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function buildForm(array $form, FormStateInterface $form_state) {
+-    $directory = $this->fileSystem->getTempDirectory();
+-
+-    $directory_is_writable = is_writable($directory);
+-    if (!$directory_is_writable) {
+-      $this->messenger()->addError($this->t('The directory %directory is not writable.', ['%directory' => $directory]));
++class CmisBrowserDocumentUploadForm extends FormBase
++{
++
++    /**
++     * The file system.
++     *
++     * @var \Drupal\Core\File\FileSystemInterface
++     */
++    protected $fileSystem;
++
++    /**
++     * An array of found redirect IDs to avoid recursion.
++     *
++     * @var Symfony\Component\HttpFoundation\RequestStack
++     */
++    protected $requestStack;
++
++    /**
++     * Constructs an CmisBrowserDocumentUploadForm object.
++     *
++     * @param Symfony\Component\HttpFoundation\RequestStack $requestStack The Request Stack.
++     */
++    public function __construct(RequestStack $requestStack)
++    {
++        $this->requestStack = $requestStack;
++    }
++
++    /**
++     * {@inheritdoc}
++     */
++    public static function create(ContainerInterface $container)
++    {
++        $instance = parent::create($container);
++        return new static(
++            $instance->fileSystem = $container->get('file_system'),
++            $container->get('request_stack')
++        );
+     }
+-    $form['local_file'] = [
+-      '#type' => 'file',
+-      '#title' => $this->t('Local file'),
+-      '#description' => $this->t('Choose the local file to uploading'),
+-    ];
+-
+-    $form['description'] = [
+-      '#type' => 'textarea',
+-      '#title' => $this->t('Document description'),
+-      '#description' => $this->t('Enter the document description'),
+-      '#default_value' => $form_state->getValue('description'),
+-    ];
+-
+-    $form['config'] = [
+-      '#type' => 'hidden',
+-      '#default_value' => $this->getRouteMatch()->getParameter('config'),
+-    ];
+-
+-    $form['folder_id'] = [
+-      '#type' => 'hidden',
+-      '#default_value' => $this->getRouteMatch()->getParameter('folder_id'),
+-    ];
+-
+-    $form['actions']['submit'] = [
+-      '#type' => 'submit',
+-      '#value' => $this->t('Upload'),
+-    ];
+-
+-    return $form;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function submitForm(array &$form, FormStateInterface $form_state) {
+-    $values = $form_state->getValues();
+-    $form_state->setRedirect(
+-        'cmis.cmis_repository_controller_browser', ['config' => $values['config'], 'folder_id' => $values['folder_id']]
+-    );
+-    $directory = $this->fileSystem->getTempDirectory();
+-
+-    $filename = $directory . '/' . $_FILES['files']['name']['local_file'];
+-    if (!is_uploaded_file($_FILES['files']['tmp_name']['local_file']) || !copy($_FILES['files']['tmp_name']['local_file'], $filename)) {
+-      // Can't create file.
+-      $this->messenger()->addWarning($this->t('File can not be uploaded.'));
+-      return;
++
++    /**
++     * Get Form Id.
++     *
++     * @return int
++     *   The int.
++     */
++    public function getFormId()
++    {
++        return 'cmis_browser_document_upload_form';
++    }
++
++    /**
++     * Defines form and form state interface and build form.
++     *
++     * Build the form using $form varibale using.
++     *
++     * @param array $form Build the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Build the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function buildForm(array $form, FormStateInterface $form_state)
++    {
++        $directory = $this->fileSystem->getTempDirectory();
++
++        $directory_is_writable = is_writable($directory);
++        if (!$directory_is_writable) {
++            $this->messenger()->addError($this->t('The directory %directory is not writable.', ['%directory' => $directory]));
++        }
++        $form['local_file'] = [
++        '#type' => 'file',
++        '#title' => $this->t('Local file'),
++        '#description' => $this->t('Choose the local file to uploading'),
++        ];
++
++        $form['description'] = [
++        '#type' => 'textarea',
++        '#title' => $this->t('Document description'),
++        '#description' => $this->t('Enter the document description'),
++        '#default_value' => $form_state->getValue('description'),
++        ];
++
++        $form['config'] = [
++        '#type' => 'hidden',
++        '#default_value' => $this->getRouteMatch()->getParameter('config'),
++        ];
++
++        $form['folder_id'] = [
++        '#type' => 'hidden',
++        '#default_value' => $this->getRouteMatch()->getParameter('folder_id'),
++        ];
++
++        $form['actions']['submit'] = [
++        '#type' => 'submit',
++        '#value' => $this->t('Upload'),
++        ];
++
++        return $form;
+     }
+ 
+-    // Open repository.
+-    if ($repository = new CmisRepositoryController($values['config'], $values['folder_id'])) {
+-      if (!empty($repository->getBrowser()->getConnection()->validObjectName($_FILES['files']['name']['local_file'], 'cmis:document', $values['folder_id']))) {
+-        // Document exists. Delete file from local.
+-        unlink($filename);
+-        $this->messenger()->addWarning($this->t('The document name @name exists in folder.', ['@name' => $_FILES['files']['name']['local_file']]));
+-        return;
+-      }
+-
+-      $session = $repository->getBrowser()->getConnection()->getSession();
+-      $properties = [
+-        PropertyIds::OBJECT_TYPE_ID => 'cmis:document',
+-        PropertyIds::NAME => $_FILES['files']['name']['local_file'],
+-      ];
+-      if (!empty($values['description'])) {
+-        $properties[PropertyIds::DESCRIPTION] = $values['description'];
+-      }
+-
+-      // Create document.
+-      try {
+-        $session->createDocument(
+-          $properties,
+-          $session->createObjectId($values['folder_id']),
+-          Stream::factory(fopen($filename, 'r'))
++    /**
++     * Submit the form using $form varibale using.
++     *
++     * @param array $form Submit the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Submit the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function submitForm(array &$form, FormStateInterface $form_state)
++    {
++        $values = $form_state->getValues();
++        $form_state->setRedirect(
++            'cmis.cmis_repository_controller_browser', ['config' => $values['config'], 'folder_id' => $values['folder_id']]
+         );
+-        // Delete file from local.
+-        unlink($filename);
+-        $this->messenger()->addStatus($this->t('Document name @name has been created.', ['@name' => $_FILES['files']['name']['local_file']]));
+-      }
+-      catch (Exception $exception) {
+-        $this->messenger()->addWarning($this->t('Document name @name could not be created.', ['@name' => $_FILES['files']['name']['local_file']]));
+-      }
++        $directory = $this->fileSystem->getTempDirectory();
++
++        $filename = $directory . '/' . $this->requestStack->getCurrentRequest()->files->get('files');
++        if (!is_uploaded_file($this->requestStack->getCurrentRequest()->files->get('files') || !copy($this->requestStack->getCurrentRequest()->files->get('files')) {
++            // Can't create file.
++            $this->messenger()->addWarning($this->t('File can not be uploaded.'));
++            return;
++        }
++
++        // Open repository.
++        if ($repository = new CmisRepositoryController($values['config'], $values['folder_id'])) {
++            if (!empty($repository->getBrowser()->getConnection()->validObjectName($this->requestStack->getCurrentRequest()->files->get('files'), 'cmis:document', $values['folder_id']))) {
++                // Document exists. Delete file from local.
++                unlink($filename);
++                $this->messenger()->addWarning($this->t('The document name @name exists in folder.', ['@name' => $this->requestStack->getCurrentRequest()->files->get('files')));
++                return;
++            }
++
++            $session = $repository->getBrowser()->getConnection()->getSession();
++            $properties = [
++            PropertyIds::OBJECT_TYPE_ID => 'cmis:document',
++            PropertyIds::NAME => $this->requestStack->getCurrentRequest()->files->get('files'),
++            ];
++            if (!empty($values['description'])) {
++                $properties[PropertyIds::DESCRIPTION] = $values['description'];
++            }
++
++            // Create document.
++            try {
++                $session->createDocument(
++                    $properties,
++                    $session->createObjectId($values['folder_id']),
++                    Stream::factory(fopen($filename, 'r'))
++                );
++                // Delete file from local.
++                unlink($filename);
++                $this->messenger()->addStatus($this->t('Document name @name has been created.', ['@name' => $this->requestStack->getCurrentRequest()->files->get('files')));
++            }
++            catch (Exception $exception) {
++                $this->messenger()->addWarning($this->t('Document name @name could not be created.', ['@name' => $this->requestStack->getCurrentRequest()->files->get('files')));
++            }
++        }
+     }
+-  }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Form/CmisConnectionEntityDeleteForm.php b/modules/contrib/cmis/src/Form/CmisConnectionEntityDeleteForm.php
+index 3f8f2f0..f8c4868 100644
+--- a/modules/contrib/cmis/src/Form/CmisConnectionEntityDeleteForm.php
++++ b/modules/contrib/cmis/src/Form/CmisConnectionEntityDeleteForm.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Form;
+@@ -10,43 +26,78 @@
+ 
+ /**
+  * Builds the form to delete CMIS connection entities.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis\Form
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisConnectionEntityDeleteForm extends EntityConfirmFormBase {
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getQuestion() {
+-    return $this->t('Are you sure you want to delete %name?', ['%name' => $this->entity->label()]);
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getCancelUrl() {
+-    return new Url('entity.cmis_connection_entity.collection');
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getConfirmText() {
+-    return $this->t('Delete');
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function submitForm(array &$form, FormStateInterface $form_state) {
+-    $this->entity->delete();
+-    $this->messenger()->addStatus($this->t('content @type: deleted @label.',
+-      [
+-        '@type' => $this->entity->bundle(),
+-        '@label' => $this->entity->label(),
+-      ]
+-    ));
+-
+-    $form_state->setRedirectUrl($this->getCancelUrl());
+-  }
++class CmisConnectionEntityDeleteForm extends EntityConfirmFormBase
++{
++
++    /**
++     * Get Questions.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getQuestion()
++    {
++        return $this->t('Are you sure you want to delete %name?', ['%name' => $this->entity->label()]);
++    }
++
++    /**
++     * Get Cancel Url.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getCancelUrl()
++    {
++        return new Url('entity.cmis_connection_entity.collection');
++    }
++
++    /**
++     * Get Confirm Text.
++     *
++     * @return string
++     *   The string.
++     */
++    public function getConfirmText()
++    {
++        return $this->t('Delete');
++    }
++
++    /**
++     * Submit the form using $form varibale using.
++     *
++     * @param array $form Submit the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Submit the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function submitForm(array &$form, FormStateInterface $form_state)
++    {
++        $this->entity->delete();
++        $this->messenger()->addStatus(
++            $this->t(
++                'content @type: deleted @label.',
++                [
++                '@type' => $this->entity->bundle(),
++                '@label' => $this->entity->label(),
++                ]
++            )
++        );
++
++        $form_state->setRedirectUrl($this->getCancelUrl());
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Form/CmisConnectionEntityForm.php b/modules/contrib/cmis/src/Form/CmisConnectionEntityForm.php
+index 52c9c06..18dc26d 100644
+--- a/modules/contrib/cmis/src/Form/CmisConnectionEntityForm.php
++++ b/modules/contrib/cmis/src/Form/CmisConnectionEntityForm.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Form;
+@@ -10,101 +26,136 @@
+ /**
+  * Class CmisConnectionEntityForm.
+  *
++ * @category Module
++ *
+  * @package Drupal\cmis\Form
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisConnectionEntityForm extends EntityForm {
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function form(array $form, FormStateInterface $form_state) {
+-    $form = parent::form($form, $form_state);
+-
+-    $cmis_connection_entity = $this->entity;
+-    $form['label'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('Label'),
+-      '#maxlength' => 255,
+-      '#default_value' => $cmis_connection_entity->label(),
+-      '#description' => $this->t('Label for the CMIS connection.'),
+-      '#required' => TRUE,
+-    ];
+-
+-    $form['id'] = [
+-      '#type' => 'machine_name',
+-      '#default_value' => $cmis_connection_entity->id(),
+-      '#machine_name' => [
++class CmisConnectionEntityForm extends EntityForm
++{
++
++    /**
++     * Defines form and form state interface and build form.
++     *
++     * Build the form using $form varibale using.
++     *
++     * @param array $form Build the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Build the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function form(array $form, FormStateInterface $form_state)
++    {
++        $form = parent::form($form, $form_state);
++
++        $cmis_connection_entity = $this->entity;
++        $form['label'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('Label'),
++        '#maxlength' => 255,
++        '#default_value' => $cmis_connection_entity->label(),
++        '#description' => $this->t('Label for the CMIS connection.'),
++        '#required' => true,
++        ];
++
++        $form['id'] = [
++        '#type' => 'machine_name',
++        '#default_value' => $cmis_connection_entity->id(),
++        '#machine_name' => [
+         'exists' => '\Drupal\cmis\Entity\CmisConnectionEntity::load',
+-      ],
+-      '#disabled' => !$cmis_connection_entity->isNew(),
+-    ];
+-
+-    $form['cmis_url'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('CMIS browser url'),
+-      '#maxlength' => 255,
+-      '#default_value' => $cmis_connection_entity->getCmisUrl(),
+-      '#description' => $this->t('Enter CMIS browser url.'),
+-      '#required' => TRUE,
+-    ];
+-
+-    $form['cmis_user'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('CMIS user'),
+-      '#maxlength' => 255,
+-      '#default_value' => $cmis_connection_entity->getCmisUser(),
+-      '#description' => $this->t('Enter CMIS user name.'),
+-      '#required' => TRUE,
+-    ];
+-
+-    $form['cmis_password'] = [
+-      '#type' => 'password',
+-      '#title' => $this->t('CMIS password'),
+-      '#maxlength' => 255,
+-      '#default_value' => $cmis_connection_entity->getCmisPassword(),
+-      '#description' => $this->t('Enter CMIS password.'),
+-      '#required' => TRUE,
+-    ];
+-
+-    $form['cmis_repository'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('CMIS repository id'),
+-      '#maxlength' => 255,
+-      '#default_value' => $cmis_connection_entity->getCmisRepository(),
+-      '#description' => $this->t('Enter CMIS repository id. If empty the first repository will be used'),
+-      '#required' => FALSE,
+-    ];
+-
+-    $form['cmis_cacheable'] = [
+-      '#type' => 'checkbox',
+-      '#title' => $this->t('CMIS cacheable'),
+-      '#default_value' => $cmis_connection_entity->getCmisCacheable(),
+-      '#description' => $this->t('Check if repository will be cacheable'),
+-      '#required' => FALSE,
+-    ];
+-    return $form;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function save(array $form, FormStateInterface $form_state) {
+-    $cmis_connection_entity = $this->entity;
+-    $status = $cmis_connection_entity->save();
+-
+-    switch ($status) {
+-      case SAVED_NEW:
+-        $this->messenger()->addStatus($this->t('Created the %label CMIS connection.', [
+-          '%label' => $cmis_connection_entity->label(),
+-        ]));
+-        break;
+-
+-      default:
+-        $this->messenger()->addStatus($this->t('Saved the %label CMIS connection.', [
+-          '%label' => $cmis_connection_entity->label(),
+-        ]));
++        ],
++        '#disabled' => !$cmis_connection_entity->isNew(),
++        ];
++
++        $form['cmis_url'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('CMIS browser url'),
++        '#maxlength' => 255,
++        '#default_value' => $cmis_connection_entity->getCmisUrl(),
++        '#description' => $this->t('Enter CMIS browser url.'),
++        '#required' => true,
++        ];
++
++        $form['cmis_user'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('CMIS user'),
++        '#maxlength' => 255,
++        '#default_value' => $cmis_connection_entity->getCmisUser(),
++        '#description' => $this->t('Enter CMIS user name.'),
++        '#required' => true,
++        ];
++
++        $form['cmis_password'] = [
++        '#type' => 'password',
++        '#title' => $this->t('CMIS password'),
++        '#maxlength' => 255,
++        '#default_value' => $cmis_connection_entity->getCmisPassword(),
++        '#description' => $this->t('Enter CMIS password.'),
++        '#required' => true,
++        ];
++
++        $form['cmis_repository'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('CMIS repository id'),
++        '#maxlength' => 255,
++        '#default_value' => $cmis_connection_entity->getCmisRepository(),
++        '#description' => $this->t('Enter CMIS repository id. If empty the first repository will be used'),
++        '#required' => false,
++        ];
++
++        $form['cmis_cacheable'] = [
++        '#type' => 'checkbox',
++        '#title' => $this->t('CMIS cacheable'),
++        '#default_value' => $cmis_connection_entity->getCmisCacheable(),
++        '#description' => $this->t('Check if repository will be cacheable'),
++        '#required' => false,
++        ];
++        return $form;
++    }
++
++    /**
++     * Save the form using $form varibale using.
++     *
++     * @param array $form Save the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Save the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function save(array $form, FormStateInterface $form_state)
++    {
++        $cmis_connection_entity = $this->entity;
++        $status = $cmis_connection_entity->save();
++
++        switch ($status) {
++        case SAVED_NEW:
++            $this->messenger()->addStatus(
++                $this->t(
++                    'Created the %label CMIS connection.', [
++                    '%label' => $cmis_connection_entity->label(),
++                    ]
++                )
++            );
++            break;
++
++        default:
++            $this->messenger()->addStatus(
++                $this->t(
++                    'Saved the %label CMIS connection.', [
++                    '%label' => $cmis_connection_entity->label(),
++                    ]
++                )
++            );
++        }
++        $form_state->setRedirectUrl($cmis_connection_entity->toUrl('collection'));
+     }
+-    $form_state->setRedirectUrl($cmis_connection_entity->toUrl('collection'));
+-  }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Form/CmisCreateFolderForm.php b/modules/contrib/cmis/src/Form/CmisCreateFolderForm.php
+index cd59690..aa58ed9 100644
+--- a/modules/contrib/cmis/src/Form/CmisCreateFolderForm.php
++++ b/modules/contrib/cmis/src/Form/CmisCreateFolderForm.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Form;
+@@ -8,96 +24,177 @@
+ use Drupal\cmis\Controller\CmisRepositoryController;
+ use Drupal\Core\Form\FormBase;
+ use Drupal\Core\Form\FormStateInterface;
++use Drupal\Core\StringTranslation\StringTranslationTrait;
++use Drupal\Core\StringTranslation\TranslationInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Class CmisCreateFolder.
+  *
++ * @category Module
++ *
+  * @package Drupal\cmis\Form
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisCreateFolderForm extends FormBase {
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getFormId() {
+-    return 'cmis_create_folder';
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function buildForm(array $form, FormStateInterface $form_state) {
+-    $form['folder_name'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('Folder name'),
+-      '#description' => $this->t('Enter the new folder name'),
+-      '#maxlength' => 255,
+-      '#size' => 64,
+-      '#required' => TRUE,
+-    ];
+-
+-    $form['folder_description'] = [
+-      '#type' => 'textarea',
+-      '#title' => $this->t('Folder description'),
+-      '#description' => $this->t('Enter the folder description'),
+-    ];
+-
+-    $form['config'] = [
+-      '#type' => 'hidden',
+-      '#default_value' => $this->getRouteMatch()->getParameter('config'),
+-    ];
+-
+-    $form['folder_id'] = [
+-      '#type' => 'hidden',
+-      '#default_value' => $this->getRouteMatch()->getParameter('folder_id'),
+-    ];
+-
+-    $form['operation']['submit'] = [
+-      '#type' => 'submit',
+-      '#value' => $this->t('Create folder'),
+-    ];
+-
+-    return $form;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function submitForm(array &$form, FormStateInterface $form_state) {
+-    $values = $form_state->getValues();
+-    $form_state->setRedirect('cmis.cmis_repository_controller_browser', [
+-      'config' => $values['config'],
+-      'folder_id' => $values['folder_id'],
+-    ]);
+-    if (!empty($values['folder_name'])) {
+-      $repository = new CmisRepositoryController($values['config'], $values['folder_id']);
+-      if (!empty($repository->getBrowser()->getConnection()->validObjectName($values['folder_name'], 'cmis:folder', $values['folder_id']))) {
+-        $this->messenger()->addWarning($this->t('The folder name @folder_name exists in folder.', [
+-          '@folder_name' => $values['folder_name'],
+-        ]));
+-        return;
+-      }
+-      $session = $repository->getBrowser()->getConnection()->getSession();
+-      $properties = [
+-        PropertyIds::OBJECT_TYPE_ID => 'cmis:folder',
+-        PropertyIds::NAME => $values['folder_name'],
+-      ];
+-      if (!empty($values['folder_description'])) {
+-        $properties[PropertyIds::DESCRIPTION] = $values['folder_description'];
+-      }
+-
+-      try {
+-        $session->createFolder($properties, $session->createObjectId($values['folder_id']));
+-        $this->messenger()->addStatus($this->t('The folder name @folder_name has been created.', [
+-          '@folder_name' => $values['folder_name'],
+-        ]));
+-      }
+-      catch (Exception $exception) {
+-        $this->messenger()->addWarning($this->t('Impossible to create fhe folder name @folder_name.', [
+-          '@folder_name' => $values['folder_name'],
+-        ]));
+-      }
++class CmisCreateFolderForm extends FormBase
++{
++
++    use StringTranslationTrait;
++
++    /**
++     * The string translation information.
++     *
++     * @var Drupal\Core\StringTranslation\TranslationInterface
++     */
++    protected $stringTranslation;
++
++    /**
++     * Contruct method.
++     *
++     * @param Drupal\Core\StringTranslation\TranslationInterface $string_translation The string translation information.
++     */
++    public function __construct(TranslationInterface $string_translation)
++    {
++        $this->stringTranslation = $string_translation;
++    }
++
++    /**
++     * The container Interface.
++     *
++     * @param $container The container variable.
++     *
++     * @return object 
++     *   The object.
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('string_translation')
++        );
++    }
++
++    /**
++     * Get Form Id.
++     *
++     * @return int
++     *   The int.
++     */
++    public function getFormId()
++    {
++        return 'cmis_create_folder';
++    }
++
++    /**
++     * Defines form and form state interface and build form.
++     *
++     * Build the form using $form varibale using.
++     *
++     * @param array $form Build the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Build the form using $form_state interface.
++     *
++     * @return array
++     */
++    public function buildForm(array $form, FormStateInterface $form_state)
++    {
++        $form['folder_name'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('Folder name'),
++        '#description' => $this->t('Enter the new folder name'),
++        '#maxlength' => 255,
++        '#size' => 64,
++        '#required' => true,
++        ];
++
++        $form['folder_description'] = [
++        '#type' => 'textarea',
++        '#title' => $this->t('Folder description'),
++        '#description' => $this->t('Enter the folder description'),
++        ];
++
++        $form['config'] = [
++        '#type' => 'hidden',
++        '#default_value' => $this->getRouteMatch()->getParameter('config'),
++        ];
++
++        $form['folder_id'] = [
++        '#type' => 'hidden',
++        '#default_value' => $this->getRouteMatch()->getParameter('folder_id'),
++        ];
++
++        $form['operation']['submit'] = [
++        '#type' => 'submit',
++        '#value' => $this->t('Create folder'),
++        ];
++
++        return $form;
++    }
++
++    /**
++     * Submit the form using $form varibale using.
++     *
++     * @param array $form Submit the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Submit the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function submitForm(array &$form, FormStateInterface $form_state)
++    {
++        $values = $form_state->getValues();
++        $form_state->setRedirect(
++            'cmis.cmis_repository_controller_browser', [
++            'config' => $values['config'],
++            'folder_id' => $values['folder_id'],
++            ]
++        );
++        if (!empty($values['folder_name'])) {
++            $repository = new CmisRepositoryController($values['config'], $values['folder_id']);
++            if (!empty($repository->getBrowser()->getConnection()->validObjectName($values['folder_name'], 'cmis:folder', $values['folder_id']))) {
++                $this->messenger()->addWarning(
++                    $this->t(
++                        'The folder name @folder_name exists in folder.', [
++                        '@folder_name' => $values['folder_name'],
++                        ]
++                    )
++                );
++                return;
++            }
++            $session = $repository->getBrowser()->getConnection()->getSession();
++            $properties = [
++            PropertyIds::OBJECT_TYPE_ID => 'cmis:folder',
++            PropertyIds::NAME => $values['folder_name'],
++            ];
++            if (!empty($values['folder_description'])) {
++                $properties[PropertyIds::DESCRIPTION] = $values['folder_description'];
++            }
++
++            try {
++                $session->createFolder($properties, $session->createObjectId($values['folder_id']));
++                $this->messenger()->addStatus(
++                    $this->t(
++                        'The folder name @folder_name has been created.', [
++                        '@folder_name' => $values['folder_name'],
++                        ]
++                    )
++                );
++            }
++            catch (Exception $exception) {
++                $this->messenger()->addWarning(
++                    $this->t(
++                        'Impossible to create fhe folder name @folder_name.', [
++                        '@folder_name' => $values['folder_name'],
++                        ]
++                    )
++                );
++            }
++        }
+     }
+-  }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Form/CmisQueryForm.php b/modules/contrib/cmis/src/Form/CmisQueryForm.php
+index d40d119..72ad929 100644
+--- a/modules/contrib/cmis/src/Form/CmisQueryForm.php
++++ b/modules/contrib/cmis/src/Form/CmisQueryForm.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Form;
+@@ -8,192 +24,261 @@
+ use Drupal\Core\Form\FormBase;
+ use Drupal\Core\Form\FormStateInterface;
+ use Drupal\cmis\CmisElement;
++use Drupal\Core\StringTranslation\StringTranslationTrait;
++use Drupal\Core\StringTranslation\TranslationInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Class CmisQueryForm.
+  *
++ * @category Module
++ *
+  * @package Drupal\cmis\Form
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
+  */
+-class CmisQueryForm extends FormBase {
+-
+-  /**
+-   * Configuration ID.
+-   *
+-   * @var string
+-   */
+-  protected $config;
+-
+-  /**
+-   * Connection object.
+-   *
+-   * @var object
+-   */
+-  protected $connection;
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function getFormId() {
+-    return 'cmis_query_form';
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function buildForm(array $form, FormStateInterface $form_state) {
+-    $parameters = $this->getRequest()->query->all();
+-    unset($parameters['type']);
+-    $configuration_options = cmis_get_configurations();
+-    unset($configuration_options['_none']);
+-    $first_config = reset($configuration_options);
+-    $input = $form_state->getUserInput();
+-    $user_inputs = array_merge($parameters, $input);
+-    if (!empty($user_inputs)) {
+-      $form_state->setUserInput($user_inputs);
++class CmisQueryForm extends FormBase
++{
++    
++    use StringTranslationTrait;
++
++    /**
++     * Configuration ID.
++     *
++     * @var string
++     */
++    protected $config;
++
++    /**
++     * Connection object.
++     *
++     * @var object
++     */
++    protected $connection;
++
++    /**
++     * The string translation information.
++     *
++     * @var Drupal\Core\StringTranslation\TranslationInterface
++     */
++    protected $stringTranslation;
++
++    /**
++     * Creates a new instance.
++     *
++     * @param Drupal\Core\StringTranslation\TranslationInterface $string_translation The string translation information.
++     */
++    public function __construct(TranslationInterface $string_translation)
++    {
++        $this->stringTranslation = $string_translation;
+     }
+-    $input = $user_inputs;
+-
+-    $form['config'] = [
+-      '#type' => 'select',
+-      '#title' => $this->t('Configuration'),
+-      '#description' => $this->t('Select the configuration for repository.'),
+-      '#options' => $configuration_options,
+-      '#default_value' => !empty($input['config']) ? $input['config'] : key($first_config),
+-    ];
+-
+-    $form['query_string'] = [
+-      '#type' => 'textarea',
+-      '#title' => $this->t('Query string'),
+-      '#description' => $this->t('Enter a valid CMIS query.'),
+-      '#default_value' => !empty($input['query_string']) ? $input['query_string'] : '',
+-    ];
+-
+-    $form['actions']['submit'] = [
+-      '#type' => 'submit',
+-      '#value' => $this->t('Run'),
+-      '#ajax' => [
++
++    /**
++     * The container Interface.
++     *
++     * @param $container The container variable.
++     *
++     * @return object
++     *   The object. 
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('string_translation')
++        );
++    }
++    
++    /**
++     * {@inheritdoc}
++     *
++     * @return int
++     *   The int.
++     */
++    public function getFormId()
++    {
++        return 'cmis_query_form';
++    }
++
++    /**
++     * Defines form and form state interface and build form.
++     *
++     * Build the form using $form varibale using.
++     *
++     * @param array $form Build the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Build the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function buildForm(array $form, FormStateInterface $form_state)
++    {
++        $parameters = $this->getRequest()->query->all();
++        unset($parameters['type']);
++        $configuration_options = cmis_get_configurations();
++        unset($configuration_options['_none']);
++        $first_config = reset($configuration_options);
++        $input = $form_state->getUserInput();
++        $user_inputs = array_merge($parameters, $input);
++        if (!empty($user_inputs)) {
++            $form_state->setUserInput($user_inputs);
++        }
++        $input = $user_inputs;
++
++        $form['config'] = [
++        '#type' => 'select',
++        '#title' => $this->t('Configuration'),
++        '#description' => $this->t('Select the configuration for repository.'),
++        '#options' => $configuration_options,
++        '#default_value' => !empty($input['config']) ? $input['config'] : key($first_config),
++        ];
++
++        $form['query_string'] = [
++        '#type' => 'textarea',
++        '#title' => $this->t('Query string'),
++        '#description' => $this->t('Enter a valid CMIS query.'),
++        '#default_value' => !empty($input['query_string']) ? $input['query_string'] : '',
++        ];
++
++        $form['actions']['submit'] = [
++        '#type' => 'submit',
++        '#value' => $this->t('Run'),
++        '#ajax' => [
+         'callback' => '::ajaxGetResult',
+         'wrapper' => 'query-result-wrapper',
+-      ],
+-    ];
+-
+-    $result = '';
+-    if (
+-      !empty($input['query_string']) &&
+-      !empty($input['config'])
+-    ) {
+-      $this->config = $input['config'];
+-      if (empty($this->connection)) {
+-        $this->connection = new CmisConnectionApi($this->config);
+-      }
+-      if (!empty($this->connection->getHttpInvoker())) {
+-        $result = $this->queryExec($this->config, $input['query_string']);
+-      }
+-    }
++        ],
++        ];
+ 
+-    $form['result'] = [
+-      '#markup' => $result,
+-      '#prefix' => '<div id="query-result-wrapper">',
+-      '#suffix' => '</div>',
+-    ];
+-
+-    return $form;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function submitForm(array &$form, FormStateInterface $form_state) {
+-    // No submit handling here.
+-  }
+-
+-  /**
+-   * Execute query string.
+-   *
+-   * @param string $config
+-   * @param string $query
+-   *
+-   * @return string
+-   */
+-  public function queryExec($config = '', $query = '') {
+-    $content = '';
+-    if (empty($config)) {
+-      if (!empty($this->config)) {
+-        $config = $this->config;
+-      }
+-      else {
+-        return $content;
+-      }
++        $result = '';
++        if (!empty($input['query_string']) 
++            && !empty($input['config'])
++        ) {
++            $this->config = $input['config'];
++            if (empty($this->connection)) {
++                $this->connection = new CmisConnectionApi($this->config);
++            }
++            if (!empty($this->connection->getHttpInvoker())) {
++                $result = $this->queryExec($this->config, $input['query_string']);
++            }
++        }
++
++        $form['result'] = [
++        '#markup' => $result,
++        '#prefix' => '<div id="query-result-wrapper">',
++        '#suffix' => '</div>',
++        ];
++
++        return $form;
+     }
+ 
+-    if (!empty($query)) {
+-      $this->connection->setDefaultParameters();
+-      $session = $this->connection->getSession();
+-      $results = $session->query($query);
+-      $content = $this->prepareResult($results, $query);
++    /**
++     * Submit the form using $form varibale using.
++     *
++     * @param array $form Submit the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Submit the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function submitForm(array &$form, FormStateInterface $form_state)
++    {
++        // No submit handling here.
+     }
+ 
+-    return $content;
+-  }
+-
+-  /**
+-   * Prepare results to rendered table.
+-   *
+-   * @param array $results
+-   * @param query
+-   *
+-   * @return string
+-   */
+-  private function prepareResult(array $results, $query) {
+-    $content = '';
+-    $rows = [];
+-    $table_header = [
+-      $this->t('Name'),
+-      $this->t('Details'),
+-      $this->t('Author'),
+-      $this->t('Created'),
+-      $this->t('Description'),
+-      $this->t('Operation'),
+-    ];
+-    $root = $this->connection->getRootFolder();
+-    $element = new CmisElement($this->config, FALSE, NULL, $query, $root->getId());
+-    if ($session = $this->connection->getSession()) {
+-      foreach ($results as $result) {
+-        $id = $result->getPropertyValueById('cmis:objectId');
+-        $cid = $session->createObjectId($id);
+-        if ($object = $session->getObject($cid)) {
+-          $element->setElement('query', $object);
+-          $rows[] = $element->getData();
++    /**
++     * Execute query string.
++     *
++     * @param string $config The configuration.
++     * @param string $query  The query.
++     *
++     * @return string
++     *   The string.
++     */
++    public function queryExec($config = '', $query = '')
++    {
++        $content = '';
++        if (empty($config)) {
++            if (!empty($this->config)) {
++                $config = $this->config;
++            } else {
++                return $content;
++            }
++        }
++
++        if (!empty($query)) {
++            $this->connection->setDefaultParameters();
++            $session = $this->connection->getSession();
++            $results = $session->query($query);
++            $content = $this->prepareResult($results, $query);
+         }
+-      }
+ 
+-      if (!empty($rows)) {
+-        $table = [
+-          '#theme' => 'cmis_browser',
+-          '#header' => $table_header,
+-          '#elements' => $rows,
++        return $content;
++    }
++
++    /**
++     * Prepare results to rendered table.
++     *
++     * @param array  $results The results.
++     * @param string $query   The query.
++     *
++     * @return string
++     *   The string.
++     */
++    private function prepareResult(array $results, $query)
++    {
++        $content = '';
++        $rows = [];
++        $table_header = [
++        $this->t('Name'),
++        $this->t('Details'),
++        $this->t('Author'),
++        $this->t('Created'),
++        $this->t('Description'),
++        $this->t('Operation'),
+         ];
++        $root = $this->connection->getRootFolder();
++        $element = new CmisElement($this->config, false, null, $query, $root->getId());
++        if ($session = $this->connection->getSession()) {
++            foreach ($results as $result) {
++                $id = $result->getPropertyValueById('cmis:objectId');
++                $cid = $session->createObjectId($id);
++                if ($object = $session->getObject($cid)) {
++                    $element->setElement('query', $object);
++                    $rows[] = $element->getData();
++                }
++            }
+ 
+-        $content = render($table);
+-      }
++            if (!empty($rows)) {
++                $table = [
++                '#theme' => 'cmis_browser',
++                '#header' => $table_header,
++                '#elements' => $rows,
++                ];
++
++                $content = render($table);
++            }
++        }
++
++        return $content;
+     }
+ 
+-    return $content;
+-  }
+-
+-  /**
+-   * Submit button ajax callback.
+-   *
+-   * @param array $form
+-   *   The form array.
+-   * @param \Drupal\Core\Form\FormStateInterface $form_state
+-   *   The form state object.
+-   *
+-   * @return array
+-   *   Subform.
+-   */
+-  public function ajaxGetResult(array &$form, FormStateInterface $form_state) {
+-    return $form['result'];
+-  }
++    /**
++     * Submit button ajax callback.
++     *
++     * @param array $form The form array.
++     * @param Drupal\Core\Form\FormStateInterface $form_state The form state object.
++     *
++     * @return array
++     *   Subform.
++     */
++    public function ajaxGetResult(array &$form, FormStateInterface $form_state)
++    {
++        return $form['result'];
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Plugin/Field/FieldFormatter/CmisFieldLink.php b/modules/contrib/cmis/src/Plugin/Field/FieldFormatter/CmisFieldLink.php
+index 66f5b7e..48a485a 100644
+--- a/modules/contrib/cmis/src/Plugin/Field/FieldFormatter/CmisFieldLink.php
++++ b/modules/contrib/cmis/src/Plugin/Field/FieldFormatter/CmisFieldLink.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Plugin\Field\FieldFormatter;
+@@ -21,38 +37,62 @@
+  *   }
+  * )
+  */
+-class CmisFieldLink extends FormatterBase {
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function viewElements(FieldItemListInterface $items, $langcode) {
+-    $elements = [];
++/**
++ * Class CmisFieldLink.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis\Plugin\Field\FieldFormatter
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
++ */
++class CmisFieldLink extends FormatterBase
++{
+ 
+-    foreach ($items as $delta => $item) {
+-      $elements[$delta] = $this->viewValue($item);
+-    }
++    /**
++     * View Elements.
++     *
++     * @param Drupal\Core\Field\FieldItemListInterface $items The field item list interface.
++     * @param string $langcode The langiage code.
++     *
++     * @return array
++     *   The textual output generated.
++     */
++    public function viewElements(FieldItemListInterface $items, $langcode)
++    {
++        $elements = [];
++
++        foreach ($items as $delta => $item) {
++            $elements[$delta] = $this->viewValue($item);
++        }
+ 
+-    return $elements;
+-  }
+-
+-  /**
+-   * Generate the output appropriate for one field item.
+-   *
+-   * @param \Drupal\Core\Field\FieldItemInterface $item
+-   *   One field item.
+-   *
+-   * @return array
+-   *   The textual output generated.
+-   */
+-  protected function viewValue(FieldItemInterface $item) {
+-    $url = Url::fromUserInput($item->get('path')->getValue());
+-    if (empty($url)) {
+-      return [];
++        return $elements;
+     }
+-    $path = Link::fromTextAndUrl($item->get('title')->getValue(), $url)->toRenderable();
+ 
+-    return $path;
+-  }
++    /**
++     * Generate the output appropriate for one field item.
++     *
++     * @param \Drupal\Core\Field\FieldItemInterface $item One field item.
++     *
++     * @return array
++     *   The textual output generated.
++     */
++    protected function viewValue(FieldItemInterface $item)
++    {
++        $url = Url::fromUserInput($item->get('path')->getValue());
++        if (empty($url)) {
++            return [];
++        }
++        $path = Link::fromTextAndUrl($item->get('title')->getValue(), $url)->toRenderable();
++
++        return $path;
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Plugin/Field/FieldType/CmisField.php b/modules/contrib/cmis/src/Plugin/Field/FieldType/CmisField.php
+index 568545c..b7f6163 100644
+--- a/modules/contrib/cmis/src/Plugin/Field/FieldType/CmisField.php
++++ b/modules/contrib/cmis/src/Plugin/Field/FieldType/CmisField.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Plugin\Field\FieldType;
+@@ -19,14 +35,37 @@
+  *   default_formatter = "cmis_field_link"
+  * )
+  */
+-class CmisField extends FieldItemBase {
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public static function schema(FieldStorageDefinitionInterface $field_definition) {
+-    return [
+-      'columns' => [
++/**
++ * Class CmisField.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis\Plugin\Field\FieldType
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
++ */
++class CmisField extends FieldItemBase
++{
++
++    /**
++     * Defines schema.
++     *
++     * @param Drupal\Core\Field\FieldStorageDefinitionInterface $field_definition The field definition.
++     *
++     * @return array
++     *   The array.
++     */
++    public static function schema(FieldStorageDefinitionInterface $field_definition)
++    {
++        return [
++        'columns' => [
+         'title' => [
+           'type' => 'varchar',
+           'length' => 255,
+@@ -35,33 +74,43 @@ public static function schema(FieldStorageDefinitionInterface $field_definition)
+           'type' => 'varchar',
+           'length' => 255,
+         ],
+-      ],
+-    ];
+-  }
++        ],
++        ];
++    }
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function isEmpty() {
+-    $value1 = $this->get('title')->getValue();
+-    $value2 = $this->get('path')->getValue();
+-    return empty($value1) && empty($value2);
+-  }
++    /**
++     * Defines isEmpty.
++     *
++     * @return array
++     *   The array.
++     */
++    public function isEmpty()
++    {
++        $value1 = $this->get('title')->getValue();
++        $value2 = $this->get('path')->getValue();
++        return empty($value1) && empty($value2);
++    }
+ 
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
+-    // Add our properties.
+-    $properties['title'] = DataDefinition::create('string')
+-      ->setLabel(t('Title'))
+-      ->setDescription(t('The title of CMIS object.'));
++    /**
++     * Defines propertyDefinitions.
++     *
++     * @param Drupal\Core\Field\FieldStorageDefinitionInterface $field_definition The field definition.
++     *
++     * @return array
++     *   The array.
++     */
++    public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition)
++    {
++        // Add our properties.
++        $properties['title'] = DataDefinition::create('string')
++            ->setLabel(t('Title'))
++            ->setDescription(t('The title of CMIS object.'));
+ 
+-    $properties['path'] = DataDefinition::create('string')
+-      ->setLabel(t('Path'))
+-      ->setDescription(t('The path of CMIS object.'));
++        $properties['path'] = DataDefinition::create('string')
++            ->setLabel(t('Path'))
++            ->setDescription(t('The path of CMIS object.'));
+ 
+-    return $properties;
+-  }
++        return $properties;
++    }
+ 
+ }
+diff --git a/modules/contrib/cmis/src/Plugin/Field/FieldWidget/CmisFieldWidget.php b/modules/contrib/cmis/src/Plugin/Field/FieldWidget/CmisFieldWidget.php
+index 3a95f4c..3394624 100644
+--- a/modules/contrib/cmis/src/Plugin/Field/FieldWidget/CmisFieldWidget.php
++++ b/modules/contrib/cmis/src/Plugin/Field/FieldWidget/CmisFieldWidget.php
+@@ -1,5 +1,21 @@
+ <?php
+ 
++/**
++ * Provides cmis module Implementation.
++ *
++ * @category Module
++ *
++ * @package Contrib
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "GIT: <1001>"
++ *
++ * @link https://www.drupal.org/
++ */
++
+ declare(strict_types = 1);
+ 
+ namespace Drupal\cmis\Plugin\Field\FieldWidget;
+@@ -10,6 +26,9 @@
+ use Drupal\Core\Form\FormStateInterface;
+ use Drupal\Core\Link;
+ use Drupal\Core\Url;
++use Drupal\Core\StringTranslation\StringTranslationTrait;
++use Drupal\Core\StringTranslation\TranslationInterface;
++use Symfony\Component\DependencyInjection\ContainerInterface;
+ 
+ /**
+  * Plugin implementation of the 'cmis_field_widget' widget.
+@@ -22,149 +41,238 @@
+  *   }
+  * )
+  */
+-class CmisFieldWidget extends WidgetBase {
+-
+-  private $cmisConfigurations = [];
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public static function defaultSettings() {
+-    return [
+-      'size' => 60,
+-      'placeholder' => '',
+-      'cmis_configuration' => '',
+-    ] + parent::defaultSettings();
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function settingsForm(array $form, FormStateInterface $form_state) {
+-    $elements = [];
+-
+-    $elements['size'] = [
+-      '#type' => 'number',
+-      '#title' => $this->t('Size of textfield'),
+-      '#default_value' => $this->getSetting('size'),
+-      '#required' => TRUE,
+-      '#min' => 1,
+-    ];
+-    $elements['placeholder'] = [
+-      '#type' => 'textfield',
+-      '#title' => $this->t('Placeholder'),
+-      '#default_value' => $this->getSetting('placeholder'),
+-      '#description' => $this->t('Text that will be shown inside the field until a value is entered. This hint is usually a sample value or a brief description of the expected format.'),
+-    ];
+-
+-    if (empty($this->cmisConfigurations)) {
+-      $this->getConfigurations();
++
++/**
++ * Class CmisFieldWidget.
++ *
++ * @category Module
++ *
++ * @package Drupal\cmis\Plugin\Field\FieldWidget
++ *
++ * @author Display Name <username@example.com>
++ *
++ * @license https://www.drupal.org/ Drupal
++ *
++ * @version "Release: 8"
++ *
++ * @link https://www.drupal.org/
++ */
++class CmisFieldWidget extends WidgetBase
++{
++
++    use StringTranslationTrait;
++
++    /**
++     * The cmis configuration.
++     *
++     * @var array
++     */
++    private $cmisConfigurations = [];
++
++    /**
++     * The string translation information.
++     *
++     * @var Drupal\Core\StringTranslation\TranslationInterface
++     */
++    protected $stringTranslation;
++
++    /**
++     * Creates a new instance.
++     *
++     * @param Drupal\Core\StringTranslation\TranslationInterface $string_translation The string translation information.
++     */
++    public function __construct(TranslationInterface $string_translation)
++    {
++        $this->stringTranslation = $string_translation;
+     }
+-    $elements['cmis_configuration'] = [
+-      '#type' => 'select',
+-      '#title' => $this->t('CMIS configuration'),
+-      '#description' => $this->t('Please choose one from CMIS configuration.'),
+-      '#options' => $this->cmisConfigurations,
+-      '#require' => TRUE,
+-      '#default_value' => $this->getSetting('cmis_configuration'),
+-    ];
+-
+-    return $elements;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function settingsSummary() {
+-    if (empty($this->cmisConfigurations)) {
+-      $this->getConfigurations();
++
++    /**
++     * The container Interface.
++     *
++     * @param $container The container variable.
++     *
++     * @return object 
++     */
++    public static function create(ContainerInterface $container)
++    {
++        return new static(
++            $container->get('string_translation')
++        );
+     }
+-    $summary = [];
+ 
+-    $summary[] = $this->t('Textfield size: !size', ['!size' => $this->getSetting('size')]);
+-    if (!empty($this->getSetting('placeholder'))) {
+-      $summary[] = $this->t('Placeholder: @placeholder', ['@placeholder' => $this->getSetting('placeholder')]);
++    /**
++     * {@inheritdoc}
++     */
++    public static function defaultSettings()
++    {
++        return [
++        'size' => 60,
++        'placeholder' => '',
++        'cmis_configuration' => '',
++        ] + parent::defaultSettings();
+     }
+-    $cmis_configuration = $this->getSetting('cmis_configuration');
+-    if (!empty($cmis_configuration)) {
+-      $summary[] = $this->t('CMIS configuration: @cmis_configuration', ['@cmis_configuration' => $this->cmisConfigurations[$cmis_configuration]]);
++
++    /**
++     * Create a Settings Form.
++     *
++     * @param array $form Build the form using $form varibale using.
++     * @param Drupal\Core\Form\FormStateInterface $form_state Build the form using $form_state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function settingsForm(array $form, FormStateInterface $form_state)
++    {
++        $elements = [];
++
++        $elements['size'] = [
++        '#type' => 'number',
++        '#title' => $this->t('Size of textfield'),
++        '#default_value' => $this->getSetting('size'),
++        '#required' => true,
++        '#min' => 1,
++        ];
++        $elements['placeholder'] = [
++        '#type' => 'textfield',
++        '#title' => $this->t('Placeholder'),
++        '#default_value' => $this->getSetting('placeholder'),
++        '#description' => $this->t('Text that will be shown inside the field until a value is entered. This hint is usually a sample value or a brief description of the expected format.'),
++        ];
++
++        if (empty($this->cmisConfigurations)) {
++            $this->getConfigurations();
++        }
++        $elements['cmis_configuration'] = [
++        '#type' => 'select',
++        '#title' => $this->t('CMIS configuration'),
++        '#description' => $this->t('Please choose one from CMIS configuration.'),
++        '#options' => $this->cmisConfigurations,
++        '#require' => true,
++        '#default_value' => $this->getSetting('cmis_configuration'),
++        ];
++
++        return $elements;
+     }
+ 
+-    return $summary;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state) {
+-    $title = isset($items[$delta]->title) ? $items[$delta]->title : NULL;
+-    $path = isset($items[$delta]->path) ? $items[$delta]->path : NULL;
+-
+-    $element = [
+-      '#prefix' => '<div id="cmis-field-wrapper">',
+-      '#suffix' => '</div>',
+-    ];
+-
+-    $element['title'] = [
+-      '#type' => 'textfield',
+-      '#default_value' => $title,
+-      '#size' => $this->getSetting('size'),
+-      '#placeholder' => $this->getSetting('placeholder'),
+-      '#maxlength' => $this->getFieldSetting('max_length'),
+-      '#attributes' => [
++    /**
++     * The Settings Summary.
++     *
++     * @return array
++     *   The array.
++     */
++    public function settingsSummary()
++    {
++        if (empty($this->cmisConfigurations)) {
++            $this->getConfigurations();
++        }
++        $summary = [];
++
++        $summary[] = $this->t('Textfield size: !size', ['!size' => $this->getSetting('size')]);
++        if (!empty($this->getSetting('placeholder'))) {
++            $summary[] = $this->t('Placeholder: @placeholder', ['@placeholder' => $this->getSetting('placeholder')]);
++        }
++        $cmis_configuration = $this->getSetting('cmis_configuration');
++        if (!empty($cmis_configuration)) {
++            $summary[] = $this->t('CMIS configuration: @cmis_configuration', ['@cmis_configuration' => $this->cmisConfigurations[$cmis_configuration]]);
++        }
++
++        return $summary;
++    }
++
++    /**
++     * Creating a form elements.
++     *
++     * @param Drupal\Core\Field\FieldItemListInterface $items The field list interface.
++     * @param string $delta A delta item.
++     * @param array $element The array elements.
++     * @param array $form The array form.
++     * @param Drupal\Core\Form\FormStateInterface $form_state The form state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function formElement(FieldItemListInterface $items, $delta, array $element, array &$form, FormStateInterface $form_state)
++    {
++        $title = isset($items[$delta]->title) ? $items[$delta]->title : null;
++        $path = isset($items[$delta]->path) ? $items[$delta]->path : null;
++
++        $element = [
++        '#prefix' => '<div id="cmis-field-wrapper">',
++        '#suffix' => '</div>',
++        ];
++
++        $element['title'] = [
++        '#type' => 'textfield',
++        '#default_value' => $title,
++        '#size' => $this->getSetting('size'),
++        '#placeholder' => $this->getSetting('placeholder'),
++        '#maxlength' => $this->getFieldSetting('max_length'),
++        '#attributes' => [
+         'class' => ['edit-field-cmis-field'],
+-      ],
+-    ];
++        ],
++        ];
+ 
+-    $element['path'] = [
+-      '#type' => 'hidden',
+-      '#default_value' => $path,
+-      '#attributes' => [
++        $element['path'] = [
++        '#type' => 'hidden',
++        '#default_value' => $path,
++        '#attributes' => [
+         'class' => ['edit-field-cmis-path'],
+-      ],
+-    ];
++        ],
++        ];
+ 
+-    $url = Url::fromUserInput('/cmis/browser/' . $this->getSetting('cmis_configuration'));
+-    $link_options = [
+-      'attributes' => [
++        $url = Url::fromUserInput('/cmis/browser/' . $this->getSetting('cmis_configuration'));
++        $link_options = [
++        'attributes' => [
+         'class' => ['use-ajax'],
+         'data-dialog-type' => 'modal',
+-        'data-dialog-options' => Json::encode([
+-          'height' => 400,
+-          'width' => 700,
+-        ]),
+-      ],
+-      'query' => ['type' => 'popup'],
+-    ];
+-    $url->setOptions($link_options);
+-    $element['cmis_browser'] = Link::fromTextAndUrl($this->t('Browse'), $url)->toRenderable();
+-    $element['#attached']['library'][] = 'cmis/cmis-field';
+-
+-    return $element;
+-  }
+-
+-  /**
+-   * {@inheritdoc}
+-   */
+-  public function massageFormValues(array $values, array $form, FormStateInterface $form_state) {
+-    foreach ($values as &$item) {
+-      if (!empty($item['path'])) {
+-        $args = explode('/', $item['path']);
+-        $id = end($args);
+-        $item['path'] = '/cmis/document/' . $this->getSetting('cmis_configuration') . '/' . $id;
+-      }
++        'data-dialog-options' => Json::encode(
++            [
++            'height' => 400,
++            'width' => 700,
++            ]
++        ),
++        ],
++        'query' => ['type' => 'popup'],
++        ];
++        $url->setOptions($link_options);
++        $element['cmis_browser'] = Link::fromTextAndUrl($this->t('Browse'), $url)->toRenderable();
++        $element['#attached']['library'][] = 'cmis/cmis-field';
++
++        return $element;
+     }
+ 
+-    return $values;
+-  }
+-
+-  /**
+-   * Get configuration entity to private variable.
+-   *
+-   * @return mixed
+-   */
+-  private function getConfigurations() {
+-    $this->cmisConfigurations = cmis_get_configurations();
+-  }
++    /**
++     * Message form values.
++     *
++     * @param array $values The values.
++     * @param array $form The array form.
++     * @param Drupal\Core\Form\FormStateInterface $form_state The form state interface.
++     *
++     * @return array
++     *   The array.
++     */
++    public function massageFormValues(array $values, array $form, FormStateInterface $form_state)
++    {
++        foreach ($values as &$item) {
++            if (!empty($item['path'])) {
++                $args = explode('/', $item['path']);
++                $id = end($args);
++                $item['path'] = '/cmis/document/' . $this->getSetting('cmis_configuration') . '/' . $id;
++            }
++        }
++
++        return $values;
++    }
++
++    /**
++     * Get configuration entity to private variable.
++     *
++     * @return mixed
++     *   The mixed.
++     */
++    private function getConfigurations()
++    {
++        $this->cmisConfigurations = cmis_get_configurations();
++    }
+ 
+ }

@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * Provides cmis module Implementation.
+ *
+ * @category Module
+ *
+ * @package Contrib
+ *
+ * @author Display Name <username@example.com>
+ *
+ * @license https://www.drupal.org/ Drupal
+ *
+ * @version "GIT: <1001>"
+ *
+ * @link https://www.drupal.org/
+ */
+
 declare(strict_types = 1);
 
 namespace Drupal\cmis\Plugin\Field\FieldType;
@@ -19,14 +35,37 @@ use Drupal\Core\TypedData\DataDefinition;
  *   default_formatter = "cmis_field_link"
  * )
  */
-class CmisField extends FieldItemBase {
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function schema(FieldStorageDefinitionInterface $field_definition) {
-    return [
-      'columns' => [
+/**
+ * Class CmisField.
+ *
+ * @category Module
+ *
+ * @package Drupal\cmis\Plugin\Field\FieldType
+ *
+ * @author Display Name <username@example.com>
+ *
+ * @license https://www.drupal.org/ Drupal
+ *
+ * @version "Release: 8"
+ *
+ * @link https://www.drupal.org/
+ */
+class CmisField extends FieldItemBase
+{
+
+    /**
+     * Defines schema.
+     *
+     * @param FieldStorageDefinitionInterface $field_definition The field definition.
+     *
+     * @return array
+     *   The array.
+     */
+    public static function schema(FieldStorageDefinitionInterface $field_definition)
+    {
+        return [
+        'columns' => [
         'title' => [
           'type' => 'varchar',
           'length' => 255,
@@ -35,33 +74,44 @@ class CmisField extends FieldItemBase {
           'type' => 'varchar',
           'length' => 255,
         ],
-      ],
-    ];
-  }
+        ],
+        ];
+    }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function isEmpty() {
-    $value1 = $this->get('title')->getValue();
-    $value2 = $this->get('path')->getValue();
-    return empty($value1) && empty($value2);
-  }
+    /**
+     * Defines isEmpty.
+     *
+     * @return array
+     *   The array.
+     */
+    public function isEmpty()
+    {
+        $value1 = $this->get('title')->getValue();
+        $value2 = $this->get('path')->getValue();
+        return empty($value1) && empty($value2);
+    }
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function propertyDefinitions(FieldStorageDefinitionInterface $field_definition) {
-    // Add our properties.
-    $properties['title'] = DataDefinition::create('string')
-      ->setLabel(t('Title'))
-      ->setDescription(t('The title of CMIS object.'));
+    /**
+     * Defines propertyDefinitions.
+     *
+     * @param FieldStorageDefinitionInterface $field_definition The field definition.
+     *
+     * @return array
+     *   The array.
+     */
+    public static function propertyDefinitions(FieldStorageDefinitionInterface 
+        $field_definition
+    ) {
+        // Add our properties.
+        $properties['title'] = DataDefinition::create('string')
+            ->setLabel(t('Title'))
+            ->setDescription(t('The title of CMIS object.'));
 
-    $properties['path'] = DataDefinition::create('string')
-      ->setLabel(t('Path'))
-      ->setDescription(t('The path of CMIS object.'));
+        $properties['path'] = DataDefinition::create('string')
+            ->setLabel(t('Path'))
+            ->setDescription(t('The path of CMIS object.'));
 
-    return $properties;
-  }
+        return $properties;
+    }
 
 }

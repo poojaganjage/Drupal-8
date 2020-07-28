@@ -158,7 +158,7 @@ function cmis_get_configurations() {
  *
  * @param string $key
  *   The property key.
- * @param type $property
+ * @param mixed $property
  *   The property to get values from.
  *
  * @return string

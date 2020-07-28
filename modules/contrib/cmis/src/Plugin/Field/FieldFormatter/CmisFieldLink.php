@@ -1,5 +1,21 @@
 <?php
 
+/**
+ * Provides cmis module Implementation.
+ *
+ * @category Module
+ *
+ * @package Contrib
+ *
+ * @author Display Name <username@example.com>
+ *
+ * @license https://www.drupal.org/ Drupal
+ *
+ * @version "GIT: <1001>"
+ *
+ * @link https://www.drupal.org/
+ */
+
 declare(strict_types = 1);
 
 namespace Drupal\cmis\Plugin\Field\FieldFormatter;
@@ -21,38 +37,63 @@ use Drupal\Core\Url;
  *   }
  * )
  */
-class CmisFieldLink extends FormatterBase {
 
-  /**
-   * {@inheritdoc}
-   */
-  public function viewElements(FieldItemListInterface $items, $langcode) {
-    $elements = [];
+/**
+ * Class CmisFieldLink.
+ *
+ * @category Module
+ *
+ * @package Drupal\cmis\Plugin\Field\FieldFormatter
+ *
+ * @author Display Name <username@example.com>
+ *
+ * @license https://www.drupal.org/ Drupal
+ *
+ * @version "Release: 8"
+ *
+ * @link https://www.drupal.org/
+ */
+class CmisFieldLink extends FormatterBase
+{
 
-    foreach ($items as $delta => $item) {
-      $elements[$delta] = $this->viewValue($item);
+    /**
+     * View Elements.
+     *
+     * @param FieldItemListInterface $items    The field item list interface.
+     * @param string                 $langcode The langiage code.
+     *
+     * @return array
+     *   The textual output generated.
+     */
+    public function viewElements(FieldItemListInterface $items, $langcode)
+    {
+        $elements = [];
+
+        foreach ($items as $delta => $item) {
+            $elements[$delta] = $this->viewValue($item);
+        }
+
+        return $elements;
     }
 
-    return $elements;
-  }
+    /**
+     * Generate the output appropriate for one field item.
+     *
+     * @param \Drupal\Core\Field\FieldItemInterface $item One field item.
+     *
+     * @return array
+     *   The textual output generated.
+     */
+    protected function viewValue(FieldItemInterface $item)
+    {
+        $url = Url::fromUserInput($item->get('path')->getValue());
+        if (empty($url)) {
+            return [];
+        }
+        $path = Link::fromTextAndUrl($item->get('title')->getValue(), $url)
+        ->toRenderable();
 
-  /**
-   * Generate the output appropriate for one field item.
-   *
-   * @param \Drupal\Core\Field\FieldItemInterface $item
-   *   One field item.
-   *
-   * @return array
-   *   The textual output generated.
-   */
-  protected function viewValue(FieldItemInterface $item) {
-    $url = Url::fromUserInput($item->get('path')->getValue());
-    if (empty($url)) {
-      return [];
+        return $path;
     }
-    $path = Link::fromTextAndUrl($item->get('title')->getValue(), $url)->toRenderable();
-
-    return $path;
-  }
 
 }
