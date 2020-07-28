@@ -1,0 +1,4 @@
+services:
+  tasty_backend.manager:
+    class: Drupal\tasty_backend\TastyBackendManager
+    arguments: ['@messenger', '@system.manager', '@entity_type.manager', '@menu.active_trail']
