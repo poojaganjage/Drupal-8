@@ -1,0 +1,15 @@
+diff --git a/modules/contrib/smart_content_a_b/smart_content_a_b.links.menu.yml b/modules/contrib/smart_content_a_b/smart_content_a_b.links.menu.yml
+index 56869c5..800f9ac 100644
+--- a/modules/contrib/smart_content_a_b/smart_content_a_b.links.menu.yml
++++ b/modules/contrib/smart_content_a_b/smart_content_a_b.links.menu.yml
+@@ -1,8 +1,8 @@
+ 
+ # Segment Set A/B menu items definition
+ entity.smart_content_a_b.collection:
+-  title: 'Segment Set A/B'
++  title: 'Manage A/B Tests'
+   route_name: entity.smart_content_a_b.collection
+   description: 'List Segment Set A/B (bundles)'
+-  parent: system.admin_structure
++  parent: smart_content.overview
+   weight: 99
