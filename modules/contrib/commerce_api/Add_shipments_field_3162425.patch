@@ -1,0 +1,12 @@
+diff --git a/modules/contrib/commerce_api/src/FieldAccess.php b/modules/contrib/commerce_api/src/FieldAccess.php
+index d56a760..3f11ad7 100644
+--- a/modules/contrib/commerce_api/src/FieldAccess.php
++++ b/modules/contrib/commerce_api/src/FieldAccess.php
+@@ -110,6 +110,7 @@ protected function getAllowedViewFieldNames(string $entity_type_id): array {
+         'order_number',
+         'store_id',
+         'billing_information',
++        'shipments',
+         'shipping_information',
+         'shipping_method',
+         'payment_gateway_id',

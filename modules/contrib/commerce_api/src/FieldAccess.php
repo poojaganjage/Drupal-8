@@ -110,6 +110,7 @@ class FieldAccess implements FieldAccessInterface {
         'order_number',
         'store_id',
         'billing_information',
+        'shipments',
         'shipping_information',
         'shipping_method',
         'payment_gateway_id',
