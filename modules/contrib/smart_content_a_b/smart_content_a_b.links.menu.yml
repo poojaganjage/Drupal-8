@@ -1,0 +1,8 @@
+
+# Segment Set A/B menu items definition
+entity.smart_content_a_b.collection:
+  title: 'Segment Set A/B'
+  route_name: entity.smart_content_a_b.collection
+  description: 'List Segment Set A/B (bundles)'
+  parent: system.admin_structure
+  weight: 99

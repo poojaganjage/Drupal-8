@@ -1,0 +1,7 @@
+smart_content_a_b:
+  header: true
+  version: 1.x
+  js:
+    js/smart_content_a_b.js: { }
+  dependencies:
+    - smart_content/storage

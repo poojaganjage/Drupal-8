@@ -1,0 +1,12 @@
+smart_content_a_b.smart_content_a_b.*:
+  type: config_entity
+  label: 'Segment Set A/B config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string

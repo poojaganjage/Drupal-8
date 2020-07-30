@@ -1,0 +1,5 @@
+entity.smart_content_a_b.add_form:
+  route_name: entity.smart_content_a_b.add_form
+  title: 'Add Segment Set A/B'
+  appears_on:
+    - entity.smart_content_a_b.collection
