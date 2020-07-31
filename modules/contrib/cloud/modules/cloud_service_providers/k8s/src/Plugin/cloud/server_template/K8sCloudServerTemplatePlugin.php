@@ -608,11 +608,11 @@ class K8sCloudServerTemplatePlugin extends CloudPluginBase implements CloudServe
             '%label' => $result['metadata']['name'],
           ]));
 
-          $this->logger('k8s')->notice('@type: created %label.', [
+          $this->logger('k8s')->notice($this->t('@type: created %label.', [
             '@type' => $short_label,
             '%label' => $result['metadata']['name'],
             'link' => $entity->toLink($this->t('View'))->toString(),
-          ]);
+          ]));
 
           $cloud_server_template->get('field_launch_resources')->appendItem(['item_key' => $entity->getEntityTypeId(), 'item_value' => $entity->id()]);
 
@@ -630,10 +630,10 @@ class K8sCloudServerTemplatePlugin extends CloudPluginBase implements CloudServe
             '%label' => $result['metadata']['name'],
           ]));
 
-          $this->logger('k8s')->notice('@type: launched %label.', [
+          $this->logger('k8s')->notice($this->t('@type: launched %label.', [
             '@type' => $short_label,
             '%label' => $result['metadata']['name'],
-          ]);
+          ]));
         }
 
       }

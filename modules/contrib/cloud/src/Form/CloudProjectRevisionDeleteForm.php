@@ -136,7 +136,7 @@ class CloudProjectRevisionDeleteForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->cloudProjectStorage->deleteRevision($this->revision->getRevisionId());
 
-    $this->logger('content')->notice('Cloud project: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
+    $this->logger('content')->notice($this->t('Cloud project: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
     $this->messenger->addStatus(t('Revision from %revision-date of Cloud project %title has been deleted.', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
     $form_state->setRedirect(
       'entity.cloud_project.canonical',

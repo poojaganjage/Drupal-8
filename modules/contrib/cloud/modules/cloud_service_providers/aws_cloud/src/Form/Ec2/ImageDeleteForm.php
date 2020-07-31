@@ -84,11 +84,11 @@ class ImageDeleteForm extends AwsDeleteForm {
         '@label' => $entity->getName(),
       ]));
 
-      $this->logger($entity->getEntityType()->getProvider())->error('@type: @label could not be deleted.', [
+      $this->logger($entity->getEntityType()->getProvider())->error($this->t('@type: @label could not be deleted.', [
         '@type' => $entity->getEntityType()->getLabel(),
         '@label' => $entity->label(),
         'link' => $entity->toLink($entity->t('View'))->toString(),
-      ]);
+      ]));
     }
 
     $form_state->setRedirect("view.{$entity->getEntityTypeId()}.list", ['cloud_context' => $entity->getCloudContext()]);

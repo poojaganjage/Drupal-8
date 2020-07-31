@@ -407,11 +407,11 @@ trait CloudContentEntityTrait {
 
     if ($passive_operation === 'created') {
 
-      $this->logger($channel)->error('@type: @label could not be @passive_operation.', [
+      $this->logger($channel)->error($this->t('@type: @label could not be @passive_operation.', [
         '@type' => $entity_type->getLabel(),
         '@label' => $entity->label(),
         '@passive_operation' => $passive_operation,
-      ]);
+      ]));
 
       // Skip the following code if $present_operation is 'create'.
       return;
@@ -425,12 +425,12 @@ trait CloudContentEntityTrait {
       $link = $entity->toLink('View', 'edit-form')->toString();
     }
 
-    $this->logger($channel)->error('@type: %label could not be @passive_operation.', [
+    $this->logger($channel)->error($this->t('@type: %label could not be @passive_operation.', [
       '@type' => $entity_type->getLabel(),
       '%label' => $entity->label(),
       '@passive_operation' => $passive_operation,
       'link' => $link,
-    ]);
+    ]));
   }
 
   /**

@@ -1,0 +1,160 @@
+diff --git a/modules/contrib/cloud/modules/cloud_service_providers/aws_cloud/src/Form/Ec2/ImageDeleteForm.php b/modules/contrib/cloud/modules/cloud_service_providers/aws_cloud/src/Form/Ec2/ImageDeleteForm.php
+index 48e6dcc..d2d5a37 100644
+--- a/modules/contrib/cloud/modules/cloud_service_providers/aws_cloud/src/Form/Ec2/ImageDeleteForm.php
++++ b/modules/contrib/cloud/modules/cloud_service_providers/aws_cloud/src/Form/Ec2/ImageDeleteForm.php
+@@ -84,11 +84,11 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+         '@label' => $entity->getName(),
+       ]));
+ 
+-      $this->logger($entity->getEntityType()->getProvider())->error('@type: @label could not be deleted.', [
++      $this->logger($entity->getEntityType()->getProvider())->error($this->t('@type: @label could not be deleted.', [
+         '@type' => $entity->getEntityType()->getLabel(),
+         '@label' => $entity->label(),
+         'link' => $entity->toLink($entity->t('View'))->toString(),
+-      ]);
++      ]));
+     }
+ 
+     $form_state->setRedirect("view.{$entity->getEntityTypeId()}.list", ['cloud_context' => $entity->getCloudContext()]);
+diff --git a/modules/contrib/cloud/modules/cloud_service_providers/k8s/src/Plugin/cloud/server_template/K8sCloudServerTemplatePlugin.php b/modules/contrib/cloud/modules/cloud_service_providers/k8s/src/Plugin/cloud/server_template/K8sCloudServerTemplatePlugin.php
+index 8abe26c..0f07373 100644
+--- a/modules/contrib/cloud/modules/cloud_service_providers/k8s/src/Plugin/cloud/server_template/K8sCloudServerTemplatePlugin.php
++++ b/modules/contrib/cloud/modules/cloud_service_providers/k8s/src/Plugin/cloud/server_template/K8sCloudServerTemplatePlugin.php
+@@ -608,11 +608,11 @@ private function launchK8sResources(CloudServerTemplateInterface $cloud_server_t
+             '%label' => $result['metadata']['name'],
+           ]));
+ 
+-          $this->logger('k8s')->notice('@type: created %label.', [
++          $this->logger('k8s')->notice($this->t('@type: created %label.', [
+             '@type' => $short_label,
+             '%label' => $result['metadata']['name'],
+             'link' => $entity->toLink($this->t('View'))->toString(),
+-          ]);
++          ]));
+ 
+           $cloud_server_template->get('field_launch_resources')->appendItem(['item_key' => $entity->getEntityTypeId(), 'item_value' => $entity->id()]);
+ 
+@@ -630,10 +630,10 @@ private function launchK8sResources(CloudServerTemplateInterface $cloud_server_t
+             '%label' => $result['metadata']['name'],
+           ]));
+ 
+-          $this->logger('k8s')->notice('@type: launched %label.', [
++          $this->logger('k8s')->notice($this->t('@type: launched %label.', [
+             '@type' => $short_label,
+             '%label' => $result['metadata']['name'],
+-          ]);
++          ]));
+         }
+ 
+       }
+diff --git a/modules/contrib/cloud/src/Form/CloudConfigRevisionDeleteForm.php b/modules/contrib/cloud/src/Form/CloudConfigRevisionDeleteForm.php
+index 61dc2e4..67b44c1 100644
+--- a/modules/contrib/cloud/src/Form/CloudConfigRevisionDeleteForm.php
++++ b/modules/contrib/cloud/src/Form/CloudConfigRevisionDeleteForm.php
+@@ -133,7 +133,7 @@ public function buildForm(array $form, FormStateInterface $form_state, $cloud_co
+   public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->cloudConfigStorage->deleteRevision($this->revision->getRevisionId());
+ 
+-    $this->logger('cloud_config')->notice('Cloud service provider: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('cloud_config')->notice($this->t('Cloud service provider: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus($this->t('Revision from %revision-date of cloud service provide %title has been deleted.', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
+     $form_state->setRedirect(
+       'entity.cloud_config.canonical',
+diff --git a/modules/contrib/cloud/src/Form/CloudConfigRevisionRevertForm.php b/modules/contrib/cloud/src/Form/CloudConfigRevisionRevertForm.php
+index c9583ba..ea60c0f 100644
+--- a/modules/contrib/cloud/src/Form/CloudConfigRevisionRevertForm.php
++++ b/modules/contrib/cloud/src/Form/CloudConfigRevisionRevertForm.php
+@@ -133,7 +133,7 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
+     $this->revision->save();
+ 
+-    $this->logger('cloud_config')->notice('Cloud service provider: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('cloud_config')->notice($this->t('Cloud service provider: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus($this->t('The cloud service provider %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
+     $form_state->setRedirect(
+       'entity.cloud_config.version_history',
+diff --git a/modules/contrib/cloud/src/Form/CloudProjectRevisionDeleteForm.php b/modules/contrib/cloud/src/Form/CloudProjectRevisionDeleteForm.php
+index 7e076bd..b0a506a 100644
+--- a/modules/contrib/cloud/src/Form/CloudProjectRevisionDeleteForm.php
++++ b/modules/contrib/cloud/src/Form/CloudProjectRevisionDeleteForm.php
+@@ -136,7 +136,7 @@ public function buildForm(array $form, FormStateInterface $form_state, $cloud_pr
+   public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->cloudProjectStorage->deleteRevision($this->revision->getRevisionId());
+ 
+-    $this->logger('content')->notice('Cloud project: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('content')->notice($this->t('Cloud project: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus(t('Revision from %revision-date of Cloud project %title has been deleted.', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
+     $form_state->setRedirect(
+       'entity.cloud_project.canonical',
+diff --git a/modules/contrib/cloud/src/Form/CloudProjectRevisionRevertForm.php b/modules/contrib/cloud/src/Form/CloudProjectRevisionRevertForm.php
+index c07e13e..4bcc6a2 100644
+--- a/modules/contrib/cloud/src/Form/CloudProjectRevisionRevertForm.php
++++ b/modules/contrib/cloud/src/Form/CloudProjectRevisionRevertForm.php
+@@ -137,7 +137,7 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
+     $this->revision->save();
+ 
+-    $this->logger('content')->notice('Cloud project: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('content')->notice($this->t('Cloud project: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus($this->t('Cloud project %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
+     $form_state->setRedirect(
+       'entity.cloud_project.version_history', [
+diff --git a/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionDeleteForm.php b/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionDeleteForm.php
+index 0fd3fe4..9dd1b99 100644
+--- a/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionDeleteForm.php
++++ b/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionDeleteForm.php
+@@ -137,7 +137,7 @@ public function buildForm(array $form, FormStateInterface $form_state, $cloud_se
+   public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->cloudServerTemplateStorage->deleteRevision($this->revision->getRevisionId());
+ 
+-    $this->logger('launch_template')->notice('Launch template: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('launch_template')->notice($this->t('Launch template: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus($this->t('Revision from %revision-date of Launch template %title has been deleted.', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
+     $form_state->setRedirect(
+       'entity.cloud_server_template.canonical',
+diff --git a/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionRevertForm.php b/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionRevertForm.php
+index c6d1f6a..ef15282 100644
+--- a/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionRevertForm.php
++++ b/modules/contrib/cloud/src/Form/CloudServerTemplateRevisionRevertForm.php
+@@ -137,7 +137,7 @@ public function submitForm(array &$form, FormStateInterface $form_state) {
+     $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
+     $this->revision->save();
+ 
+-    $this->logger('launch_template')->notice('Launch template: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
++    $this->logger('launch_template')->notice($this->t('Launch template: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
+     $this->messenger->addStatus($this->t('Launch template %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
+     $form_state->setRedirect(
+       'entity.cloud_server_template.version_history', [
+diff --git a/modules/contrib/cloud/src/Traits/CloudContentEntityTrait.php b/modules/contrib/cloud/src/Traits/CloudContentEntityTrait.php
+index abd8fb3..4405533 100644
+--- a/modules/contrib/cloud/src/Traits/CloudContentEntityTrait.php
++++ b/modules/contrib/cloud/src/Traits/CloudContentEntityTrait.php
+@@ -407,11 +407,11 @@ protected function logOperationErrorMessage(EntityInterface $entity, $passive_op
+ 
+     if ($passive_operation === 'created') {
+ 
+-      $this->logger($channel)->error('@type: @label could not be @passive_operation.', [
++      $this->logger($channel)->error($this->t('@type: @label could not be @passive_operation.', [
+         '@type' => $entity_type->getLabel(),
+         '@label' => $entity->label(),
+         '@passive_operation' => $passive_operation,
+-      ]);
++      ]));
+ 
+       // Skip the following code if $present_operation is 'create'.
+       return;
+@@ -425,12 +425,12 @@ protected function logOperationErrorMessage(EntityInterface $entity, $passive_op
+       $link = $entity->toLink('View', 'edit-form')->toString();
+     }
+ 
+-    $this->logger($channel)->error('@type: %label could not be @passive_operation.', [
++    $this->logger($channel)->error($this->t('@type: %label could not be @passive_operation.', [
+       '@type' => $entity_type->getLabel(),
+       '%label' => $entity->label(),
+       '@passive_operation' => $passive_operation,
+       'link' => $link,
+-    ]);
++    ]));
+   }
+ 
+   /**

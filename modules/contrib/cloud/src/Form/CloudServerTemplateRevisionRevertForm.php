@@ -137,7 +137,7 @@ class CloudServerTemplateRevisionRevertForm extends ConfirmFormBase {
     $this->revision->revision_log = $this->t('Copy of the revision from %date.', ['%date' => $this->dateFormatter->format($original_revision_timestamp)]);
     $this->revision->save();
 
-    $this->logger('launch_template')->notice('Launch template: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
+    $this->logger('launch_template')->notice($this->t('Launch template: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
     $this->messenger->addStatus($this->t('Launch template %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
     $form_state->setRedirect(
       'entity.cloud_server_template.version_history', [

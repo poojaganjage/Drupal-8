@@ -133,7 +133,7 @@ class CloudConfigRevisionDeleteForm extends ConfirmFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->cloudConfigStorage->deleteRevision($this->revision->getRevisionId());
 
-    $this->logger('cloud_config')->notice('Cloud service provider: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
+    $this->logger('cloud_config')->notice($this->t('Cloud service provider: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]));
     $this->messenger->addStatus($this->t('Revision from %revision-date of cloud service provide %title has been deleted.', ['%revision-date' => $this->dateFormatter->format($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
     $form_state->setRedirect(
       'entity.cloud_config.canonical',
