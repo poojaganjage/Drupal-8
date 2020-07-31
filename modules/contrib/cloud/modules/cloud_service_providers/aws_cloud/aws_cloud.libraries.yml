@@ -1,0 +1,63 @@
+aws_cloud_form:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_form.js: {}
+  css:
+    theme:
+      css/aws_cloud_instance_type.css: {}
+  dependencies:
+    - core/jquery
+    - cloud/select2
+
+aws_cloud_security_groups:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_security_groups.js: {}
+  css:
+    theme:
+      css/aws_cloud_security_groups.css: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+
+aws_cloud_auto_refresh:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_auto_refresh.js: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+
+aws_cloud_view_builder:
+  version: 8.x-1.x
+  css:
+    theme:
+      css/aws_cloud_view_builder.css: {}
+
+aws_cloud_instance_type_prices:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_instance_type_prices.js: {}
+  css:
+    theme:
+      css/aws_cloud_instance_type_prices.css: {}
+
+aws_cloud_image_import:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_image_import.js: {}
+  css:
+    theme:
+      css/aws_cloud_image_import.css: {}
+  dependencies:
+    - core/jquery
+    - cloud/select2
+
+aws_cloud_instance_monitor:
+  version: 8.x-1.x
+  js:
+    js/aws_cloud_instance_monitor.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/d3
+    - cloud/c3

@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - terraform
+id: terraform_workspace_delete_action
+label: 'Delete Workspace(s)'
+type: terraform_workspace
+plugin: entity:delete_action:terraform_workspace
+configuration: {  }

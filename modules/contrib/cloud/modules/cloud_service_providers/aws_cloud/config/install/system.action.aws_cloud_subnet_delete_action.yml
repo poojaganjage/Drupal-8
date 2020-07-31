@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_subnet_delete_action
+label: 'Delete subnet(s)'
+type: aws_cloud_subnet
+plugin: entity:delete_action:aws_cloud_subnet
+configuration: {  }

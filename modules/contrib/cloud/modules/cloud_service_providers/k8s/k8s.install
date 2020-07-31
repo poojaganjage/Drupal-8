@@ -1,0 +1,2120 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for k8s.
+ */
+
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Config\FileStorage;
+
+/**
+ * Implements hook_install().
+ */
+function k8s_install() {
+  // Setup default icons.
+  \Drupal::service('cloud')->addDefaultIcon('k8s');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function k8s_uninstall() {
+
+  // Delete K8s cloud service provider entities.
+  \Drupal::service('cloud')->uninstallServiceProvider('k8s');
+
+  // Delete default icon.
+  \Drupal::service('cloud')->deleteDefaultIcon('k8s');
+
+  // Delete cloud config fields.
+  // NOTE: field_location_* fields consists of two kinds of information
+  // such as field.field.cloud_config.aws_cloud.field_location_* and
+  // field.storage.cloud_config.field_location_*.
+  // field.field.cloud_config.*.field_location_* should be explicitly
+  // removed here when we uninstall this module.
+  // Removing field.storage.cloud_config.field_location_* are automatically
+  // taken care by Cloud module.
+  \Drupal::service('cloud')->uninstallLocationFields('k8s');
+
+  // @FIXME: Method call is provided 4 parameters, but the method signature
+  // uses 2 parameters.
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $field_storage_definition = $update_manager->getFieldStorageDefinition(
+    'field_detail',
+    'field_namespace',
+    'field_object',
+    'field_yaml_url'
+  );
+  if ($field_storage_definition) {
+    $update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+  }
+
+  try {
+    // @FIXME: Is this correct?
+    $vocabulary = \Drupal::entityTypeManager()
+      ->getStorage('taxonomy_vocabulary')
+      ->load('k8s_tags');
+    if ($vocabulary) {
+      $vocabulary->delete();
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add entity type k8s_node and view k8s_node.
+ */
+function k8s_update_8201() {
+  // Add entity type k8s_node.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_node');
+  if (!empty($entity_type)) {
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_node.
+  $files = [
+    'views.view.k8s_node.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_node and view k8s_node.
+ */
+function k8s_update_8202() {
+  try {
+    // Add entity type k8s_node.
+    $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+    $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_node');
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+    // Add view k8s_node.
+    $files = [
+      'views.view.k8s_node.yml',
+    ];
+    \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add entity type k8s_namespace and view k8s_namespace.
+ */
+function k8s_update_8203() {
+  try {
+    // Add entity type k8s_namespace.
+    $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+    $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_namespace');
+    $definition_update_manager->installEntityType($entity_type);
+    // Add view k8s_namespace.
+    $files = [
+      'views.view.k8s_namespace.yml',
+      'system.action.k8s_namespace_delete_action.yml',
+    ];
+    \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add entity type k8s_pod and view k8s_pod.
+ */
+function k8s_update_8204() {
+  // Add entity type k8s_pod.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_pod');
+  if (!empty($entity_type)) {
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_pod.
+  $files = [
+    'views.view.k8s_pod.yml',
+    'system.action.k8s_pod_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add namespace filter to view k8s_pod.
+ */
+function k8s_update_8205() {
+  // Update view k8s_pod.
+  $files = [
+    'views.view.k8s_pod.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_deployment and view k8s_deployment.
+ */
+function k8s_update_8206() {
+  // Add entity type k8s_deployment.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_deployment');
+  if (!empty($entity_type)) {
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_deployment.
+  $files = [
+    'views.view.k8s_deployment.yml',
+    'system.action.k8s_deployment_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_service and view k8s_service.
+ */
+function k8s_update_8207() {
+  // Add entity type k8s_service.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_service');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_service.
+  $files = [
+    'views.view.k8s_service.yml',
+    'system.action.k8s_service_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update view k8s_pod.
+ */
+function k8s_update_8208() {
+  // Update view k8s_pod.
+  $files = [
+    'views.view.k8s_pod.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_cron_job and view k8s_cron_job.
+ */
+function k8s_update_8209() {
+  // Add entity type k8s_cron_job.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_cron_job');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_cron_job.
+  $files = [
+    'views.view.k8s_cron_job.yml',
+    'system.action.k8s_cron_job_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_job and view k8s_job.
+ */
+function k8s_update_8210() {
+  // Add entity type k8s_job.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_job');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_job.
+  $files = [
+    'views.view.k8s_job.yml',
+    'system.action.k8s_job_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update both field_api_server and field_token.
+ */
+function k8s_update_8212() {
+  // Update fields.
+  $files = [
+    'field.field.cloud_config.k8s.field_api_server.yml',
+    'field.field.cloud_config.k8s.field_token.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_resource_quota and view k8s_resource_quota.
+ */
+function k8s_update_8213() {
+  // Add entity type k8s_resource_quota.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_resource_quota');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_resource_quota.
+  $files = [
+    'views.view.k8s_resource_quota.yml',
+    'system.action.k8s_resource_quota_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add fields about metrics to k8s_node.
+ */
+function k8s_update_8214() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $fields = [];
+  $fields['cpu_capacity'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Capacity)'))
+    ->setDescription(t('The cpu capacity of the node.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['cpu_request'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Request)'))
+    ->setDescription(t('The requested cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['cpu_limit'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Limit)'))
+    ->setDescription(t('The limited cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_capacity'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Capacity)'))
+    ->setDescription(t('The memory capacity of the node.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_request'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Request)'))
+    ->setDescription(t('The requested memory.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_limit'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Limit)'))
+    ->setDescription(t('The limited memory.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  $fields['pods_capacity'] = BaseFieldDefinition::create('integer')
+    ->setLabel(t('Pods (Capacity)'))
+    ->setDescription(t('The pods capacity of the node.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['pods_allocation'] = BaseFieldDefinition::create('integer')
+    ->setLabel(t('Pods (Allocation)'))
+    ->setDescription(t('The pods allocated.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_node',
+      'k8s',
+      $field
+    );
+  }
+
+  // Update view k8s_node.
+  $files = [
+    'views.view.k8s_node.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  drupal_flush_all_caches();
+
+  // Update K8s nodes.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updateNodesWithoutBatch();
+  }
+}
+
+/**
+ * Add fields about metrics to k8s_pod.
+ */
+function k8s_update_8215() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $fields = [];
+  $fields['cpu_request'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Request)'))
+    ->setDescription(t('The requested cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['cpu_limit'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Limit)'))
+    ->setDescription(t('The limited cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['cpu_usage'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Usage)'))
+    ->setDescription(t('The requested cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_request'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Request)'))
+    ->setDescription(t('The requested memory.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_limit'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Limit)'))
+    ->setDescription(t('The limited memory.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_usage'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Usage)'))
+    ->setDescription(t('The memory usage.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_pod',
+      'k8s',
+      $field
+    );
+  }
+
+  // Update view k8s_pod.
+  $files = [
+    'views.view.k8s_pod.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  drupal_flush_all_caches();
+
+  // Update K8s pods.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updatePodsWithoutBatch();
+  }
+}
+
+/**
+ * Add detail field to k8s_node and k8s_namespace.
+ */
+function k8s_update_8216() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field_detail = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Detail'))
+    ->setDescription(t('Node detail.'))
+    ->setRequired(TRUE)
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'detail',
+    'k8s_node',
+    'k8s',
+    $field_detail
+  );
+
+  $field_detail = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Detail'))
+    ->setDescription(t('Namespace detail.'))
+    ->setRequired(TRUE)
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'detail',
+    'k8s_namespace',
+    'k8s',
+    $field_detail
+  );
+
+  drupal_flush_all_caches();
+
+  // Update K8s namespace.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updateNodesWithoutBatch();
+    $k8s_service->updateNamespacesWithoutBatch();
+  }
+}
+
+/**
+ * Add fields about metrics to k8s_node.
+ */
+function k8s_update_8217() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $fields = [];
+  $fields['cpu_usage'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('CPU (Usage)'))
+    ->setDescription(t('The requested cpu.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['memory_usage'] = BaseFieldDefinition::create('float')
+    ->setLabel(t('Memory (Usage)'))
+    ->setDescription(t('The memory usage.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'memory_formatter',
+      'weight' => -5,
+    ]);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_node',
+      'k8s',
+      $field
+    );
+  }
+
+  // Update view k8s_node.
+  $files = [
+    'views.view.k8s_node.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  drupal_flush_all_caches();
+
+  // Update K8s pods.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updatePodsWithoutBatch();
+  }
+}
+
+/**
+ * Install K8s cloud server template.
+ */
+function k8s_update_8218() {
+  $files = [
+    'cloud.cloud_server_template_type.k8s.yml',
+    'core.entity_form_display.cloud_server_template.k8s.default.yml',
+    'core.entity_view_display.cloud_server_template.k8s.default.yml',
+    'field.field.cloud_server_template.k8s.field_detail.yml',
+    'field.field.cloud_server_template.k8s.field_namespace.yml',
+    'field.field.cloud_server_template.k8s.field_object.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add configuration k8s_js_refresh_interval and update view k8s_profile.
+ */
+function k8s_update_8219() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.settings');
+  $config->set('k8s_js_refresh_interval', 10);
+  $config->save();
+
+  $files = [
+    'views.view.k8s_profile.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add field creation_yaml to k8s_pod and k8s_deployment.
+ */
+function k8s_update_8220() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $entity_types = [
+    'k8s_pod',
+    'k8s_deployment',
+  ];
+  foreach ($entity_types ?: [] as $entity_type) {
+    $definition_update_manager->installFieldStorageDefinition(
+      'creation_yaml',
+      $entity_type,
+      'k8s',
+      $field
+    );
+  }
+}
+
+/**
+ * Change sort setting of views.
+ */
+function k8s_update_8221() {
+  $files = [
+    'views.view.k8s_deployment.yml',
+    'views.view.k8s_pod.yml',
+    'views.view.k8s_service.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add block for node in K8s pod view.
+ */
+function k8s_update_8222() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_pod.yml'], 'k8s');
+}
+
+/**
+ * Add entity type k8s_limit_range and view k8s_limit_range.
+ */
+function k8s_update_8223() {
+  // Add entity type k8s_limit_range.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_limit_range');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_limit_range.
+  $files = [
+    'views.view.k8s_limit_range.yml',
+    'system.action.k8s_limit_range_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_replica_set and view k8s_replica_set.
+ */
+function k8s_update_8224() {
+  // Add entity type k8s_replica_set.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_replica_set');
+  if (!empty($entity_type)) {
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_replica_set.
+  $files = [
+    'views.view.k8s_replica_set.yml',
+    'system.action.k8s_replica_set_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add entity type k8s_secret and view k8s_secret.
+ */
+function k8s_update_8225() {
+  // Add entity type k8s_secret.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_secret');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_secret.
+  $files = [
+    'views.view.k8s_secret.yml',
+    'system.action.k8s_secret_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add fields about Locaion to cloud_config.
+ */
+function k8s_update_8226() {
+  // Add new fields and update entity cloud_config.k8s.
+  $files = [
+    'field.field.cloud_config.k8s.field_location_country.yml',
+    'field.field.cloud_config.k8s.field_location_city.yml',
+    'field.field.cloud_config.k8s.field_location_latitude.yml',
+    'field.field.cloud_config.k8s.field_location_longitude.yml',
+    'core.entity_form_display.cloud_config.k8s.default.yml',
+    'core.entity_view_display.cloud_config.k8s.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_config_map and view k8s_config_map.
+ */
+function k8s_update_8227() {
+  // Add entity type k8s_config_map.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_config_map');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_config_map.
+  $files = [
+    'views.view.k8s_config_map.yml',
+    'system.action.k8s_config_map_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add entity type k8s_network_policy and view k8s_network_policy.
+ */
+function k8s_update_8228() {
+  // Add entity type k8s_network_policy.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_network_policy');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_network_policy.
+  $files = [
+    'views.view.k8s_network_policy.yml',
+    'system.action.k8s_network_policy_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_role and view k8s_role.
+ */
+function k8s_update_8229() {
+  // Add entity type k8s_role.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_role');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_role.
+  $files = [
+    'views.view.k8s_role.yml',
+    'system.action.k8s_role_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update view k8s_replica_set.
+ */
+function k8s_update_8230() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_replica_set.yml'], 'k8s');
+}
+
+/**
+ * Update entity type k8s_config_map.
+ */
+function k8s_update_8231() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_replica_set.yml'], 'k8s');
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_config_map');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_config_map.
+  $files = [
+    'views.view.k8s_config_map.yml',
+    'system.action.k8s_config_map_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Update K8s pod view.
+ */
+function k8s_update_8232() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_pod.yml'], 'k8s');
+}
+
+/**
+ * Add creation_yaml to k8s_config_map and annotations to k8s_namespace.
+ */
+function k8s_update_8233() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'creation_yaml',
+    'k8s_config_map',
+    'k8s',
+    $field
+  );
+
+  $field = BaseFieldDefinition::create('key_value')
+    ->setLabel(t('Annotations'))
+    ->setDescription(t('Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata.'))
+    ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+    ->setSetting('max_length', 4096)
+    ->setSetting('long', TRUE)
+    ->setDisplayOptions('view', [
+      'type' => 'key_value_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'annotations',
+    'k8s_namespace',
+    'k8s',
+    $field
+  );
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add creation_yaml to k8s_config_map.
+ */
+function k8s_update_8234() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'creation_yaml',
+    'k8s_secret',
+    'k8s',
+    $field
+  );
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Update a column name of K8s profile list view.
+ */
+function k8s_update_8235() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_profile.yml'], 'k8s');
+}
+
+/**
+ * Add entity type k8s_cluster_role and view k8s_cluster_role.
+ */
+function k8s_update_8236() {
+  // Add entity type k8s_cluster_role.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_cluster_role');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_cluster_role.
+  $files = [
+    'views.view.k8s_cluster_role.yml',
+    'system.action.k8s_cluster_role_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add creation_yaml to k8s_cron_job.
+ */
+function k8s_update_8237() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'creation_yaml',
+    'k8s_cron_job',
+    'k8s',
+    $field
+  );
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add creation_yaml to k8s_job.
+ */
+function k8s_update_8238() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'creation_yaml',
+    'k8s_job',
+    'k8s',
+    $field
+  );
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add a bulk operation to K8s profile list view.
+ */
+function k8s_update_8239() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_profile.yml'], 'k8s');
+}
+
+/**
+ * Add view k8s_deployment_all.
+ */
+function k8s_update_8240() {
+  // Add view k8s_deployment_all.
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_deployment_all.yml'], 'k8s');
+}
+
+/**
+ * Add view k8s_pod_all and update view k8s_deployment_all.
+ */
+function k8s_update_8241() {
+  $files = [
+    'views.view.k8s_pod_all.yml',
+    'views.view.k8s_deployment_all.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update a column name of K8s profile list view.
+ *
+ * Add default icon for K8s cloud_config.
+ */
+function k8s_update_8242() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_profile.yml'], 'k8s');
+  \Drupal::service('cloud')->addDefaultIcon('k8s');
+}
+
+/**
+ * Add creation_yaml to k8s_persistent_volume.
+ */
+function k8s_update_8243() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_persistent_volume.yml'], 'k8s');
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_persistent_volume');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_config_map.
+  $files = [
+    'views.view.k8s_persistent_volume.yml',
+    'system.action.k8s_persistent_volume_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add entity type k8s_storage_class and view k8s_storage_class.
+ */
+function k8s_update_8244() {
+  // Add entity type k8s_storage_class.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_storage_class');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_storage_class.
+  $files = [
+    'views.view.k8s_storage_class.yml',
+    'system.action.k8s_storage_class_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add YAML URL field to K8s cloud server template.
+ */
+function k8s_update_8245() {
+  $files = [
+    'field.storage.cloud_server_template.field_yaml_url.yml',
+    'core.entity_form_display.cloud_server_template.k8s.default.yml',
+    'core.entity_view_display.cloud_server_template.k8s.default.yml',
+    'field.field.cloud_server_template.k8s.field_detail.yml',
+    'field.field.cloud_server_template.k8s.field_yaml_url.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update K8s profile list view.
+ */
+function k8s_update_8246() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_profile.yml'], 'k8s');
+}
+
+/**
+ * Update entity type k8s_persistent_volume and view k8s_persistent_volume.
+ */
+function k8s_update_8247() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_persistent_volume');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Update view k8s_persistent_volume.
+  $files = [
+    'views.view.k8s_persistent_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add vocabulary k8s_tags, field_tags and update view k8s_deployment_all.
+ */
+function k8s_update_8248() {
+  // Add new fields and update entity cloud_config.k8s.
+  $files = [
+    'taxonomy.vocabulary.k8s_tags.yml',
+    'field.storage.cloud_config.field_tags.yml',
+    'field.field.cloud_config.k8s.field_tags.yml',
+    'core.entity_form_display.cloud_config.k8s.default.yml',
+    'core.entity_view_display.cloud_config.k8s.default.yml',
+    'views.view.k8s_deployment_all.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update view k8s_pod_all.
+ */
+function k8s_update_8249() {
+  $files = [
+    'views.view.k8s_pod_all.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_stateful_set and view k8s_stateful_set.
+ */
+function k8s_update_8250() {
+  // Add entity type k8s_stateful_set.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_stateful_set');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_stateful_set.
+  $files = [
+    'views.view.k8s_stateful_set.yml',
+    'system.action.k8s_stateful_set_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_ingress and view k8s_ingress.
+ */
+function k8s_update_8251() {
+  // Add entity type k8s_ingress.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_ingress');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_ingress.
+  $files = [
+    'views.view.k8s_ingress.yml',
+    'system.action.k8s_ingress_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Rebuild menus.
+ */
+function k8s_update_8252() {
+  // Rebuild menu.
+  \Drupal::service('plugin.cache_clearer')->clearCachedDefinitions();
+}
+
+/**
+ * Add field dirty to k8s_node.
+ */
+function k8s_update_8253() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $fields = [];
+  $fields['dirty'] = BaseFieldDefinition::create('boolean')
+    ->setLabel(t('Dirty'))
+    ->setDescription(t('Dirty.'))
+    ->setDefaultValue(FALSE);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_node',
+      'k8s',
+      $field
+    );
+  }
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add entity type k8s_daemon_set and view k8s_daemon_set.
+ */
+function k8s_update_8254() {
+  // Add entity type k8s_daemon_set.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_daemon_set');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_daemon_set.
+  $files = [
+    'views.view.k8s_daemon_set.yml',
+    'system.action.k8s_daemon_set_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_endpoint and view k8s_endpoint.
+ */
+function k8s_update_8255() {
+  // Add entity type k8s_endpoint.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_endpoint');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_endpoint.
+  $files = [
+    'views.view.k8s_endpoint.yml',
+    'system.action.k8s_endpoint_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_event and view k8s_event.
+ */
+function k8s_update_8256() {
+  // Add entity type k8s_event.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_event');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_event.
+  $files = [
+    'views.view.k8s_event.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add fields to k8s_persistent_volume.
+ */
+function k8s_update_8257() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $fields = [];
+  $fields['phase'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Phase'))
+    ->setDescription(t('Phase indicates if a volume is available, bound to a claim, or released by a claim.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['claim_ref'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Claim'))
+    ->setDescription(t('ClaimRef is part of a bi-directional binding between PersistentVolume and PersistentVolumeClaim.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['reason'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Reason'))
+    ->setDescription(t('Reason is a brief CamelCase string that describes any failure and is meant for machine parsing and tidy display in the CLI.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_persistent_volume',
+      'k8s',
+      $field
+    );
+  }
+
+  // Update view k8s_persistent_volume.
+  $files = [
+    'views.view.k8s_persistent_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  drupal_flush_all_caches();
+
+  // Update K8s persistent volume.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updateVolumeWithoutBatch();
+  }
+}
+
+/**
+ * Add field creation_yaml to k8s_cluster_role and k8s_service.
+ */
+function k8s_update_8258() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Creation YAML'))
+    ->setDescription(t('The YAML content was used to create the entity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $entity_types = [
+    'k8s_cluster_role',
+    'k8s_service',
+  ];
+  foreach ($entity_types ?: [] as $entity_type) {
+    $definition_update_manager->installFieldStorageDefinition(
+      'creation_yaml',
+      $entity_type,
+      'k8s',
+      $field
+    );
+  }
+}
+
+/**
+ * Add entity type k8s_persistent_volume_claim and view it.
+ */
+function k8s_update_8259() {
+  // Add entity type k8s_persistent_volume_claim.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_persistent_volume_claim');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_persistent_volume_claim.
+  $files = [
+    'views.view.k8s_persistent_volume_claim.yml',
+    'system.action.k8s_persistent_volume_claim_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add metrics server templates.
+ */
+function k8s_update_8260() {
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    k8s_create_metrics_server_templates($config_entity->getCloudContext());
+  }
+}
+
+/**
+ * Add entity type k8s_cluster_role_binding and view k8s_cluster_role_binding.
+ */
+function k8s_update_8261() {
+  // Add entity type k8s_cluster_role_binding.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_cluster_role_binding');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_cluster_role_binding.
+  $files = [
+    'views.view.k8s_cluster_role_binding.yml',
+    'system.action.k8s_cluster_role_binding_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_api_service and view k8s_api_service.
+ */
+function k8s_update_8262() {
+  // Add entity type k8s_api_service.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_api_service');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_api_service.
+  $files = [
+    'views.view.k8s_api_service.yml',
+    'system.action.k8s_api_service_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add entity type k8s_role_binding and view k8s_role_binding.
+ */
+function k8s_update_8263() {
+  // Add entity type k8s_role_binding.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_role_binding');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view k8s_role_binding.
+  $files = [
+    'views.view.k8s_role_binding.yml',
+    'system.action.k8s_role_binding_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update cloud service provider name (k8s -> K8s)
+ */
+function k8s_update_8264() {
+
+  $files = [
+    'cloud.cloud_config_type.k8s.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add fields to k8s_persistent_volume.
+ */
+function k8s_update_8265() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $fields = [];
+
+  $fields['capacity'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Capacity'))
+    ->setDescription(t('Capacity.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  $fields['access_modes'] = BaseFieldDefinition::create('string')
+    ->setLabel(t('Access Modes'))
+    ->setDescription(t('Access Modes.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ]);
+
+  foreach ($fields ?: [] as $name => $field) {
+    $definition_update_manager->installFieldStorageDefinition(
+      $name,
+      'k8s_persistent_volume',
+      'k8s',
+      $field
+    );
+  }
+
+  // Update view k8s_persistent_volume.
+  $files = [
+    'views.view.k8s_persistent_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  drupal_flush_all_caches();
+
+  // Update K8s persistent volume.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->updateVolumeWithoutBatch();
+  }
+}
+
+/**
+ * Add k8s.project.settings.yaml file.
+ */
+function k8s_update_8266() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.project.settings');
+  $config->set('k8s_startup_time_hour', '00');
+  $config->set('k8s_startup_time_minute', '00');
+  $config->set('k8s_stop_time_hour', '06');
+  $config->set('k8s_stop_time_minute', '00');
+  $config->save();
+}
+
+/**
+ * Add entity type k8s_service_account and view k8s_service_account.
+ */
+function k8s_update_8267() {
+  // Add entity type k8s_service_account.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_service_account');
+  $definition_update_manager->uninstallEntityType($entity_type);
+  $definition_update_manager->installEntityType($entity_type);
+
+  // Add view k8s_service_account.
+  $files = [
+    'views.view.k8s_service_account.yml',
+    'system.action.k8s_service_account_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add sorting order on capacity and access modes fields.
+ */
+function k8s_update_8268() {
+  $files = [
+    'views.view.k8s_persistent_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add k8s.project.settings.yaml file.
+ */
+function k8s_update_8269() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.project.settings');
+  $config->set('k8s_request_cpu', '500');
+  $config->set('k8s_request_memory', '100');
+  $config->set('k8s_pod_count', '10');
+  $config->save();
+}
+
+/**
+ * Add Git fields to K8s cloud server template.
+ */
+function k8s_update_8270() {
+  $files = [
+    'field.storage.cloud_server_template.field_git_password.yml',
+    'field.storage.cloud_server_template.field_git_path.yml',
+    'field.storage.cloud_server_template.field_git_username.yml',
+    'field.storage.cloud_server_template.field_object.yml',
+    'field.storage.cloud_server_template.field_source_type.yml',
+    'core.entity_form_display.cloud_server_template.k8s.default.yml',
+    'core.entity_view_display.cloud_server_template.k8s.default.yml',
+    'field.field.cloud_server_template.k8s.field_git_password.yml',
+    'field.field.cloud_server_template.k8s.field_git_path.yml',
+    'field.field.cloud_server_template.k8s.field_git_username.yml',
+    'field.field.cloud_server_template.k8s.field_source_type.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update k8s_pod.yml file.
+ */
+function k8s_update_8271() {
+  $view_ids = [
+    'k8s_pod_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.k8s_pod.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update k8s_deployment.yml file.
+ */
+function k8s_update_8272() {
+  $view_ids = [
+    'k8s_deployment_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.k8s_deployment.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add launch resources field to cloud_server_template.
+ */
+function k8s_update_8273() {
+  // Add a new field and update entity cloud_server_template.k8s.
+  // Do nothing, move to 8274.
+}
+
+/**
+ * Add launch resources field to cloud_server_template.
+ */
+function k8s_update_8274() {
+
+  $entity_type = 'cloud_server_template';
+  $field_name = 'field_launch_resources';
+  $bundle = 'k8s';
+
+  // Delete the existing field_launch_resources field.
+  \Drupal::configFactory()->getEditable("field.field.${entity_type}.${bundle}.${field_name}")->delete();
+
+  $config_path = realpath(drupal_get_path('module', 'k8s')) . '/config/install';
+  $source = new FileStorage($config_path);
+
+  // Obtain the storage manager for field_storage_config entity type, then
+  // create a new field from the yaml configuration and save.
+  \Drupal::entityTypeManager()->getStorage('field_storage_config')
+    ->create($source->read("field.storage.${entity_type}.${field_name}"))
+    ->save();
+
+  // Obtain the storage manager for field_config entity type, then
+  // create a new field from the yaml configuration and save.
+  \Drupal::entityTypeManager()->getStorage('field_config')
+    ->create($source->read("field.field.${entity_type}.${bundle}.${field_name}"))
+    ->save();
+
+  $files = [
+    'core.entity_form_display.cloud_server_template.k8s.default.yml',
+    'core.entity_view_display.cloud_server_template.k8s.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add field and field_storage for cloud_project.
+ */
+function k8s_update_8275() {
+  // Add new fields and field_storage for cloud_project.k8s.
+  $files = [
+    'field.storage.cloud_project.field_enable_resource_scheduler.yml',
+    'field.storage.cloud_project.field_enable_time_scheduler.yml',
+    'field.storage.cloud_project.field_k8s_clusters.yml',
+    'field.storage.cloud_project.field_username.yml',
+    'field.storage.cloud_project.field_pod_count.yml',
+    'field.storage.cloud_project.field_request_cpu.yml',
+    'field.storage.cloud_project.field_request_memory.yml',
+    'field.storage.cloud_project.field_startup_time_hour.yml',
+    'field.storage.cloud_project.field_startup_time_minute.yml',
+    'field.storage.cloud_project.field_stop_time_hour.yml',
+    'field.storage.cloud_project.field_stop_time_minute.yml',
+    'cloud.cloud_project_type.k8s.yml',
+    'core.entity_form_display.cloud_project.k8s.default.yml',
+    'core.entity_view_display.cloud_project.k8s.default.yml',
+    'field.field.cloud_project.k8s.field_enable_resource_scheduler.yml',
+    'field.field.cloud_project.k8s.field_enable_time_scheduler.yml',
+    'field.field.cloud_project.k8s.field_k8s_clusters.yml',
+    'field.field.cloud_project.k8s.field_username.yml',
+    'field.field.cloud_project.k8s.field_pod_count.yml',
+    'field.field.cloud_project.k8s.field_request_cpu.yml',
+    'field.field.cloud_project.k8s.field_request_memory.yml',
+    'field.field.cloud_project.k8s.field_startup_time_hour.yml',
+    'field.field.cloud_project.k8s.field_startup_time_minute.yml',
+    'field.field.cloud_project.k8s.field_stop_time_hour.yml',
+    'field.field.cloud_project.k8s.field_stop_time_minute.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add an 'views.*.all' view for k8s entities.
+ */
+function k8s_update_8276() {
+  $files = [
+    'views.view.k8s_api_service.yml',
+    'views.view.k8s_cluster_role.yml',
+    'views.view.k8s_cluster_role_binding.yml',
+    'views.view.k8s_config_map.yml',
+    'views.view.k8s_cron_job.yml',
+    'views.view.k8s_daemon_set.yml',
+    'views.view.k8s_deployment.yml',
+    'views.view.k8s_deployment_all.yml',
+    'views.view.k8s_endpoint.yml',
+    'views.view.k8s_event.yml',
+    'views.view.k8s_ingress.yml',
+    'views.view.k8s_job.yml',
+    'views.view.k8s_limit_range.yml',
+    'views.view.k8s_namespace.yml',
+    'views.view.k8s_network_policy.yml',
+    'views.view.k8s_node.yml',
+    'views.view.k8s_persistent_volume.yml',
+    'views.view.k8s_persistent_volume_claim.yml',
+    'views.view.k8s_pod.yml',
+    'views.view.k8s_pod_all.yml',
+    'views.view.k8s_replica_set.yml',
+    'views.view.k8s_resource_quota.yml',
+    'views.view.k8s_role.yml',
+    'views.view.k8s_role_binding.yml',
+    'views.view.k8s_secret.yml',
+    'views.view.k8s_service.yml',
+    'views.view.k8s_service_account.yml',
+    'views.view.k8s_stateful_set.yml',
+    'views.view.k8s_storage_class.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add enforced option to these files.
+ */
+function k8s_update_8277() {
+  $files = [
+    'core.entity_form_display.cloud_project.k8s.default.yml',
+    'core.entity_view_display.cloud_project.k8s.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Change a function used in field_k8s_clusters.
+ */
+function k8s_update_8278() {
+  $files = [
+    'field.field.cloud_project.k8s.field_k8s_clusters.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Update the column namespace's link of K8s Service Account list view.
+ */
+function k8s_update_8279() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.k8s_service_account.yml'], 'k8s');
+}
+
+/**
+ * Add configuration k8s_metrics_queue_cron_time.
+ */
+function k8s_update_8280() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.settings');
+  $config->set('k8s_metrics_queue_cron_time', 5);
+  $config->save();
+}
+
+/**
+ * Update singular and plural label annotation.
+ */
+function k8s_update_8281() {
+  \Drupal::service('cloud')->updateEntityPluralLabels('k8s');
+}
+
+/**
+ * Add YAML Extension configuration item.
+ */
+function k8s_update_8282() {
+  $config_path = realpath(drupal_get_path('module', 'k8s')) . '/config/install';
+
+  $filename = $config_path . '/k8s.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values) && isset($values['k8s_yaml_file_extensions'])) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('k8s.settings');
+      $config->set('k8s_yaml_file_extensions', $values['k8s_yaml_file_extensions']);
+      $config->save();
+    }
+  }
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function k8s_update_8283() {
+
+  $annotations = [
+    'k8s_persistent_volume' => [
+      'id_plural' => 'k8s_persistent_volumes',
+      'label' => 'Persistent Volume',
+      'label_collection' => 'Persistent Volumes',
+      'label_singular' => 'Persistent Volume',
+      'label_plural' => 'Persistent Volumes',
+    ],
+    'k8s_cluster_role_binding' => [
+      'id_plural' => 'k8s_cluster_role_bindings',
+      'label' => 'Cluster Role Binding',
+      'label_collection' => 'Cluster Role Bindings',
+      'label_singular' => 'Cluster Role Binding',
+      'label_plural' => 'Cluster Role Bindings',
+    ],
+    'k8s_role_binding' => [
+      'id_plural' => 'k8s_role_bindings',
+      'label' => 'Role Binding',
+      'label_collection' => 'Role Bindings',
+      'label_singular' => 'Role Binding',
+      'label_plural' => 'Role Bindings',
+    ],
+    'k8s_api_service' => [
+      'id_plural' => 'k8s_api_services',
+      'label' => 'API Service',
+      'label_collection' => 'API Services',
+      'label_singular' => 'API Service',
+      'label_plural' => 'API Services',
+    ],
+    'k8s_config_map' => [
+      'id_plural' => 'k8s_config_maps',
+      'label' => 'ConfigMap',
+      'label_collection' => 'ConfigMaps',
+      'label_singular' => 'ConfigMap',
+      'label_plural' => 'ConfigMaps',
+    ],
+    'k8s_network_policy' => [
+      'id_plural' => 'k8s_network_policies',
+      'label' => 'Network Policy',
+      'label_collection' => 'Network Policies',
+      'label_singular' => 'Network Policy',
+      'label_plural' => 'Network Policies',
+    ],
+    'k8s_resource_quota' => [
+      'id_plural' => 'k8s_resource_quotas',
+      'label' => 'Resource Quota',
+      'label_collection' => 'Resource Quotas',
+      'label_singular' => 'Resource Quota',
+      'label_plural' => 'Resource Quotas',
+    ],
+    'k8s_stateful_set' => [
+      'id_plural' => 'k8s_stateful_sets',
+      'label' => 'Stateful Set',
+      'label_collection' => 'Stateful Sets',
+      'label_singular' => 'Stateful Set',
+      'label_plural' => 'Stateful Sets',
+    ],
+    'k8s_replica_set' => [
+      'id_plural' => 'k8s_replica_sets',
+      'label' => 'Replica Set',
+      'label_collection' => 'Replica Sets',
+      'label_singular' => 'Replica Set',
+      'label_plural' => 'Replica Sets',
+    ],
+    'k8s_namespace' => [
+      'id_plural' => 'k8s_namespaces',
+      'label' => 'Namespace',
+      'label_collection' => 'Namespaces',
+      'label_singular' => 'Namespace',
+      'label_plural' => 'Namespaces',
+    ],
+    'k8s_daemon_set' => [
+      'id_plural' => 'k8s_daemon_sets',
+      'label' => 'Daemon Set',
+      'label_collection' => 'Daemon Sets',
+      'label_singular' => 'Daemon Set',
+      'label_plural' => 'Daemon Sets',
+    ],
+    'k8s_role' => [
+      'id_plural' => 'k8s_roles',
+      'label' => 'Role',
+      'label_collection' => 'Roles',
+      'label_singular' => 'Role',
+      'label_plural' => 'Roles',
+    ],
+    'k8s_cron_job' => [
+      'id_plural' => 'k8s_cron_jobs',
+      'label' => 'Cron Job',
+      'label_collection' => 'Cron Jobs',
+      'label_singular' => 'Cron Job',
+      'label_plural' => 'Cron Jobs',
+    ],
+    'k8s_storage_class' => [
+      'id_plural' => 'k8s_storage_classes',
+      'label' => 'Storage Class',
+      'label_collection' => 'Storage Classes',
+      'label_singular' => 'Storage Class',
+      'label_plural' => 'Storage Classes',
+    ],
+    'k8s_job' => [
+      'id_plural' => 'k8s_jobs',
+      'label' => 'Job',
+      'label_collection' => 'Jobs',
+      'label_singular' => 'Job',
+      'label_plural' => 'Jobs',
+    ],
+    'k8s_node' => [
+      'id_plural' => 'k8s_nodes',
+      'label' => 'Node',
+      'label_collection' => 'Nodes',
+      'label_singular' => 'Node',
+      'label_plural' => 'Nodes',
+    ],
+    'k8s_event' => [
+      'id_plural' => 'k8s_events',
+      'label' => 'Event',
+      'label_collection' => 'Events',
+      'label_singular' => 'Event',
+      'label_plural' => 'Events',
+    ],
+    'k8s_ingress' => [
+      'id_plural' => 'k8s_ingresses',
+      'label' => 'Ingress',
+      'label_collection' => 'Ingresses',
+      'label_singular' => 'Ingress',
+      'label_plural' => 'Ingresses',
+    ],
+    'k8s_deployment' => [
+      'id_plural' => 'k8s_deployments',
+      'label' => 'Deployment',
+      'label_collection' => 'Deployments',
+      'label_singular' => 'Deployment',
+      'label_plural' => 'Deployments',
+    ],
+    'k8s_endpoint' => [
+      'id_plural' => 'k8s_endpoints',
+      'label' => 'Endpoint',
+      'label_collection' => 'Endpoints',
+      'label_singular' => 'Endpoint',
+      'label_plural' => 'Endpoints',
+    ],
+    'k8s_service_account' => [
+      'id_plural' => 'k8s_service_accounts',
+      'label' => 'Service Account',
+      'label_collection' => 'Service Accounts',
+      'label_singular' => 'Service Account',
+      'label_plural' => 'Service Accounts',
+    ],
+    'k8s_service' => [
+      'id_plural' => 'k8s_services',
+      'label' => 'Service',
+      'label_collection' => 'Services',
+      'label_singular' => 'Service',
+      'label_plural' => 'Services',
+    ],
+    'k8s_pod' => [
+      'id_plural' => 'k8s_pods',
+      'label' => 'Pod',
+      'label_collection' => 'Pods',
+      'label_singular' => 'Pod',
+      'label_plural' => 'Pods',
+    ],
+    'k8s_persistent_volume_claim' => [
+      'id_plural' => 'k8s_persistent_volume_claims',
+      'label' => 'Persistent Volume Claim',
+      'label_collection' => 'Persistent Volume Claims',
+      'label_singular' => 'Persistent Volume Claim',
+      'label_plural' => 'Persistent Volume Claims',
+    ],
+    'k8s_limit_range' => [
+      'id_plural' => 'k8s_limit_ranges',
+      'label' => 'Limit Range',
+      'label_collection' => 'Limit Ranges',
+      'label_singular' => 'Limit Range',
+      'label_plural' => 'Limit Ranges',
+    ],
+    'k8s_secret' => [
+      'id_plural' => 'k8s_secrets',
+      'label' => 'Secret',
+      'label_collection' => 'Secrets',
+      'label_singular' => 'Secret',
+      'label_plural' => 'Secrets',
+    ],
+    'k8s_cluster_role' => [
+      'id_plural' => 'k8s_cluster_roles',
+      'label' => 'Cluster Role',
+      'label_collection' => 'Cluster Roles',
+      'label_singular' => 'Cluster Role',
+      'label_plural' => 'Cluster Roles',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Add an 'views.*.all' view for k8s entities.
+ */
+function k8s_update_8284() {
+  $files = [
+    'views.view.k8s_api_service.yml',
+    'views.view.k8s_cluster_role.yml',
+    'views.view.k8s_cluster_role_binding.yml',
+    'views.view.k8s_config_map.yml',
+    'views.view.k8s_cron_job.yml',
+    'views.view.k8s_daemon_set.yml',
+    'views.view.k8s_deployment.yml',
+    'views.view.k8s_endpoint.yml',
+    'views.view.k8s_event.yml',
+    'views.view.k8s_ingress.yml',
+    'views.view.k8s_job.yml',
+    'views.view.k8s_limit_range.yml',
+    'views.view.k8s_namespace.yml',
+    'views.view.k8s_network_policy.yml',
+    'views.view.k8s_node.yml',
+    'views.view.k8s_persistent_volume.yml',
+    'views.view.k8s_persistent_volume_claim.yml',
+    'views.view.k8s_pod.yml',
+    'views.view.k8s_replica_set.yml',
+    'views.view.k8s_resource_quota.yml',
+    'views.view.k8s_role.yml',
+    'views.view.k8s_role_binding.yml',
+    'views.view.k8s_secret.yml',
+    'views.view.k8s_service.yml',
+    'views.view.k8s_service_account.yml',
+    'views.view.k8s_stateful_set.yml',
+    'views.view.k8s_storage_class.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+
+  $view_ids = [
+    'k8s_deployment_all',
+    'k8s_pod_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+}
+
+/**
+ * Add field_enable_metrics_server to cloud server template.
+ */
+function k8s_update_8285() {
+  // Add field.
+  $files = [
+    'field.storage.cloud_config.field_enable_metrics_server.yml',
+    'field.field.cloud_config.k8s.field_enable_metrics_server.yml',
+    'core.entity_form_display.cloud_config.k8s.default.yml',
+    'core.entity_view_display.cloud_config.k8s.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add configuration k8s_update_resources_queue_cron_time.
+ */
+function k8s_update_8286() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.settings');
+  $config->set('k8s_update_resources_queue_cron_time', 5);
+  $config->save();
+}
+
+/**
+ * Add configuration k8s_update_cost_storage_queue_cron_time.
+ */
+function k8s_update_8287() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.settings');
+  $config->set('k8s_update_cost_storage_queue_cron_time', 5);
+  $config->save();
+}
+
+/**
+ * Add entity type k8s_priority_class and view k8s_priority_class.
+ */
+function k8s_update_8288() {
+  // Add entity type k8s_priority_class.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('k8s_priority_class');
+  $definition_update_manager->uninstallEntityType($entity_type);
+  $definition_update_manager->installEntityType($entity_type);
+
+  // Add view k8s_priority_class.
+  $files = [
+    'views.view.k8s_priority_class.yml',
+    'system.action.k8s_priority_class_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Add configuration k8s_update_resource_storage_queue_cron_time.
+ */
+function k8s_update_8289() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('k8s.settings');
+  $config->set('k8s_update_resource_storage_queue_cron_time', 60);
+  $config->set('k8s_update_cost_storage_queue_cron_time', 3600);
+  $config->set('k8s_keep_resource_storage_time_range', 2);
+  $config->save();
+}
+
+/**
+ * Add an 'views.*.project' view for k8s entities.
+ */
+function k8s_update_8290() {
+  $files = [
+    'views.view.k8s_api_service.yml',
+    'views.view.k8s_cluster_role.yml',
+    'views.view.k8s_cluster_role_binding.yml',
+    'views.view.k8s_config_map.yml',
+    'views.view.k8s_cron_job.yml',
+    'views.view.k8s_daemon_set.yml',
+    'views.view.k8s_deployment.yml',
+    'views.view.k8s_endpoint.yml',
+    'views.view.k8s_event.yml',
+    'views.view.k8s_ingress.yml',
+    'views.view.k8s_job.yml',
+    'views.view.k8s_limit_range.yml',
+    'views.view.k8s_namespace.yml',
+    'views.view.k8s_network_policy.yml',
+    'views.view.k8s_node.yml',
+    'views.view.k8s_persistent_volume.yml',
+    'views.view.k8s_persistent_volume_claim.yml',
+    'views.view.k8s_pod.yml',
+    'views.view.k8s_priority_class.yml',
+    'views.view.k8s_replica_set.yml',
+    'views.view.k8s_resource_quota.yml',
+    'views.view.k8s_role.yml',
+    'views.view.k8s_role_binding.yml',
+    'views.view.k8s_secret.yml',
+    'views.view.k8s_service.yml',
+    'views.view.k8s_service_account.yml',
+    'views.view.k8s_stateful_set.yml',
+    'views.view.k8s_storage_class.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'k8s');
+}
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function k8s_update_dependencies() {
+  $dependencies = [];
+
+  $dependencies['k8s'] = [
+    8226 => ['cloud' => 8122],
+    8273 => ['cloud' => 8128],
+    8274 => ['cloud' => 8131],
+    8275 => ['cloud' => 8133],
+  ];
+
+  return $dependencies;
+}

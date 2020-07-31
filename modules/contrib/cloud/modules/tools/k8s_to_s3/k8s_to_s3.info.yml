@@ -1,0 +1,16 @@
+name: 'K8s to S3'
+type: module
+description: 'Transfer definitions of K8s resources to Amazon S3 bucket.'
+package: Cloud
+core_version_requirement: ^8.8 || ^9
+configure: k8s_to_s3.settings
+dependencies:
+  - cloud:aws_cloud
+  - cloud:cloud
+  - cloud:docker
+  - cloud:k8s
+
+# Information added by Drupal.org packaging script on 2020-07-30
+version: '3.x-dev'
+project: 'cloud'
+datestamp: 1596085889

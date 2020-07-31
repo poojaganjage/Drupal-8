@@ -1,0 +1,63 @@
+field.formatter.settings.cloud_image:
+  type: mapping
+  label: 'Cloud Image'
+  mapping:
+    image_style:
+      type: string
+      label: 'Image Style'
+    image_link:
+      type: string
+      label: 'Link image to'
+
+field.formatter.settings.entity_link:
+  type: mapping
+  label: 'Entity link'
+  mapping:
+    target_type:
+      type: string
+      label: 'Target type'
+    field_name:
+      type: string
+      label: 'Field name'
+    comma_separated:
+      type: boolean
+      label: 'Separated with comma'
+    html_generator_class:
+      type: string
+      label: 'Html generator class'
+    extra_route_parameter:
+      type: string
+      label: 'Extra route parameter'
+    extra_route_parameter_entity_method:
+      type: string
+      label: 'Entity method for extra route parameter'
+
+field.widget.settings.key_value_item:
+  type: mapping
+  label: 'Key Value Widget'
+  mapping:
+    reserved_key_checker_class:
+      type: string
+      label: 'Reserved key checker class'
+    value_converter_class:
+      type: string
+      label: 'Value converter class'
+
+field.formatter.settings.key_value_formatter:
+  type: mapping
+  label: 'Key Value Formatter'
+  mapping:
+    value_converter_class:
+      type: string
+      label: 'Value converter class'
+
+field.storage_settings.key_value:
+  type: mapping
+  label: 'Key Value'
+  mapping:
+    max_length:
+      type: integer
+      label: 'Maximum length'
+    long:
+      type: boolean
+      label: 'Long'

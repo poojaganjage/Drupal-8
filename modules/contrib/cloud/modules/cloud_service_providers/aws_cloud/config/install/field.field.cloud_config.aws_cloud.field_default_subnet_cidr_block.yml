@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_default_subnet_cidr_block
+id: cloud_config.aws_cloud.field_default_subnet_cidr_block
+field_name: field_default_subnet_cidr_block
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Default Subnet CIDR Block'
+description: 'The default Subnet CIDR Block which will be used to create user owned subnet. e.g. 10.0.0.0/24'
+required: false
+translatable: false
+default_value:
+  -
+    value: 10.0.0.0/24
+default_value_callback: ''
+settings: {  }
+field_type: string

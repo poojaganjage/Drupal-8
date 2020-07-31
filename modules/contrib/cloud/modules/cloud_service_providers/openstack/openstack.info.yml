@@ -1,0 +1,13 @@
+name: 'OpenStack'
+type: module
+description: 'Allows users to manage OpenStack.'
+package: Cloud service providers
+core_version_requirement: ^8.8 || ^9
+configure: openstack.settings
+dependencies:
+  - aws_cloud
+
+# Information added by Drupal.org packaging script on 2020-07-30
+version: '3.x-dev'
+project: 'cloud'
+datestamp: 1596085889

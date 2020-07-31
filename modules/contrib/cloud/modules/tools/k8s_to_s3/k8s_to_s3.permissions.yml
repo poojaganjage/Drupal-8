@@ -1,0 +1,3 @@
+administer k8s_to_s3:
+  title: 'Administer Kubernetes to S3 settings'
+  description: 'Perform administration tasks for Kubernetes to S3.'

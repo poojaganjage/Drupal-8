@@ -1,0 +1,305 @@
+<?php
+
+/**
+ * @file
+ * VMware module.
+ *
+ * This module handles UI interactions with the cloud system for VMware.
+ */
+
+use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\file\Entity\File;
+use Drupal\vmware\Service\VmwareServiceException;
+
+/**
+ * Implements hook_help().
+ */
+function vmware_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.vmware':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module creates a user interface for managing VMware.') . '</p>';
+      $output .= '<h3>' . t('Features') . '</h3>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('<strong>VMware</strong>');
+      $output .= '<ul>';
+      $output .= '<li>' . t('Manage VMware.') . '</li>';
+      $output .= '<li>' . t('Manage most of VMware resources.') . '</li>';
+      $output .= '</ul></li></ul>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the VMware module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_default_cloud_config_icon().
+ */
+function vmware_default_cloud_config_icon($entity) {
+  // Provides the calling hook with the default VMware icon.
+  if ($entity->bundle() === 'vmware') {
+    $config = \Drupal::config('vmware.settings');
+    return $config->get('vmware_cloud_config_icon');
+  }
+}
+
+/**
+ * Get fieldsets of cloud config page.
+ *
+ * @param array $fields
+ *   Array of fields.
+ */
+function vmware_cloud_config_fieldsets(array &$fields) {
+  $fieldset_defs = [
+    [
+      'name' => 'cloud_provider',
+      'title' => t('Cloud Service Provider'),
+      'open' => TRUE,
+      'fields' => [
+        'cloud_context',
+        'name',
+        'image',
+        'field_vcenter_url',
+      ],
+    ],
+    [
+      'name' => 'credentials',
+      'title' => t('Credentials'),
+      'open' => TRUE,
+      'fields' => [
+        'field_vcenter_username',
+        'field_vcenter_password',
+      ],
+    ],
+    [
+      'name' => 'location',
+      'title' => t('Location'),
+      'open' => TRUE,
+      'fields' => [
+        'cloud_config_location_map',
+        'field_location_country',
+        'field_location_city',
+        'field_location_latitude',
+        'field_location_longitude',
+      ],
+    ],
+  ];
+
+  $others = [
+    'name' => 'others',
+    'title' => t('Others'),
+    'open' => FALSE,
+    'fields' => [
+      'uid',
+    ],
+  ];
+
+  $fieldset_defs[] = $others;
+
+  \Drupal::service('cloud')->reorderForm($fields, $fieldset_defs);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function vmware_form_cloud_config_vmware_edit_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  vmware_form_cloud_config_vmware_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function vmware_form_cloud_config_vmware_add_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['cloud_context']['#access'] = FALSE;
+  $form['actions']['submit']['#submit'] = ['vmware_form_cloud_config_vmware_add_form_submit'];
+  $form['#validate'][] = 'vmware_form_cloud_config_vmware_add_form_validate';
+
+  vmware_form_cloud_config_vmware_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Validate function for form cloud_config_vmware_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function vmware_form_cloud_config_vmware_add_form_validate(array &$form, FormStateInterface $form_state) {
+
+  // Validate Name.
+  $name = $form_state->getValue('name')[0]['value'];
+
+  $cloud_context_exists = \Drupal::service('cloud')->cloudContextExists($name);
+  if ($cloud_context_exists === TRUE) {
+    $form_state->setErrorByName(
+      'name',
+      t('The cloud service providers have existed with the same cloud service provider.')
+    );
+    return;
+  }
+
+  // Validate vCenter URL.
+  $vcenter_url = $form_state->getValue('field_vcenter_url')[0]['value'];
+  if (!UrlHelper::isValid($vcenter_url, TRUE)) {
+    $form_state->setErrorByName(
+      'field_vcenter_url',
+      t('The vCenter URL is invalid. Please check your URL format.')
+    );
+    return;
+  }
+
+  // Validate vCenter fields.
+  $vcenter_username = $form_state->getValue('field_vcenter_username')[0]['value'];
+  $vcenter_password = $form_state->getValue('field_vcenter_password')[0]['value'];
+  $vmware = \Drupal::service('vmware');
+  $vmware->setCredentials([
+    'vcenter_url' => $vcenter_url,
+    'vcenter_username' => $vcenter_username,
+    'vcenter_password' => $vcenter_password,
+  ]);
+
+  try {
+    $vmware->login();
+  }
+  catch (VmwareServiceException $e) {
+    $form_state->setErrorByName(
+      NULL,
+      t('Cannot login vCenter server. Please check your vCenter Username or Password.')
+    );
+  }
+}
+
+/**
+ * Submit function for form cloud_config_vmware_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function vmware_form_cloud_config_vmware_add_form_submit(array $form, FormStateInterface $form_state) {
+  // Create CloudConfig.
+  $entity = $form_state->getFormObject()->buildEntity($form, $form_state);
+
+  // Set cloud_context.
+  $name = $form_state->getValue('name')[0]['value'];
+  $cloud_context = \Drupal::service('cloud')->generateCloudContext($name);
+  $entity->setCloudContext($cloud_context);
+  $entity->save();
+
+  \Drupal::service('cloud')->processOperationStatus($entity, 'created');
+
+  // Rebuild menu.
+  \Drupal::service('plugin.cache_clearer')->clearCachedDefinitions();
+
+  $form_state->setRedirect('entity.cloud_config.collection', []);
+}
+
+/**
+ * Common alter function.
+ *
+ * Common alter function for vmware_form_cloud_config_vmware_edit_form and
+ * vmware_form_cloud_config_vmware_add_form.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Edit form_id.
+ */
+function vmware_form_cloud_config_vmware_form_common_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  try {
+    // Set the default vmware icon.
+    $config = \Drupal::config('vmware.settings');
+    $default_image = $config->get('vmware_cloud_config_icon');
+    if ($default_image) {
+      $file = File::load($default_image);
+      $image = \Drupal::service('image.factory')->get($file->getFileUri());
+      $form['image']['widget'][0]['#default_image'] = [
+        'fid' => $default_image,
+        'width' => $image->getWidth(),
+        'height' => $image->getHeight(),
+      ];
+    }
+
+    // Change type to password.
+    $form['field_vcenter_password']['widget'][0]['value']['#type'] = 'password';
+
+    vmware_cloud_config_fieldsets($form);
+
+    $form['new_revision']['#access'] = FALSE;
+    $form['revision_log_message']['#access'] = FALSE;
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view_alter().
+ */
+function vmware_cloud_config_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->bundle() === 'vmware') {
+    $map_json_url = \Drupal::config('cloud.settings')->get('cloud_custom_location_map_json_url');
+    $url = Url::fromRoute('entity.cloud_config.location', ['cloud_config' => $entity->id()])
+      ->toString();
+
+    $build['cloud_config_location_map'] = [
+      '#markup' => '<div id="cloud_config_location"></div>',
+      '#attached' => [
+        'library' => [
+          'cloud/cloud_config_location',
+        ],
+        'drupalSettings' => [
+          'cloud' => [
+            'cloud_location_map_json_url' => $map_json_url,
+            'cloud_config_location_json_url' => $url,
+          ],
+        ],
+      ],
+    ];
+
+    $build['field_location_country']['#access'] = FALSE;
+    $build['field_location_city']['#access'] = FALSE;
+    $build['field_location_longitude']['#access'] = FALSE;
+    $build['field_location_latitude']['#access'] = FALSE;
+
+    vmware_cloud_config_fieldsets($build);
+  }
+}
+
+/**
+ * Implements hook_entity_operation().
+ */
+function vmware_entity_operation(EntityInterface $entity) {
+  $operations = [];
+  $account = \Drupal::currentUser();
+
+  if ($entity->getEntityTypeId() === 'vmware_vm') {
+    if ($account->hasPermission('edit vmware vm')) {
+      if ($entity->getPowerState() === 'POWERED_OFF') {
+        $operations['start'] = [
+          'title' => t('Start'),
+          'url' => $entity->toUrl('start-form'),
+          'weight' => 20,
+        ];
+      }
+      elseif ($entity->getPowerState() === 'POWERED_ON') {
+        $operations['stop'] = [
+          'title' => t('Stop'),
+          'url' => $entity->toUrl('stop-form'),
+          'weight' => 20,
+        ];
+      }
+    }
+  }
+
+  return $operations;
+}

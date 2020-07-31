@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_logs_permission_arn
+id: cloud_config.aws_cloud.field_logs_permission_arn
+field_name: field_logs_permission_arn
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'CloudWatch Logs IAM Role'
+description: 'The ARN for the IAM role that permits Amazon EC2 to publish flow logs to a CloudWatch Logs log group in your account.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

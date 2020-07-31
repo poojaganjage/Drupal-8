@@ -1,0 +1,356 @@
+<?php
+
+/**
+ * @file
+ * Terraform module.
+ *
+ * This module handles UI interactions with the cloud system for Terraform.
+ */
+
+use Drupal\cloud\Entity\CloudConfig;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\file\Entity\File;
+
+/**
+ * Implements hook_help().
+ */
+function terraform_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.terraform':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module creates a user interface for managing Terraform.') . '</p>';
+      $output .= '<h3>' . t('Features') . '</h3>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('<strong>Terraform</strong>');
+      $output .= '<ul>';
+      $output .= '<li>' . t('Manage Terraform.') . '</li>';
+      $output .= '<li>' . t('Manage most of Terraform resources.') . '</li>';
+      $output .= '</ul></li></ul>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the Terraform module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_default_cloud_config_icon().
+ */
+function terraform_default_cloud_config_icon($entity) {
+  // Provides the calling hook with the default Terraform icon.
+  if ($entity->bundle() === 'terraform') {
+    $config = \Drupal::config('terraform.settings');
+    return $config->get('terraform_cloud_config_icon');
+  }
+}
+
+/**
+ * Implements hook_cloud_config_delete().
+ */
+function terraform_cloud_config_delete(CloudConfig $cloud_config) {
+  if ($cloud_config->bundle() === 'terraform') {
+    /* @var \Drupal\terraform\Service\TerraformServiceInterface $terraform_service */
+    $terraform_service = \Drupal::service('terraform');
+    $terraform_service->setCloudContext($cloud_config->getCloudContext());
+    $terraform_service->clearAllEntities();
+  }
+}
+
+/**
+ * Get fieldsets of cloud config page.
+ *
+ * @param array $fields
+ *   Array of fields.
+ */
+function terraform_cloud_config_fieldsets(array &$fields) {
+  $fieldset_defs = [
+    [
+      'name' => 'cloud_provider',
+      'title' => t('Cloud Service Provider'),
+      'open' => TRUE,
+      'fields' => [
+        'cloud_context',
+        'name',
+        'image',
+        'field_organization',
+        'field_aws_cloud',
+      ],
+    ],
+    [
+      'name' => 'credentials',
+      'title' => t('Credentials'),
+      'open' => TRUE,
+      'fields' => [
+        'field_api_token',
+      ],
+    ],
+  ];
+
+  $others = [
+    'name' => 'others',
+    'title' => t('Others'),
+    'open' => FALSE,
+    'fields' => [
+      'uid',
+    ],
+  ];
+
+  $fieldset_defs[] = $others;
+
+  \Drupal::service('cloud')->reorderForm($fields, $fieldset_defs);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function terraform_form_cloud_config_terraform_edit_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  terraform_form_cloud_config_terraform_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function terraform_form_cloud_config_terraform_add_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['cloud_context']['#access'] = FALSE;
+  $form['actions']['submit']['#submit'] = ['terraform_form_cloud_config_terraform_add_form_submit'];
+  $form['#validate'][] = 'terraform_form_cloud_config_terraform_add_form_validate';
+
+  terraform_form_cloud_config_terraform_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Validate function for form cloud_config_terraform_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function terraform_form_cloud_config_terraform_add_form_validate(array &$form, FormStateInterface $form_state) {
+
+  // Validate Name.
+  $name = $form_state->getValue('name')[0]['value'];
+
+  $cloud_context_exists = \Drupal::service('cloud')->cloudContextExists($name);
+  if ($cloud_context_exists === TRUE) {
+    $form_state->setErrorByName(
+      'name',
+      t('The cloud service providers have existed with the same cloud service provider.')
+    );
+    return;
+  }
+
+  // Validate Organization.
+  if (empty($form_state->getValue('field_organization')[0]['value'])) {
+    $form_state->setErrorByName(
+      'field_organization',
+      t('The Organization field cannot be empty.')
+    );
+  }
+
+  // Validate API Token.
+  if (empty($form_state->getValue('field_api_token')[0]['value'])) {
+    $form_state->setErrorByName(
+      'field_api_token',
+      t('The API Token field cannot be empty.')
+    );
+  }
+}
+
+/**
+ * Submit function for form cloud_config_terraform_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function terraform_form_cloud_config_terraform_add_form_submit(array $form, FormStateInterface $form_state) {
+  // Create CloudConfig.
+  $entity = $form_state->getFormObject()->buildEntity($form, $form_state);
+
+  // Set cloud_context.
+  $name = $form_state->getValue('name')[0]['value'];
+  $cloud_context = \Drupal::service('cloud')->generateCloudContext($name);
+  $entity->setCloudContext($cloud_context);
+  $entity->save();
+
+  \Drupal::service('cloud')->processOperationStatus($entity, 'created');
+
+  // Rebuild menu.
+  \Drupal::service('plugin.cache_clearer')->clearCachedDefinitions();
+
+  $form_state->setRedirect('entity.cloud_config.collection', []);
+}
+
+/**
+ * Common alter function.
+ *
+ * Common alter function for terraform_form_cloud_config_terraform_edit_form and
+ * terraform_form_cloud_config_terraform_add_form.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Edit form_id.
+ */
+function terraform_form_cloud_config_terraform_form_common_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  try {
+    // Set the default terraform icon.
+    $config = \Drupal::config('terraform.settings');
+    $default_image = $config->get('terraform_cloud_config_icon');
+    if ($default_image) {
+      $file = File::load($default_image);
+      $image = \Drupal::service('image.factory')->get($file->getFileUri());
+      $form['image']['widget'][0]['#default_image'] = [
+        'fid' => $default_image,
+        'width' => $image->getWidth(),
+        'height' => $image->getHeight(),
+      ];
+    }
+
+    terraform_cloud_config_fieldsets($form);
+
+    // Hide the select box if the module aws_cloud isn't installed.
+    if (!\Drupal::service('module_handler')->moduleExists('aws_cloud')) {
+      $form['cloud_provider']['field_aws_cloud']['#access'] = FALSE;
+    }
+
+    $form['new_revision']['#access'] = FALSE;
+    $form['revision_log_message']['#access'] = FALSE;
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function terraform_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if (strpos($form_id, 'views_form_terraform_variable_') === 0) {
+    $form['#submit'][] = 'terraform_variable_views_bulk_form_submit';
+  }
+  elseif (strpos($form_id, 'views_form_terraform_') === 0) {
+    $form['#submit'][] = 'cloud_views_bulk_form_submit';
+  }
+}
+
+/**
+ * Submit function for form views_form_terraform_variable.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function terraform_variable_views_bulk_form_submit(array $form, FormStateInterface $form_state) {
+  $request = \Drupal::service('request_stack')->getCurrentRequest();
+  $form_state->setRedirect(
+    'entity.terraform_variable.delete_multiple_form', [
+      'cloud_context' => $request->get('cloud_context'),
+      'terraform_workspace' => $request->get('terraform_workspace'),
+    ]
+  );
+}
+
+/**
+ * Implements hook_entity_operation().
+ */
+function terraform_entity_operation(EntityInterface $entity) {
+  $operations = [];
+  $account = \Drupal::currentUser();
+
+  if ($entity->getEntityTypeId() === 'terraform_run') {
+    if ($account->hasPermission('edit terraform run')) {
+      if ($entity->getStatus() === 'planned') {
+        $operations['apply'] = [
+          'title' => t('Apply'),
+          'url' => $entity->toUrl('apply-form'),
+          'weight' => 20,
+        ];
+      }
+    }
+  }
+
+  return $operations;
+}
+
+/**
+ * Set dynamic allowed values for the AWS Cloud field.
+ *
+ * @param \Drupal\field\Entity\FieldStorageConfig $definition
+ *   The field definition.
+ * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
+ *   The entity being created if applicable.
+ * @param bool $cacheable
+ *   Boolean indicating if the results are cacheable.
+ *
+ * @return array
+ *   An array of possible key and value options.
+ *
+ * @see options_allowed_values()
+ */
+function terraform_aws_cloud_allowed_values_function(FieldStorageConfig $definition, ContentEntityInterface $entity = NULL, $cacheable) {
+  $allowed_values = [];
+
+  if (empty($entity) || $entity->bundle() !== 'terraform') {
+    return $allowed_values;
+  }
+
+  if (!\Drupal::service('module_handler')->moduleExists('aws_cloud')) {
+    return $allowed_values;
+  }
+
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('aws_cloud');
+  foreach ($entities ?: [] as $entity) {
+    $allowed_values[$entity->getCloudContext()] = $entity->getName();
+  }
+
+  return $allowed_values;
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function terraform_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->getEntityTypeId() === 'terraform_run') {
+    $build['#attached']['library'][] = 'terraform/terraform_run';
+
+    $config = \Drupal::config('terraform.settings');
+    $build['#attached']['drupalSettings']['terraform']['terraform_js_refresh_interval']
+      = $config->get('terraform_js_refresh_interval');
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function terraform_cron() {
+  $terraform_service = \Drupal::service('terraform');
+
+  // Update resources.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('terraform');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $terraform_service->setCloudContext($config_entity->getCloudContext());
+    $terraform_service->createResourceQueueItems();
+  }
+}
+
+/**
+ * Implements hook_queue_info_alter().
+ */
+function terraform_queue_info_alter(&$queues) {
+  $config = \Drupal::config('terraform.settings');
+  if (!empty($queues['terraform_update_resources_queue'])) {
+    $queues['terraform_update_resources_queue']['cron']['time'] = $config->get('terraform_update_resources_queue_cron_time');
+  }
+}

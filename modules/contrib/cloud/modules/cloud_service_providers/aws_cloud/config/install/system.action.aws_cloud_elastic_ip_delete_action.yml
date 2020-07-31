@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_elastic_ip_delete_action
+label: 'Delete Elastic IP(s)'
+type: aws_cloud_elastic_ip
+plugin: aws_cloud_elastic_ip_delete_action
+configuration: {  }

@@ -1,0 +1,2641 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for aws_cloud.
+ */
+
+use Drupal\aws_cloud\Plugin\Field\Util\AwsCloudReservedKeyChecker;
+use Drupal\aws_cloud\Plugin\Field\Util\AwsCloudValueConverter;
+use Drupal\aws_cloud\Service\Pricing\PricingService;
+use Drupal\cloud\Entity\CloudConfig;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * Implements hook_install().
+ */
+function aws_cloud_install() {
+  // Setup default icons.
+  \Drupal::service('cloud')->addDefaultIcon('aws_cloud');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function aws_cloud_uninstall() {
+
+  // Delete AWS Cloud service provider entities.
+  \Drupal::service('cloud')->uninstallServiceProvider('aws_cloud');
+  // @TODO: Delete the following user later on.
+  \Drupal::service('cloud')->uninstallServiceProvider('aws_ec2');
+
+  // Delete default icon.
+  \Drupal::service('cloud')->deleteDefaultIcon('aws_cloud');
+
+  // Delete cloud config fields.
+  // NOTE: field_location_* fields consists of two kinds of information
+  // such as field.field.cloud_config.aws_cloud.field_location_* and
+  // field.storage.cloud_config.field_location_*.
+  // field.field.cloud_config.*.field_location_* should be explicitly
+  // removed here when we uninstall this module.
+  // Removing field.storage.cloud_config.field_location_* are automatically
+  // taken care by Cloud module.
+  \Drupal::service('cloud')->uninstallLocationFields('aws_cloud');
+}
+
+/**
+ * Helper function to add fields to the entity type.
+ *
+ * @param string $entity_type
+ *   The entity type, such as cloud_server_template.
+ * @param string $bundle
+ *   The bundle the entity type, such as aws_cloud.
+ * @param mixed $fields
+ *   The fields to be added, such as 'field_a' or ['field_a', 'field_b'].
+ */
+function aws_cloud_add_fields($entity_type, $bundle, $fields) {
+  $config_path = drupal_get_path('module', 'aws_cloud') . '/config/install';
+  $source = new FileStorage($config_path);
+
+  if (!is_array($fields)) {
+    $fields = [$fields];
+  }
+
+  foreach ($fields ?: [] as $field) {
+    // Obtain the storage manager for field_storage_config entity type, then
+    // create a new field from the yaml configuration and save.
+    \Drupal::entityTypeManager()->getStorage('field_storage_config')
+      ->create($source->read("field.storage.$entity_type.$field"))
+      ->save();
+
+    // Obtain the storage manager for field_config entity type, then
+    // create a new field from the yaml configuration and save.
+    \Drupal::entityTypeManager()->getStorage('field_config')
+      ->create($source->read("field.field.$entity_type.$bundle.$field"))
+      ->save();
+  }
+
+  // Reload the default field display and form.
+  // Reference https://drupal.stackexchange.com/questions/164713/how-do-i-update-the-configuration-of-a-module
+  $files = [
+    "core.entity_view_display.$entity_type.$bundle.default.yml",
+    "core.entity_form_display.$entity_type.$bundle.default.yml",
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Helper function to delete fields from the entity type.
+ *
+ * @param string $entity_type
+ *   The entity type, such as cloud_server_template.
+ * @param string $bundle
+ *   The bundle the entity type, such as aws_cloud.
+ * @param mixed $field_names
+ *   The names of fields to be added, such as 'field_a',
+ *   or ['field_a', 'field_b'].
+ */
+function aws_cloud_delete_fields($entity_type, $bundle, $field_names) {
+  if (!is_array($field_names)) {
+    $field_names = [$field_names];
+  }
+
+  // Delete field in bundles.
+  foreach ($field_names ?: [] as $field_name) {
+    $field = FieldConfig::loadByName($entity_type, $bundle, $field_name);
+    if (!empty($field)) {
+      $field->delete();
+    }
+  }
+
+  // Delete field storage.
+  foreach ($field_names ?: [] as $field_name) {
+    $field_storage = FieldStorageConfig::loadByName($entity_type, $field_name);
+    if (!empty($field_storage)) {
+      $field_storage->delete();
+    }
+  }
+}
+
+/**
+ * Helper function to update entity definitions.
+ */
+function aws_cloud_update_entity_definitions() {
+  drupal_flush_all_caches();
+  // @todo https://www.drupal.org/node/3034742.
+  \Drupal::entityDefinitionUpdateManager()->getChangeList();
+}
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function aws_cloud_update_dependencies() {
+  $dependencies = [];
+
+  $dependencies['aws_cloud'][8209] = [
+    'cloud' => 8122,
+  ];
+  $dependencies['cloud'][8127] = [
+    'aws_cloud' => 8208,
+  ];
+
+  return $dependencies;
+}
+
+/**
+ * Add the termination_timestamp field to aws_cloud_instance.
+ *
+ * Backup database before running this update.
+ * This applies updates to the entity tables.
+ */
+function aws_cloud_update_8101() {
+  aws_cloud_update_entity_definitions();
+}
+
+/**
+ * Set timestamp values with 0 to NULL.
+ *
+ * This will make the Timestamp widget display blank instead of
+ * the current date.
+ */
+function aws_cloud_update_8102() {
+  try {
+    \Drupal::database()
+      ->query('UPDATE {aws_cloud_instance} set termination_timestamp = NULL where termination_timestamp = 0')
+      ->execute();
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add notification configurations.
+ */
+function aws_cloud_update_8103() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_notification_frequency', 86400);
+  $config->set('aws_cloud_notification', 0);
+  $config->set('aws_cloud_notification_criteria', 30);
+  $config->set('aws_cloud_notification_subject', '[aws_cloud_instance:name] has been running for since [aws_cloud_instance:launch_time]');
+  $config->set('aws_cloud_notification_msg', 'Your instance [aws_cloud_instance:name] has been running since [aws_cloud_instance:launch_time].  Please review if the instance still needs to be running.');
+  $config->save();
+}
+
+/**
+ * Add automatically terminating instance configurations.
+ */
+function aws_cloud_update_8104() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_instance_terminate', FALSE);  $config->save();
+}
+
+/**
+ * Add field_vpc and field_subnet.
+ */
+function aws_cloud_update_8105() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', ['field_vpc', 'field_subnet']);
+}
+
+/**
+ * Add support for AWS Instance Scheduler.
+ *
+ * This update runs entity db update.
+ * Backup database before running this update.
+ */
+function aws_cloud_update_8106() {
+  aws_cloud_update_entity_definitions();
+
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_scheduler_tag', 'Schedule');
+  $config->save();
+}
+
+/**
+ * Add schedule field to aws_cloud server template implementation.
+ */
+function aws_cloud_update_8107() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', 'field_schedule');
+}
+
+/**
+ * Add snapshot_name to entity volume.
+ */
+function aws_cloud_update_8108() {
+  aws_cloud_update_entity_definitions();
+}
+
+/**
+ * Add a link to EBS snapshot detail page for field name in snapshot list page.
+ */
+function aws_cloud_update_8109() {
+  $config_factory = \Drupal::configFactory();
+  $view = $config_factory->getEditable('views.view.aws_snapshot');
+  $view->set('display.default.display_options.fields.name.settings.link_to_entity', TRUE);
+  $view->save(TRUE);
+}
+
+/**
+ * Make following fields required.
+ *
+ * Field_min_count, field_availability_zone, field_vpc, field_subnet,
+ * field_security_group, field_ssh_key.
+ *
+ * Change label of field_network.
+ */
+function aws_cloud_update_8110() {
+  $field_names = [
+    'field_min_count',
+    'field_availability_zone',
+    'field_vpc',
+    'field_subnet',
+    'field_security_group',
+    'field_ssh_key',
+  ];
+  $config_factory = \Drupal::configFactory();
+
+  foreach ($field_names ?: [] as $field_name) {
+    $field = $config_factory->getEditable("field.field.cloud_server_template.aws_cloud.$field_name");
+    $field->set('required', TRUE);
+    $field->save(TRUE);
+  }
+
+  $field = $config_factory->getEditable('field.field.cloud_server_template.aws_cloud.field_network');
+  $field->set('label', t('Network Interface'));
+  $field->save(TRUE);
+}
+
+/**
+ * Delete owner from entity network interface.
+ */
+function aws_cloud_update_8111() {
+  aws_cloud_update_entity_definitions();
+}
+
+/**
+ * Add IP Permissions field to aws_cloud_security_group.
+ *
+ * This update runs entity db update. Backup database before
+ * running this update.
+ */
+function aws_cloud_update_8112() {
+  aws_cloud_update_entity_definitions();
+}
+
+/**
+ * Delete Eucalyptus from field_cloud_type.
+ */
+function aws_cloud_update_8113() {
+  $config_factory = \Drupal::configFactory();
+  $field = $config_factory->getEditable('field.storage.cloud_config.field_cloud_type');
+  $allowed_values = $field->get('settings.allowed_values');
+  $new_allowed_values = [];
+  foreach ($allowed_values ?: [] as $allowed_value) {
+    if ($allowed_value['value'] === 'eucalyptus') {
+      continue;
+    }
+
+    $new_allowed_values[] = $allowed_value;
+  }
+  $field->set('settings.allowed_values', $new_allowed_values);
+  $field->save(TRUE);
+}
+
+/**
+ * Clean up the aws_cloud_instance_types configuration field.
+ *
+ * The instance_types are now being pulled from an EC2 pricing endpoint.
+ */
+function aws_cloud_update_8114() {
+  $config = \Drupal::configFactory()->getEditable('aws_cloud.settings');
+  $config->clear('aws_cloud_instance_types')->save();
+}
+
+/**
+ * Add Tags field to aws_cloud_instance and update instances.
+ */
+function aws_cloud_update_8115() {
+  aws_cloud_update_entity_definitions();
+
+  /* @var \Drupal\aws_cloud\Service\Ec2\Ec2ServiceInterface $ec2_service */
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+
+  foreach ($entities ?: [] as $entity) {
+    /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+    $ec2_service->setCloudContext($entity->getCloudContext());
+
+    $ec2_service->updateInstances();
+  }
+}
+
+/**
+ * Update allowed values and allowed values function of the following fields.
+ *
+ * The fields are: field_api_endpoint_uri, field_image_upload_url and
+ * field_region.
+ */
+function aws_cloud_update_8116() {
+  $field_config_names = [
+    'field.storage.cloud_config.field_api_endpoint_uri',
+    'field.storage.cloud_config.field_image_upload_url',
+    'field.storage.cloud_config.field_region',
+  ];
+
+  $config_path = drupal_get_path('module', 'aws_cloud') . '/config/install';
+  $source = new FileStorage($config_path);
+  $config_factory = \Drupal::configFactory();
+  foreach ($field_config_names ?: [] as $field_config_name) {
+
+    // Read allowed values from the config file.
+    $field_config = $source->read($field_config_name);
+    $allowed_values = $field_config['settings']['allowed_values'];
+    $allowed_values_function = $field_config['settings']['allowed_values_function'];
+
+    // Update allowed values.
+    $field = $config_factory->getEditable($field_config_name);
+    $field->set('settings.allowed_values', $allowed_values);
+    $field->set('settings.allowed_values_function', $allowed_values_function);
+    $field->save(TRUE);
+  }
+}
+
+/**
+ * Add field_termination_protection to aws_cloud server template implementation.
+ */
+function aws_cloud_update_8117() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', 'field_termination_protection');
+}
+
+/**
+ * Add field_iam_role to aws_cloud server template implementation.
+ */
+function aws_cloud_update_8118() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', 'field_iam_role');
+}
+
+/**
+ * Add Secondary Association ID field to Network Interfaces.
+ *
+ * Update Elastic IP views title.
+ */
+function aws_cloud_update_8119() {
+  aws_cloud_update_entity_definitions();
+
+  $files = [
+    'views.view.aws_elastic_ip.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add configuration item aws_cloud_view_refresh_interval.
+ */
+function aws_cloud_update_8120() {
+  aws_cloud_update_entity_definitions();
+
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_view_refresh_interval', 10);
+  $config->save();
+}
+
+/**
+ * Update display settings of field_instance_type.
+ *
+ * Change the label setting from above to inline
+ * and change type setting from list_default to list_key.
+ */
+function aws_cloud_update_8121() {
+  $config_factory = \Drupal::configFactory();
+  $template = $config_factory->getEditable('core.entity_view_display.cloud_server_template.aws_cloud.default');
+  $template->set('content.field_instance_type.label', 'inline');
+  $template->set('content.field_instance_type.type', 'list_key');
+  $template->save(TRUE);
+}
+
+/**
+ * Update cloud_config entities and write their credentials to an ini file.
+ */
+function aws_cloud_update_8122() {
+  // Add new fields.
+  aws_cloud_add_fields(
+    'cloud_config',
+    'aws_cloud',
+    [
+      'field_use_assume_role',
+      'field_iam_role',
+      'field_use_instance_profile',
+    ]
+  );
+
+  // Update description on access key ID, secret access key.
+  $config_factory = \Drupal::configFactory();
+
+  $field = $config_factory->getEditable('field.field.cloud_config.aws_cloud.field_secret_key');
+  $field->set('label', 'Secret Access Key');
+  $field->set('description', 'e.g. 123ABC/defGHIjkl34+LMNopq567RSTuvwxYz89Z 16-32 Characters.  If <em>Assume Role</em> is selected, enter the secret access key of the child user.');
+  $field->set('required', FALSE);
+  $field->save(TRUE);
+
+  $field = $config_factory->getEditable('field.field.cloud_config.aws_cloud.field_access_key');
+  $field->set('label', 'Access Key ID');
+  $field->set('description', '16-32 Characters, e.g. 12ABCDEFGHIJKVWXYZ89.  If <em>Assume Role</em> is selected, enter the access key ID of the child user.');
+  $field->set('required', FALSE);
+  $field->save(TRUE);
+
+  // Update any existing entities.
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($entities ?: [] as $entity) {
+    // The presave hook takes care of writing the credential file.
+    $entity->save();
+  }
+}
+
+/**
+ * Update fields due to refactoring.
+ *
+ * 1. Migrate field_user_id to field_account_id.
+ * 2. Migrate field owner of following entity type to account_id,
+ *   Instance,
+ *   NetworkInterface,
+ *   Snapshot,
+ *   Image.
+ */
+function aws_cloud_update_8123() {
+  // Add field_account_id.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', 'field_account_id');
+  drupal_flush_all_caches();
+
+  // Copy value from field_user_id to field_account_id.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $config_entity->set('field_account_id', $config_entity->field_user_id->value);
+    $config_entity->save();
+  }
+
+  // Delete field_user_id.
+  aws_cloud_delete_fields('cloud_config', 'aws_ec2', 'field_user_id');
+
+  // Update fields.
+  aws_cloud_update_entity_definitions();
+
+  // Update entities of Instance, NetworkInterface, Snapshot, Image.
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $ec2_service->setCloudContext($config_entity->getCloudContext());
+
+    $ec2_service->updateInstances();
+    $ec2_service->updateNetworkInterfaces();
+    $ec2_service->updateSnapshots();
+
+    $account_id = $config_entity->get('field_account_id')->value;
+    $ec2_service->updateImages(['Owners' => [$account_id]], TRUE);
+  }
+}
+
+/**
+ * Change label of fields for cloud server template to inline.
+ */
+function aws_cloud_update_8124() {
+  $config_factory = \Drupal::configFactory();
+  $template = $config_factory->getEditable(
+    'core.entity_view_display.cloud_server_template.aws_cloud.default'
+  );
+
+  $field_names = [
+    'field_availability_zone',
+    'field_image_id',
+    'field_network',
+    'field_security_group',
+    'field_ssh_key',
+    'field_subnet',
+    'field_vpc',
+  ];
+  foreach ($field_names ?: [] as $field_name) {
+    $template->set("content.${field_name}.label", 'inline');
+  }
+  $template->save(TRUE);
+}
+
+/**
+ * Update EBS snapshot header configuration.
+ */
+function aws_cloud_update_8125() {
+  $files = [
+    'views.view.aws_snapshot.yml',
+    'views.view.aws_instances.yml',
+    'views.view.aws_network_interfaces.yml',
+    'views.view.aws_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update following views pagination.
+ *
+ * EC2 Instances, Images, Security Groups, Elastic IPs (EIP), Elastic Network
+ * Interfaces (ENI), Key Pairs, EBS Volumes, EBS Snapshots views.
+ *
+ * Also add table header to Key Pairs view.
+ */
+function aws_cloud_update_8126() {
+  $files = [
+    'views.view.aws_cloud_key_pairs.yml',
+    'views.view.aws_elastic_ip.yml',
+    'views.view.aws_images.yml',
+    'views.view.aws_instances.yml',
+    'views.view.aws_network_interfaces.yml',
+    'views.view.aws_security_group.yml',
+    'views.view.aws_snapshot.yml',
+    'views.view.aws_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add field_tags field to cloud server template of aws_cloud.
+ */
+function aws_cloud_update_8127() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', 'field_tags');
+}
+
+/**
+ * Add column volume_id to EBS volumes view.
+ */
+function aws_cloud_update_8128() {
+  $files = ['views.view.aws_volume.yml'];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update fields.
+ *
+ * 1. Update elastic network interface field for EC2 instances.
+ * 2. Update image entity visibility field to boolean.
+ * 3. Add cost to EC2 instance entity and instance list.
+ * 4. Add created column to image and EBS snapshot list.
+ * 5. Update EC2 instance entity launch_time field to timestamp.
+ */
+function aws_cloud_update_8129() {
+  $db = \Drupal::database();
+
+  // Clean out the network_interfaces column before updating changing the
+  // column type.
+  if ($db->schema()->fieldExists('aws_cloud_instance', 'network_interfaces')) {
+    $db->update('aws_cloud_instance')
+      ->fields(['network_interfaces' => NULL])
+      ->execute();
+  }
+
+  // Clean out the launch_time column before updating changing the
+  // column type.
+  if ($db->schema()->fieldExists('aws_cloud_instance', 'launch_time')) {
+    $db->update('aws_cloud_instance')
+      ->fields(['launch_time' => NULL])
+      ->execute();
+  }
+
+  aws_cloud_update_entity_definitions();
+
+  // Update views.
+  $files = [
+    'views.view.aws_instances.yml',
+    'views.view.aws_images.yml',
+    'views.view.aws_snapshot.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+  // Update EC2 instances and EBS snapshots.
+  $cloud_configs = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($cloud_configs ?: [] as $cloud_config) {
+    $ec2_service = \Drupal::service('aws_cloud.ec2');
+    $ec2_service->setCloudContext($cloud_config->getCloudContext());
+    $ec2_service->updateInstances();
+    $ec2_service->updateSnapshots();
+  }
+}
+
+/**
+ * Update setting of attachment_information in aws_volume view.
+ */
+function aws_cloud_update_8130() {
+  $files = ['views.view.aws_volume.yml'];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Change the field name of user_id to uid.
+ */
+function aws_cloud_update_8131() {
+  $db = \Drupal::database();
+
+  $tables = [
+    'aws_cloud_elastic_ip',
+    'aws_cloud_image',
+    'aws_cloud_instance',
+    'aws_cloud_key_pair',
+    'aws_cloud_network_interface',
+    'aws_cloud_security_group',
+    'aws_cloud_snapshot',
+    'aws_cloud_volume',
+  ];
+  $old_data = [];
+  foreach ($tables ?: [] as $table) {
+    $old_data[$table] = [];
+    try {
+      if ($db->schema()->fieldExists($table, 'user_id')) {
+        $result = $db->select($table, 't')
+          ->fields('t', ['id', 'user_id'])
+          ->execute()
+          ->fetchAll();
+        foreach ($result ?: [] as $row) {
+          $old_data[$table][] = $row;
+        }
+
+        $db->update($table)
+          ->fields(['user_id' => NULL])
+          ->execute();
+      }
+    }
+    catch (\Exception $e) {
+      \Drupal::service('cloud')->handleException($e);
+    }
+  }
+
+  aws_cloud_update_entity_definitions();
+
+  foreach ($tables ?: [] as $table) {
+    foreach ($old_data[$table] as $row) {
+      $db->update($table)
+        ->fields(['uid' => $row->user_id])
+        ->condition('id', $row->id)
+        ->execute();
+    }
+  }
+}
+
+/**
+ * Add a configuration item and a field.
+ *
+ * Add configuration item google_credential_file_path to aws_cloud.settings,
+ * and Add field field_google_spreadsheet_pricing_url to cloud_config.
+ */
+function aws_cloud_update_8132() {
+  aws_cloud_update_entity_definitions();
+
+  // Update value of google_credential_file_path.
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('google_credential_file_path', gapps_google_credential_file_default_path());
+  $config->save();
+
+  // Add field_google_spreadsheet_pricing_url.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', 'field_spreadsheet_pricing_url');
+}
+
+/**
+ * Set default pager options for views.
+ */
+function aws_cloud_update_8133() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_view_items_per_page', 50);
+  $config->set('aws_cloud_view_expose_items_per_page', TRUE);
+  $config->save();
+
+  $views = [
+    'views.view.aws_cloud_key_pairs',
+    'views.view.aws_elastic_ip',
+    'views.view.aws_images',
+    'views.view.aws_instances',
+    'views.view.aws_network_interfaces',
+    'views.view.aws_security_group',
+    'views.view.aws_snapshot',
+    'views.view.aws_volume',
+  ];
+
+  $items_per_page = aws_cloud_get_views_items_options();
+  $options = [
+    'display.default.display_options.pager.options.items_per_page' => 50,
+    'display.default.display_options.pager.options.expose.items_per_page' => TRUE,
+    'display.default.display_options.pager.options.expose.items_per_page_options' => implode(',', $items_per_page),
+    'display.default.display_options.pager.options.expose.items_per_page_options_all' => TRUE,
+  ];
+
+  foreach ($views ?: [] as $view_name) {
+    aws_cloud_update_views_configuration($view_name, $options);
+  }
+}
+
+/**
+ * Add unused EBS volume configurations.
+ *
+ * Update EBS volume views configuration.
+ */
+function aws_cloud_update_8134() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_unused_volume_criteria', 60);
+  $config->set('aws_cloud_volume_notification_subject', 'Unused EBS volumes');
+  $config->set('aws_cloud_volume_notification_msg', 'The following EBS volumes are not in use.  Please review them.');
+  $config->set('aws_cloud_volume_notification_frequency', 604800);
+  $config->set('aws_cloud_volume_notification_time', '09:00:00');
+  $config->set('aws_cloud_volume_notification_hour', '09');
+  $config->set('aws_cloud_volume_notification_minutes', '00');
+  $config->save();
+
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.aws_volume.yml'], 'aws_cloud');
+}
+
+/**
+ * Update field instance_id in Elastic IP views configurations.
+ */
+function aws_cloud_update_8135() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.aws_elastic_ip.yml'], 'aws_cloud');
+}
+
+/**
+ * Update field_account_id and field_access_key definitions.
+ */
+function aws_cloud_update_8136() {
+  \Drupal::service('cloud')->updateYmlDefinitions(
+    [
+      'field.field.cloud_config.aws_cloud.field_account_id.yml',
+      'field.field.cloud_config.aws_cloud.field_access_key.yml',
+    ],
+    'aws_cloud'
+  );
+}
+
+/**
+ * Add all_aws_cloud_instances view.
+ */
+function aws_cloud_update_8137() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.all_aws_cloud_instances.yml'], 'aws_cloud');
+}
+
+/**
+ * Add instance notificaiton configurations.
+ */
+function aws_cloud_update_8138() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_notify_owner', 0);
+  $config->set('aws_cloud_instance_notification_time', '09:00:00');
+  $config->set('aws_cloud_instance_notification_hour', '09');
+  $config->set('aws_cloud_instance_notification_minutes', '00');
+  $config->set('aws_cloud_notification_msg', "The following EC2 instance is running for a long time. Please review it.\n\n--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------");
+  $config->save();
+}
+
+/**
+ * Make table headers always visible at the top of the page.
+ */
+function aws_cloud_update_8139() {
+  $views = [
+    'views.view.aws_cloud_key_pairs',
+    'views.view.aws_elastic_ip',
+    'views.view.aws_images',
+    'views.view.aws_instances',
+    'views.view.aws_network_interfaces',
+    'views.view.aws_security_group',
+    'views.view.aws_snapshot',
+    'views.view.aws_volume',
+    'views.view.all_aws_cloud_instances',
+  ];
+
+  $options = [
+    'display.default.display_options.style.options.sticky' => TRUE,
+    'display.page_1.display_options.style.options.sticky' => TRUE,
+  ];
+
+  foreach ($views ?: [] as $view_name) {
+    aws_cloud_update_views_configuration($view_name, $options);
+  }
+}
+
+/**
+ * Add cost management configurations.
+ */
+function aws_cloud_update_8140() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_instance_type_prices', TRUE);
+  $config->set('aws_cloud_instance_type_prices_spreadsheet', TRUE);
+  $config->set('aws_cloud_instance_type_cost', TRUE);
+  $config->set('aws_cloud_instance_type_cost_list', TRUE);
+  $config->set('aws_cloud_instance_list_cost_column', TRUE);
+  $config->save();
+}
+
+/**
+ * Update field_user_data in cloud_server_template entity view.
+ */
+function aws_cloud_update_8141() {
+  $files = [
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+}
+
+/**
+ * Update EC2 instance, EBS volume and snapshot notification configuration.
+ */
+function aws_cloud_update_8142() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_notification_subject', 'Long running EC2 instances');
+  $config->set('aws_cloud_notification_msg', "The following EC2 instances have been running for a long time. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]");
+  $config->set('aws_cloud_instance_notification_instance_info', "--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------");
+
+  $config->set('aws_cloud_volume_notification_subject', 'Unused EBS volumes');
+  $config->set('aws_cloud_volume_notification_msg', "The following EBS volumes are not in use. Please review them. \n\n[aws_cloud_volume_email:volumes] \n\nSent from [site:url]");
+  $config->set('aws_cloud_volume_notification_volume_info', "--------------------------------\nVolume name: [aws_cloud_volume:name]\nVolume url: [aws_cloud_volume:volume_link]\nUnused since: [aws_cloud_volume:created]\n--------------------------------");
+
+  $config->set('aws_cloud_snapshot_notify_owner', 0);
+  $config->set('aws_cloud_snapshot_notification_subject', 'Unused EBS snapshots');
+  $config->set('aws_cloud_snapshot_notification_msg', "The following EBS snapshots are unused and not associated with an EBS volume. Please review them. \n\n[aws_cloud_snapshot_email:snapshots] \n\nSent from [site:url]");
+  $config->set('aws_cloud_snapshot_notification_snapshot_info', "--------------------------------\nSnapshot name: [aws_cloud_snapshot:name]\nSnapshot url: [aws_cloud_snapshot:snapshot_link]\nSnapshot created: [aws_cloud_snapshot:created]\n--------------------------------");
+  $config->set('aws_cloud_snapshot_notification_frequency', 604800);
+  $config->set('aws_cloud_snapshot_notification_time', '09:00:00');
+  $config->set('aws_cloud_snapshot_notification_hour', '09');
+  $config->set('aws_cloud_snapshot_notification_minutes', '00');
+  $config->save();
+}
+
+/**
+ * Add field_vpc and field_subnet.
+ */
+function aws_cloud_update_8143() {
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', 'field_version');
+}
+
+/**
+ * Update field public_ip in instance views configurations.
+ */
+function aws_cloud_update_8144() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.aws_instances.yml'], 'aws_cloud');
+}
+
+/**
+ * Add the Switch Role fields.
+ */
+function aws_cloud_update_8145() {
+  aws_cloud_add_fields(
+    'cloud_config',
+    'aws_cloud',
+    [
+      'field_use_switch_role',
+      'field_switch_role_account_id',
+      'field_switch_role_iam_role',
+    ]
+  );
+}
+
+/**
+ * Update the type of user_data to string_long.
+ */
+function aws_cloud_update_8146() {
+  $db = \Drupal::database();
+
+  // Clean out the user_data column before changing the column type.
+  if ($db->schema()->fieldExists('aws_cloud_instance', 'user_data')) {
+    $db->update('aws_cloud_instance')
+      ->fields(['user_data' => NULL])
+      ->execute();
+  }
+
+  // Delete user_data.
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $field_storage_definition = $update_manager->getFieldStorageDefinition(
+    'user_data',
+    'aws_cloud_instance'
+  );
+  if ($field_storage_definition) {
+    $update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+  }
+
+  // Install user data.
+  $field_storage_definition = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('User Data'))
+    ->setDescription(t('User Data to pass to an instance when launching.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'pre_string_formatter',
+      'weight' => -5,
+    ]);
+
+  $update_manager->installFieldStorageDefinition(
+    'user_data',
+    'aws_cloud_instance',
+    'aws_cloud',
+    $field_storage_definition
+  );
+
+  drupal_flush_all_caches();
+
+  // Update instances.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('aws_cloud');
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $ec2_service->setCloudContext($config_entity->getCloudContext());
+    $ec2_service->updateInstancesWithoutBatch();
+  }
+}
+
+/**
+ * Change view's IDs.
+ *
+ * Change view's IDs, yml file names and related field definitions.
+ */
+function aws_cloud_update_8147() {
+  $view_ids = [
+    'aws_elastic_ip',
+    'aws_images',
+    'aws_instances',
+    'aws_network_interfaces',
+    'aws_security_group',
+    'aws_snapshot',
+    'aws_volume',
+    'all_aws_cloud_instances',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.aws_cloud_instances.yml',
+    'views.view.aws_cloud_images.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_instances_all.yml',
+    'views.view.aws_cloud_network_interfaces.yml',
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'field.field.cloud_server_template.aws_cloud.field_image_id.yml',
+    'field.field.cloud_server_template.aws_cloud.field_network.yml',
+    'field.field.cloud_server_template.aws_cloud.field_security_group.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update view aws_cloud_snapshot and add aws_cloud_snapshot_delete_action.
+ */
+function aws_cloud_update_8148() {
+  $files = [
+    'views.view.aws_cloud_snapshot.yml',
+    'system.action.aws_cloud_snapshot_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update view aws_cloud_volume and add aws_cloud_volume_delete_action.
+ */
+function aws_cloud_update_8149() {
+  $files = [
+    'views.view.aws_cloud_volume.yml',
+    'system.action.aws_cloud_volume_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update view aws_cloud_image and add aws_cloud_image_delete_action.
+ */
+function aws_cloud_update_8150() {
+  $files = [
+    'views.view.aws_cloud_images.yml',
+    'system.action.aws_cloud_image_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Change view's IDs.
+ *
+ * Change view's IDs, yml file names and related field definitions.
+ */
+function aws_cloud_update_8151() {
+  $view_ids = [
+    'aws_cloud_images',
+    'aws_cloud_instances',
+    'aws_cloud_network_interfaces',
+    'aws_cloud_key_pairs',
+    'aws_cloud_instances_all',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+    'views.view.aws_cloud_image.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_network_interface.yml',
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'field.field.cloud_server_template.aws_cloud.field_image_id.yml',
+    'field.field.cloud_server_template.aws_cloud.field_network.yml',
+    'field.field.cloud_server_template.aws_cloud.field_security_group.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add view aws_cloud_vpc and entity type aws_cloud_vpc.
+ */
+function aws_cloud_update_8152() {
+  $files = [
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+  try {
+    // Add entity type aws_cloud_vpc.
+    $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+    $entity_type = \Drupal::entityTypeManager()->getDefinition('aws_cloud_vpc');
+    $definition_update_manager->installEntityType($entity_type);
+
+    // Update VPCs.
+    /* @var \Drupal\aws_cloud\Service\Ec2\Ec2ServiceInterface $ec2_service */
+    $ec2_service = \Drupal::service('aws_cloud.ec2');
+    $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+
+    foreach ($entities ?: [] as $entity) {
+      /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+      $ec2_service->setCloudContext($entity->getCloudContext());
+      $ec2_service->updateVpcs();
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add multiple Elastic IP disassociate and delete action.
+ *
+ * Update view aws_cloud_elastic_ip,
+ * add aws_cloud_elastic_ip_disassociate_action,
+ * aws_cloud_elastic_ip_delete_action.
+ */
+function aws_cloud_update_8153() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+    'system.action.aws_cloud_elastic_ip_disassociate_action.yml',
+    'system.action.aws_cloud_elastic_ip_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple instance delete action.
+ *
+ * Update view aws_cloud_instance,
+ * add aws_cloud_instance_delete_action.
+ */
+function aws_cloud_update_8154() {
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+    'system.action.aws_cloud_instance_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple Key Pair delete action.
+ *
+ * Update view aws_cloud_key_pair, aws_cloud_key_pair_delete_action.
+ */
+function aws_cloud_update_8155() {
+  $files = [
+    'views.view.aws_cloud_key_pair.yml',
+    'system.action.aws_cloud_key_pair_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple instance stop action.
+ *
+ * Update view aws_cloud_instance_all,
+ * add aws_cloud_instance_stop_action.
+ */
+function aws_cloud_update_8156() {
+  $files = [
+    'system.action.aws_cloud_instance_stop_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple instance start action.
+ *
+ * Update view aws_cloud_instance_all,
+ * add aws_cloud_instance_start_action.
+ */
+function aws_cloud_update_8157() {
+  $files = [
+    'system.action.aws_cloud_instance_start_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple instance reboot action.
+ */
+function aws_cloud_update_8158() {
+  $files = [
+    'system.action.aws_cloud_instance_reboot_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple VPC delete action.
+ *
+ * Update view aws_cloud_vpc, aws_cloud_vpc_delete_action.
+ */
+function aws_cloud_update_8159() {
+  $files = [
+    'views.view.aws_cloud_vpc.yml',
+    'system.action.aws_cloud_vpc_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple Network Interface delete action.
+ *
+ * Update view aws_cloud_network_interface,
+ * aws_cloud_network_interface_delete_action.
+ */
+function aws_cloud_update_8160() {
+  $files = [
+    'views.view.aws_cloud_network_interface.yml',
+    'system.action.aws_cloud_network_interface_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add multiple Security Group delete action.
+ *
+ * Update view aws_cloud_security_group,
+ * aws_cloud_security_group_delete_action.
+ */
+function aws_cloud_update_8161() {
+  $files = [
+    'views.view.aws_cloud_security_group.yml',
+    'system.action.aws_cloud_security_group_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update view aws_cloud_image.
+ */
+function aws_cloud_update_8162() {
+  $files = [
+    'views.view.aws_cloud_image.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add configurations about automatically assigning VPC.
+ */
+function aws_cloud_update_8163() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_vpc_automatically_assign_vpc', 1);
+  $config->set('aws_cloud_vpc_default_vpc_name', 'default for user [user_name]');
+  $config->set('aws_cloud_vpc_default_vpc_cidr_block', '10.0.0.0/16');
+  $config->set('aws_cloud_vpc_default_subnet_name', 'default for user [user_name]');
+  $config->set('aws_cloud_vpc_default_subnet_cidr_block', '10.0.0.0/24');
+  $config->save();
+}
+
+/**
+ * Add field_system_vpc to cloud_config.
+ */
+function aws_cloud_update_8164() {
+  // Add new fields.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', ['field_system_vpc']);
+}
+
+/**
+ * Update AWS Cloud Profile list view.
+ *
+ * Update view 'cloud_config_aws_cloud_profile.yml'.
+ */
+function aws_cloud_update_8165() {
+  $files = [
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+  $db = \Drupal::database();
+
+  // Clean out the security_groups column before changing the column type.
+  if ($db->schema()->fieldExists('aws_cloud_instance', 'security_groups')) {
+    $db->update('aws_cloud_instance')
+      ->fields(['security_groups' => NULL])
+      ->execute();
+  }
+
+  // Delete security_groups data.
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+  $field_storage_definition = $update_manager->getFieldStorageDefinition(
+    'security_groups',
+    'aws_cloud_instance'
+  );
+  if ($field_storage_definition) {
+    $update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+  }
+
+  // Install security_groups data.
+  $field_storage_definition = BaseFieldDefinition::create('string_long')
+    ->setLabel(t('Security Groups'))
+    ->setDescription(t('The security groups to which the instance belongs. A security group is a collection of firewall rules that restrict the network traffic for the instance. Click View rules to see the rules for the specific group.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'entity_link',
+      'settings' => [
+        'target_type' => 'aws_cloud_security_group',
+        'field_name' => 'group_name',
+        'comma_separated' => TRUE,
+      ],
+      'weight' => -5,
+    ])
+    ->setReadOnly(TRUE);
+
+  $update_manager->installFieldStorageDefinition(
+    'security_groups',
+    'aws_cloud_instance',
+    'aws_cloud',
+    $field_storage_definition
+  );
+
+  drupal_flush_all_caches();
+
+  // Update instances.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('aws_cloud');
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $ec2_service->setCloudContext($config_entity->getCloudContext());
+    $ec2_service->updateInstancesWithoutBatch();
+  }
+}
+
+/**
+ * Update multiple Network Interface delete action.
+ */
+function aws_cloud_update_8166() {
+  $files = [
+    'system.action.aws_cloud_network_interface_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add resource Subnet.
+ *
+ * Add view aws_cloud_subnet and entity type aws_cloud_subnet
+ * and aws_cloud_vpc_delete_action.
+ */
+function aws_cloud_update_8167() {
+  $files = [
+    'views.view.aws_cloud_subnet.yml',
+    'system.action.aws_cloud_subnet_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+  try {
+    // Add entity type aws_cloud_subnet.
+    $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+    $entity_type = \Drupal::entityTypeManager()
+      ->getDefinition('aws_cloud_subnet');
+    $definition_update_manager->installEntityType($entity_type);
+
+    // Update Subnets.
+    /* @var \Drupal\aws_cloud\Service\Ec2\Ec2ServiceInterface $ec2_service */
+    $ec2_service = \Drupal::service('aws_cloud.ec2');
+    $entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+      ->loadConfigEntities('aws_cloud');
+
+    foreach ($entities ?: [] as $entity) {
+      /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+      $ec2_service->setCloudContext($entity->getCloudContext());
+      $ec2_service->updateSubnets();
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Update view aws_cloud_subnet.
+ */
+function aws_cloud_update_8168() {
+  $files = [
+    'views.view.aws_cloud_subnet.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update SSH key field of cloud server template.
+ */
+function aws_cloud_update_8169() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'field.field.cloud_server_template.aws_cloud.field_ssh_key.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Update AWS Cloud Profile list view.
+ */
+function aws_cloud_update_8170() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Update view aws_cloud_instance.
+ *
+ * Add link to instance_type field.
+ */
+function aws_cloud_update_8171() {
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update entity view display of cloud_server_template.aws_cloud.default.
+ *
+ * Add entity links to field_vpc and field_subnet.
+ */
+function aws_cloud_update_8172() {
+  $files = [
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update AWS Cloud Profile list view permissions.
+ */
+function aws_cloud_update_8173() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Add fields about flow log to cloud_config.
+ */
+function aws_cloud_update_8174() {
+  // Add new fields.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', [
+    'field_log_destination_type',
+    'field_log_destination',
+    'field_log_group_name',
+    'field_logs_permission_arn',
+    'field_traffic_type',
+  ]);
+
+  // Update entity cloud_config.aws_cloud.
+  $files = [
+    'core.entity_form_display.cloud_config.aws_cloud.default.yml',
+    'core.entity_view_display.cloud_config.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add link to instance_type in view aws_cloud_instance_all.
+ */
+function aws_cloud_update_8175() {
+  // Deleted to update 'aws_cloud_instance_all'.
+}
+
+/**
+ * Change field_instance_type formatter to instance_type_link_formatter.
+ */
+function aws_cloud_update_8176() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Delete field_cloud_type from cloud_config entity.
+ */
+function aws_cloud_update_8177() {
+
+  // Delete field_user_id.
+  aws_cloud_delete_fields('cloud_config', 'aws_ec2', 'field_cloud_type');
+}
+
+/**
+ * Update argument index in views.
+ */
+function aws_cloud_update_8178() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.aws_cloud_image.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_network_interface.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Add links to the VPC on list of Security Groups and Network Interfaces.
+ */
+function aws_cloud_update_8179() {
+  $files = [
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_network_interface.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.
+ *
+ * Views: Instance, All Instances, Image, Elastic IP, Key Pair,
+ * Network, Security Group, Snapshot, Volume, VPC, Subnet.
+ */
+function aws_cloud_update_8180() {
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+    'views.view.aws_cloud_image.yml',
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'views.view.aws_cloud_network_interface.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_vpc.yml',
+    'views.view.aws_cloud_subnet.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add fields about VPCs to cloud_config.
+ */
+function aws_cloud_update_8181() {
+  // Add new fields.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', [
+    'field_automatically_assign_vpc',
+    'field_default_vpc_name',
+    'field_default_vpc_cidr_block',
+    'field_default_subnet_name',
+    'field_default_subnet_cidr_block',
+  ]);
+
+  // Update entity cloud_config.aws_cloud.
+  $files = [
+    'core.entity_form_display.cloud_config.aws_cloud.default.yml',
+    'core.entity_view_display.cloud_config.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.
+ *
+ * Views: Image.
+ */
+function aws_cloud_update_8182() {
+  $files = [
+    'views.view.aws_cloud_image.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Migrate aws cloud service provider permissions.
+ *
+ * Backup database before performing this update!
+ */
+function aws_cloud_update_8183() {
+
+  $permission_map = [
+    'add aws cloud provider' => 'add aws cloud service provider',
+    'list aws cloud provider' => 'list aws cloud service provider',
+    'view aws cloud provider' => 'view aws cloud service provider',
+    'edit aws cloud provider' => 'edit aws cloud service provider',
+    'delete aws cloud provider' => 'delete aws cloud service provider',
+  ];
+
+  \Drupal::service('cloud')->updatePermissions($permission_map);
+}
+
+/**
+ * Add multiple Volume detach action.
+ *
+ * Add aws_cloud_volume_detach_action.
+ */
+function aws_cloud_update_8184() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['system.action.aws_cloud_volume_detach_action.yml'], 'aws_cloud');
+}
+
+/**
+ * Add stale snapshot criteria configuration option.
+ */
+function aws_cloud_update_8185() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_stale_snapshot_criteria', 60);
+  $config->save();
+}
+
+/**
+ * Update field_availability_zone of cloud server template.
+ */
+function aws_cloud_update_8186() {
+  $files = [
+    'field.storage.cloud_server_template.field_availability_zone.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update field_image_id in cloud_server_template entity view.
+ */
+function aws_cloud_update_8187() {
+
+  // Migrate an 'field_image_id' stored as the entity reference of
+  // aws_cloud_image to an AMI ID as string in CloudServerTemplates.
+  // First, temporarily it stores the AMI IDs since we'll delete the existing
+  // field_image_id config incl. the data. And then add a new field_image_id
+  // config.  Finally we copy the AMI IDs to 'field_image_id.
+  $temp_ami_ids = [];
+  $server_template_storage = \Drupal::entityTypeManager()->getStorage('cloud_server_template');
+  $cloud_service_providers = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($cloud_service_providers ?: [] as $cloud_service_provider) {
+    /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+    $server_templates = $server_template_storage->loadByProperties(
+      ['cloud_context' => $cloud_service_provider->getCloudContext()]
+    );
+    foreach ($server_templates ?: [] as $server_template) {
+      // Get the entity_reference.
+      // Full code: $image_ref_id = $server_template->get('field_image_id')->getValue()->getValue()[0]['target_id'];.
+      $aws_cloud_image_id = $server_template->field_image_id->target_id;
+      $image = array_shift(\Drupal::entityTypeManager()
+        ->getStorage('aws_cloud_image')->loadByProperties([
+          'id' => $aws_cloud_image_id,
+        ])
+      );
+      $ami_id = $image->getImageId();
+      $temp_ami_ids[$server_template->id()] = $ami_id;
+    }
+  }
+
+  // Delete the existing 'field_image_id' field.
+  aws_cloud_delete_fields('cloud_server_template', 'aws_cloud', [
+    'field_image_id',
+  ]);
+
+  // Add a new 'field_image_id' field.
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', [
+    'field_image_id',
+  ]);
+
+  // Update a cloud_server_template view.
+  $files = [
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+  // Restore the AMI IDs into 'field_image_id'.
+  foreach ($cloud_service_providers ?: [] as $cloud_service_provider) {
+    /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+    $cloud_context = $cloud_service_provider->getCloudContext();
+    $server_templates = $server_template_storage->loadByProperties(
+      ['cloud_context' => $cloud_context]
+    );
+    foreach ($server_templates ?: [] as $server_template) {
+
+      $ec2_service = \Drupal::service('aws_cloud.ec2');
+      $ec2_service->setCloudContext($cloud_context);
+
+      // Copy AMI IDs to 'field_image_id'.
+      $server_template->field_image_id->value = $temp_ami_ids[$server_template->id()];
+      // Create a new revision.
+      $server_template->setNewRevision(TRUE);
+
+      $params = [];
+      $params['LaunchTemplateName'] = $server_template->getName();
+      $params['VersionDescription'] = $server_template->getRevisionLogMessage();
+      $params['LaunchTemplateData'] = aws_cloud_get_launch_template_data($server_template);
+      $result = $ec2_service->createLaunchTemplateVersion($params);
+
+      $success = isset($result['LaunchTemplateVersion']);
+      if ($success) {
+        aws_cloud_server_template_update_field_tags($server_template, $params['LaunchTemplateData']);
+
+        $version = $result['LaunchTemplateVersion']['VersionNumber'];
+        $server_template->set('field_version', $version);
+
+        // Set default version.
+        $params = [];
+        $params['LaunchTemplateName'] = $server_template->getName();
+        $params['DefaultVersion'] = $version;
+        $ec2_service->modifyLaunchTemplate($params);
+      }
+
+      if (!($success && $server_template->save())) {
+        \Drupal::logger('aws_cloud')->error(
+          t('The @type @name could not be created.', [
+            '@type' => $server_template->getEntityType()->getSingularLabel(),
+            '@name' => $server_template->getName(),
+          ])
+        );
+      }
+    }
+  }
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add a configuration item aws_cloud_price_rate_ec2.
+ */
+function aws_cloud_update_8188() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_price_rate_ec2', 100);
+  $config->save();
+}
+
+/**
+ * Add EC2 pricing endpoint configuration item.
+ */
+function aws_cloud_update_8189() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_ec2_pricing_endpoint', PricingService::DEFAULT_ENDPOINT);
+  $config->save();
+}
+
+/**
+ * Add Location-related fields to cloud_config.
+ */
+function aws_cloud_update_8190() {
+  \Drupal::service('cloud')->installLocationFields('aws_cloud');
+}
+
+/**
+ * Add AWS Cloud region location configuration items.
+ */
+function aws_cloud_update_8191() {
+  $config_path = realpath(drupal_get_path('module', 'aws_cloud')) . '/config/install';
+
+  $filename = $config_path . '/aws_cloud.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values) && isset($values['aws_cloud_region_locations'])) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('aws_cloud.settings');
+      $config->set('aws_cloud_region_locations', $values['aws_cloud_region_locations']);
+      $config->save();
+    }
+  }
+}
+
+/**
+ * Update AWS Cloud Profile list view column name.
+ */
+function aws_cloud_update_8192() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ], 'aws_cloud');
+
+}
+
+/**
+ * Update AWS Cloud Profile list view column name.
+ *
+ * Add default icon for aws_cloud cloud_config.
+ */
+function aws_cloud_update_8193() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ], 'aws_cloud');
+
+  \Drupal::service('cloud')->addDefaultIcon('aws_cloud');
+}
+
+/**
+ * Update AWS Cloud Profile list view.
+ */
+function aws_cloud_update_8194() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ], 'aws_cloud');
+}
+
+/**
+ * Remove label from the entity reference of view aws_cloud_security_group.
+ */
+function aws_cloud_update_8195() {
+  $files = [
+    'views.view.aws_cloud_security_group.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Change status formatter to EBS volumes view.
+ */
+function aws_cloud_update_8196() {
+  $files = ['views.view.aws_cloud_volume.yml'];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Rename instance profile, assume role and switch role related fields.
+ */
+function aws_cloud_update_8197() {
+
+  aws_cloud_delete_fields('cloud_config', 'aws_ec2', [
+    'field_use_instance_credentials',
+    'field_assume_role',
+    'field_switch_role',
+  ]);
+}
+
+/**
+ * Add all_aws_cloud_volumes view.
+ */
+function aws_cloud_update_8198() {
+  $files = [
+    'views.view.aws_cloud_volume_all.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Change the type of field_tag and tags to key_value.
+ */
+function aws_cloud_update_8199() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $db = \Drupal::database();
+
+  foreach (['aws_cloud_instance', 'aws_cloud_subnet', 'aws_cloud_vpc'] as $entity_type) {
+    if ($db->schema()->fieldExists($entity_type, 'tags')) {
+      $db->update($entity_type)
+        ->fields(['tags' => NULL])
+        ->execute();
+    }
+
+    // Uninstall tags.
+    $field_storage_definition = $definition_update_manager->getFieldStorageDefinition(
+      'tags',
+      $entity_type
+    );
+
+    if ($field_storage_definition) {
+      $definition_update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+    }
+
+    // Install new tags.
+    $field_storage_definition = BaseFieldDefinition::create('key_value')
+      ->setLabel(t('Tags'))
+      ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+      ->setDescription(t('Tags'))
+      ->setDisplayOptions('view', [
+        'type' => 'key_value_formatter',
+        'weight' => -5,
+        'settings' => [
+          'value_converter_class' => AwsCloudValueConverter::class,
+        ],
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'key_value_item',
+        'settings' => [
+          'reserved_key_checker_class' => AwsCloudReservedKeyChecker::class,
+          'value_converter_class' => AwsCloudValueConverter::class,
+        ],
+      ])
+      ->addConstraint('tags_data');
+
+    $definition_update_manager->installFieldStorageDefinition(
+      'tags',
+      $entity_type,
+      'aws_cloud',
+      $field_storage_definition
+    );
+  }
+
+  // Delete the existing 'field_tags' field.
+  aws_cloud_delete_fields('cloud_server_template', 'aws_cloud', [
+    'field_tags',
+  ]);
+
+  // Add a new 'field_tags' field.
+  aws_cloud_add_fields('cloud_server_template', 'aws_cloud', [
+    'field_tags',
+  ]);
+
+  $files = [
+    'core.entity_form_display.cloud_server_template.aws_cloud.default.yml',
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+  // Update entities of Instance, Vpc, Subnet and Server templates.
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($config_entities ?: [] as $config_entity) {
+    try {
+      $ec2_service->setCloudContext($config_entity->getCloudContext());
+      $ec2_service->updateInstancesWithoutBatch();
+      $ec2_service->updateVpcsWithoutBatch();
+      $ec2_service->updateSubnetsWithoutBatch();
+      $ec2_service->updateCloudServerTemplatesWithoutBatch();
+    }
+    catch (\Exception $e) {
+      // When AWS credentials are not properly configured in $config_entity
+      // (AWS Cloud service provider), cactch an exception and simply move onto
+      // the next $config_entity.
+      continue;
+    }
+  }
+}
+
+/**
+ * Update views.view.aws_cloud_volume.yml.
+ */
+function aws_cloud_update_8200() {
+  $view_ids = [
+    'aws_cloud_volume_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.aws_cloud_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.views.view.aws_cloud_instance.yml.
+ */
+function aws_cloud_update_8201() {
+  $view_ids = [
+    'aws_cloud_instance_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_key_pair.yml.
+ */
+function aws_cloud_update_8202() {
+  $files = [
+    'views.view.aws_cloud_key_pair.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_vpc.yml.
+ */
+function aws_cloud_update_8203() {
+  $files = [
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_elastic_ip.yml.
+ */
+function aws_cloud_update_8204() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_snapshot.yml.
+ */
+function aws_cloud_update_8205() {
+  $files = [
+    'views.view.aws_cloud_snapshot.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_security_group.yml.
+ */
+function aws_cloud_update_8206() {
+  $files = [
+    'views.view.aws_cloud_security_group.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_subnet.yml.
+ */
+function aws_cloud_update_8207() {
+  $files = [
+    'views.view.aws_cloud_subnet.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update aws_cloud views for corresponding region.
+ */
+function aws_cloud_update_8208() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_instance.yml.
+ */
+function aws_cloud_update_8209() {
+  $files = [
+    'views.view.aws_cloud_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_subnet.yml.
+ */
+function aws_cloud_update_8210() {
+  $files = [
+    'views.view.aws_cloud_subnet.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update aws resources yml.
+ */
+function aws_cloud_update_8211() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_instance.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'views.view.aws_cloud_subnet.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update aws resources view yml.
+ */
+function aws_cloud_update_8212() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_image.yml',
+    'views.view.aws_cloud_instance.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'views.view.aws_cloud_subnet.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update views.view.aws_cloud_network_interface.yml.
+ */
+function aws_cloud_update_8213() {
+  $files = [
+    'views.view.aws_cloud_network_interface.yml',
+    'views.view.aws_cloud_security_group.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Update field_use_instance_profile in form display.
+ */
+function aws_cloud_update_8214() {
+  // Deleted the logic since 8215 takes over the YAML update.
+}
+
+/**
+ * Update view aws_cloud_image.
+ */
+function aws_cloud_update_8215() {
+  $files = [
+    'views.view.aws_cloud_image.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Rename cloud_config bundle's (cloud_config_type's) ID (aws_ec2 -> aws_cloud).
+ */
+function aws_cloud_update_8216() {
+
+  // Rename cloud_config bundle's (cloud_config_type's) ID from aws_ec2 to
+  // aws_cloud and update the view's IDs, YAML file names and related field
+  // definitions.
+  // Clear all caches.
+  drupal_flush_all_caches();
+
+  // At first, we start to preserve the existing aws_cloud cloud service
+  // providers (cloud_config) entities.
+  $cloud_configs = \Drupal::entityTypeManager()->getStorage('cloud_config')
+    ->loadByProperties([
+      'type' => 'aws_ec2',
+    ]);
+
+  // Clone cloud_config entities.
+  $cloud_configs_temp = [];
+  foreach ($cloud_configs ?: [] as $cloud_config) {
+    try {
+      // Serialize a cloud service provider since the object contains a lot of
+      // subsidiary objects.  We can NOT simply use a `clone` keyword.
+      $cloud_configs_temp[] = serialize($cloud_config);
+      // Delete the existing cloud service providers.  That's fine since we will
+      // restore the existing objects at the end of this hook_update_N
+      // operation.
+      $cloud_config->delete();
+    }
+    catch (\Exception $e) {
+      \Drupal::service('cloud')->handleException($e);
+    }
+  }
+
+  // // Delete the aws_ec2 entity type.
+  $entity_type_manager = \Drupal::entityTypeManager();
+  $entity_type = $entity_type_manager
+    ->getStorage('cloud_config_type')
+    ->load('aws_ec2');
+
+  if (!empty($entity_type)) {
+    $entity_type->delete();
+  }
+
+  // Delete the original fields.
+  $aws_cloud_delete_fields = [
+    'field_access_key',
+    'field_account_id',
+    'field_api_endpoint_uri',
+    'field_api_version',
+    'field_assume_role',
+    'field_automatically_assign_vpc',
+    'field_default_subnet_cidr_block',
+    'field_default_subnet_name',
+    'field_default_vpc_cidr_block',
+    'field_default_vpc_name',
+    'field_description',
+    'field_iam_role',
+    'field_image_upload_url',
+    'field_log_destination',
+    'field_log_destination_type',
+    'field_log_group_name',
+    'field_logs_permission_arn',
+    'field_region',
+    'field_secret_key',
+    'field_spreadsheet_pricing_url',
+    'field_switch_role',
+    'field_switch_role_account_id',
+    'field_switch_role_iam_role',
+    'field_system_vpc',
+    'field_traffic_type',
+    'field_use_assume_role',
+    'field_use_instance_profile',
+    'field_use_switch_role',
+    'field_x_509_certificate',
+  ];
+
+  aws_cloud_delete_fields('cloud_config', 'aws_ec2', $aws_cloud_delete_fields);
+
+  // Update bundle 'aws_cloud'.
+  $config_manager = \Drupal::service('config.manager');
+  $config_path = realpath(drupal_get_path('module', 'aws_cloud')) . '/config/install';
+
+  $filename = $config_path . '/' . 'cloud.cloud_config_type.aws_cloud.yml';
+  $file = file_get_contents($filename);
+
+  $value = Yaml::decode($file);
+  $type = $config_manager->getEntityTypeIdByName(basename($filename));
+  $entity_type_manager = $config_manager->getEntityTypeManager();
+  $definition = $entity_type_manager->getDefinition($type);
+  $id_key = $definition->getKey('id');
+  $id = $value[$id_key];
+  $entity_storage = $entity_type_manager->getStorage($type);
+  $entity = $entity_storage->create([
+    $definition->getKey('label') => 'aws_cloud',
+    $definition->getKey('id') => $id,
+    $definition->getKey('bundle') => 'aws_cloud',
+  ]);
+  $entity->save();
+
+  // The fields to be updated.
+  $aws_cloud_update_fields = [
+    'field_access_key',
+    'field_account_id',
+    'field_api_endpoint_uri',
+    'field_api_version',
+    'field_automatically_assign_vpc',
+    'field_default_subnet_cidr_block',
+    'field_default_subnet_name',
+    'field_default_vpc_cidr_block',
+    'field_default_vpc_name',
+    'field_description',
+    'field_iam_role',
+    'field_image_upload_url',
+    'field_log_destination',
+    'field_log_destination_type',
+    'field_log_group_name',
+    'field_logs_permission_arn',
+    'field_region',
+    'field_secret_key',
+    'field_spreadsheet_pricing_url',
+    'field_switch_role_account_id',
+    'field_switch_role_iam_role',
+    'field_system_vpc',
+    'field_traffic_type',
+    'field_use_instance_profile',
+    'field_use_assume_role',
+    'field_use_switch_role',
+    'field_x_509_certificate',
+  ];
+
+  // Updated fields.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', $aws_cloud_update_fields);
+
+  // Delete location related-fields.
+  \Drupal::service('cloud')->uninstallLocationFields('aws_cloud');
+
+  // Re-save field.field.cloud_config.aws_cloud.*.
+  \Drupal::service('cloud')->installLocationFields('aws_cloud');
+
+  // Update the existing YAML files.
+  $files = [
+    'cloud.cloud_config_type.aws_cloud.yml',
+    'cloud.cloud_server_template_type.aws_cloud.yml',
+    'core.entity_form_display.cloud_config.aws_cloud.default.yml',
+    'core.entity_view_display.cloud_config.aws_cloud.default.yml',
+    'views.view.cloud_config_aws_cloud_profile.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+  // Since the cloud service providers will be totally cleaned up after updating
+  // the YAML files above, we need to restore (rebuild) the cloud service
+  // providers from the temporary variable $cloud_config_temp.
+  foreach ($cloud_configs_temp ?: [] as $cloud_config_temp) {
+    try {
+      $cloud_config_temp = unserialize($cloud_config_temp, ['allowed_classes' => TRUE]);
+      $params = [
+        // Those fields such as 'type', 'name', 'cloud_context'... are not the
+        // field_*, so we will access the value via each method.
+        'type' => 'aws_cloud',
+        'name' => $cloud_config_temp->getName(),
+        'cloud_context' => $cloud_config_temp->getCloudContext(),
+        'created' => $cloud_config_temp->getCreatedTime(),
+        'fid' => $cloud_config_temp->getIconFid(),
+      ];
+      // Copy all field_* values to $params as the initial values from original.
+      foreach ($aws_cloud_update_fields ?: [] as $field_name) {
+        // Preserve those values.  See at aws_cloud_update_8197().
+        if ($field_name === 'field_use_instance_profile') {
+          $params[$field_name] = $cloud_config_temp->field_use_instance_credentials[LanguageInterface::LANGCODE_DEFAULT][0]['value'];
+          continue;
+        }
+        if ($field_name === 'field_use_assume_role') {
+          $params[$field_name] = $cloud_config_temp->field_assume_role[LanguageInterface::LANGCODE_DEFAULT][0]['value'];
+          continue;
+        }
+        if ($field_name === 'field_use_switch_role') {
+          $params[$field_name] = $cloud_config_temp->field_switch_role[LanguageInterface::LANGCODE_DEFAULT][0]['value'];
+          continue;
+        }
+        // For all other fields.
+        $params[$field_name] = $cloud_config_temp->$field_name[LanguageInterface::LANGCODE_DEFAULT][0]['value'];
+      }
+      // Create a CloudConfig to rebuild as an object w/ the $params above.
+      $cloud_config = CloudConfig::create($params);
+      // Don't forget to save the object.
+      $cloud_config->save();
+    }
+    catch (\Exception $e) {
+      \Drupal::service('cloud')->handleException($e);
+    }
+  }
+}
+
+/**
+ * Delete old block_devices field.
+ *
+ * Add new block_device_mappings multi valued field.
+ */
+function aws_cloud_update_8217() {
+  drupal_flush_all_caches();
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $db = \Drupal::database();
+
+  $entity_type = 'aws_cloud_image';
+  if ($db->schema()->fieldExists($entity_type, 'block_devices')) {
+    $db->update($entity_type)
+      ->fields(['block_devices' => NULL])
+      ->execute();
+  }
+  $field_storage_definition = $definition_update_manager->getFieldStorageDefinition(
+    'block_devices',
+    $entity_type
+  );
+
+  if ($field_storage_definition) {
+    $definition_update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+  }
+
+  $field_storage_definition = BaseFieldDefinition::create('block_device_mappings')
+    ->setLabel(t('Block Device Mappings'))
+    ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+    ->setDescription(t('Any block device mapping entries.'))
+    ->setDisplayOptions('view', [
+      'type' => 'block_device_mappings_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'block_device_mappings',
+    $entity_type,
+    'aws_cloud',
+    $field_storage_definition
+  );
+
+  // Update entities of Instance, Vpc, Subnet and Server templates.
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($config_entities ?: [] as $config_entity) {
+    try {
+      $account_id = $config_entity->get('field_account_id')->value;
+
+      $ec2_service->setCloudContext($config_entity->getCloudContext());
+      $ec2_service->updateImagesWithoutBatch(['Owners' => [$account_id]], FALSE);
+    }
+    catch (\Exception $e) {
+      // When AWS credentials are not properly configured in $config_entity
+      // (AWS Cloud service provider), catch an exception and simply move onto
+      // the next $config_entity.
+      continue;
+    }
+  }
+}
+
+/**
+ * Add view and entity type for aws_cloud_vpc_peering_connection.
+ */
+function aws_cloud_update_8218() {
+  try {
+    // Add entity type aws_cloud_vpc_peering_connection.
+    $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+    $entity_type = \Drupal::entityTypeManager()->getDefinition('aws_cloud_vpc_peering_connection');
+    if (!empty($entity_type)) {
+      $definition_update_manager->uninstallEntityType($entity_type);
+      $definition_update_manager->installEntityType($entity_type);
+    }
+
+    $files = [
+      'views.view.aws_cloud_vpc_peering_connection.yml',
+      'system.action.aws_cloud_vpc_peering_connection_delete_action.yml',
+    ];
+    \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+
+    // Update VPC Peering Connections.
+    /* @var \Drupal\aws_cloud\Service\Ec2\Ec2ServiceInterface $ec2_service */
+    $ec2_service = \Drupal::service('aws_cloud.ec2');
+    $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+
+    foreach ($entities as $entity) {
+      /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+      $ec2_service->setCloudContext($entity->getCloudContext());
+      $ec2_service->updateVpcPeeringConnectionsWithoutBatch();
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Change aws_cloud_config_icon to aws_cloud_cloud_config_icon.
+ */
+function aws_cloud_update_8219() {
+
+  // Creates 'aws_cloud_cloud_config_icon'.
+  \Drupal::service('cloud')->addDefaultIcon('aws_cloud');
+}
+
+/**
+ * Add new launch_permission_account_ids field to AWS Image.
+ */
+function aws_cloud_update_8220() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = 'aws_cloud_image';
+
+  $field_storage_definition = BaseFieldDefinition::create('string')
+    ->setLabel(t('AWS Account IDs'))
+    ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+    ->setDescription(t('The Launch Permissions.'))
+    ->setDisplayOptions('view', [
+      'type' => 'string',
+      'weight' => -5,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string',
+      'weight' => 5,
+    ])
+    ->setDisplayConfigurable('form', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'launch_permission_account_ids',
+    $entity_type,
+    'aws_cloud',
+    $field_storage_definition
+  );
+
+  drupal_flush_all_caches();
+
+  // Update images.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('aws_cloud');
+  $ec2_service = \Drupal::service('aws_cloud.ec2');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $ec2_service->setCloudContext($config_entity->getCloudContext());
+
+    $account_id = $config_entity->get('field_account_id')->value;
+    $ec2_service->updateImagesWithoutBatch(['Owners' => [$account_id]], TRUE);
+  }
+}
+
+/**
+ * Update singular and plural label annotation.
+ */
+function aws_cloud_update_8221() {
+  \Drupal::service('cloud')->updateEntityPluralLabels('aws_cloud');
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function aws_cloud_update_8222() {
+
+  $annotations = [
+    'aws_cloud_image' => [
+      'id_plural' => 'aws_cloud_images',
+      'label' => 'Image',
+      'label_collection' => 'Images',
+      'label_singular' => 'Image',
+      'label_plural' => 'Images',
+    ],
+    'aws_cloud_key_pair' => [
+      'id_plural' => 'aws_cloud_key_pairs',
+      'label' => 'Key Pair',
+      'label_collection' => 'Key Pairs',
+      'label_singular' => 'Key Pair',
+      'label_plural' => 'Key Pairs',
+    ],
+    'aws_cloud_security_group' => [
+      'id_plural' => 'aws_cloud_security_groups',
+      'label' => 'Security Group',
+      'label_collection' => 'Security Groups',
+      'label_singular' => 'Security Group',
+      'label_plural' => 'Security Groups',
+    ],
+    'aws_cloud_network_interface' => [
+      'id_plural' => 'aws_cloud_network_interfaces',
+      'label' => 'Network Interface',
+      'label_collection' => 'Network Interfaces',
+      'label_singular' => 'Network Interface',
+      'label_plural' => 'Network Interfaces',
+    ],
+    'aws_cloud_snapshot' => [
+      'id_plural' => 'aws_cloud_snapshots',
+      'label' => 'Snapshot',
+      'label_collection' => 'Snapshots',
+      'label_singular' => 'Snapshot',
+      'label_plural' => 'Snapshots',
+    ],
+    'aws_cloud_volume' => [
+      'id_plural' => 'aws_cloud_volumes',
+      'label' => 'Volume',
+      'label_collection' => 'Volumes',
+      'label_singular' => 'Volume',
+      'label_plural' => 'Volumes',
+    ],
+    'aws_cloud_instance' => [
+      'id_plural' => 'aws_cloud_instances',
+      'label' => 'Instance',
+      'label_collection' => 'Instances',
+      'label_singular' => 'Instance',
+      'label_plural' => 'Instances',
+    ],
+    'aws_cloud_elastic_ip' => [
+      'id_plural' => 'aws_cloud_elastic_ips',
+      'label' => 'Elastic IP',
+      'label_collection' => 'Elastic IPs',
+      'label_singular' => 'Elastic IP',
+      'label_plural' => 'Elastic IPs',
+    ],
+    'aws_cloud_subnet' => [
+      'id_plural' => 'aws_cloud_subnets',
+      'label' => 'Subnet',
+      'label_collection' => 'Subnets',
+      'label_singular' => 'Subnet',
+      'label_plural' => 'Subnets',
+    ],
+    'aws_cloud_vpc_peering_connection' => [
+      'id_plural' => 'aws_cloud_vpc_peering_connections',
+      'label' => 'VPC Peering Connection',
+      'label_collection' => 'VPC Peering Connections',
+      'label_singular' => 'VPC Peering Connection',
+      'label_plural' => 'VPC Peering Connections',
+    ],
+    'aws_cloud_vpc' => [
+      'id_plural' => 'aws_cloud_vpcs',
+      'label' => 'VPC',
+      'label_collection' => 'VPCs',
+      'label_singular' => 'VPC',
+      'label_plural' => 'VPCs',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Update aws resources view yml.
+ */
+function aws_cloud_update_8223() {
+  $files = [
+    'views.view.aws_cloud_elastic_ip.yml',
+    'views.view.aws_cloud_image.yml',
+    'views.view.aws_cloud_instance.yml',
+    'views.view.aws_cloud_key_pair.yml',
+    'views.view.aws_cloud_network_interface.yml',
+    'views.view.aws_cloud_security_group.yml',
+    'views.view.aws_cloud_snapshot.yml',
+    'views.view.aws_cloud_subnet.yml',
+    'views.view.aws_cloud_volume.yml',
+    'views.view.aws_cloud_vpc_peering_connection.yml',
+    'views.view.aws_cloud_vpc.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'aws_cloud');
+}
+
+/**
+ * Add AWS Cloud region location configuration items.
+ */
+function aws_cloud_update_8224() {
+
+  aws_cloud_update_8191();
+}
+
+/**
+ * Add get instance type price list field to cloud_config.
+ */
+function aws_cloud_update_8225() {
+  // Add new fields.
+  aws_cloud_add_fields('cloud_config', 'aws_cloud', [
+    'field_get_price_list',
+  ]);
+
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('aws_cloud');
+  foreach ($entities ?: [] as $entity) {
+    try {
+      $entity->set('field_get_price_list', TRUE);
+      $entity->setValidationRequired(FALSE);
+      $entity->save();
+    }
+    catch (\Exception $e) {
+      continue;
+    }
+  }
+}
+
+/**
+ * Add configuration item aws_cloud_monitor_refresh_interval.
+ */
+function aws_cloud_update_8226() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_monitor_refresh_interval', 60);
+  $config->save();
+}
+
+/**
+ * Update and add notification configurations.
+ */
+function aws_cloud_update_8227() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+
+  // Update configurations for long running instance.
+  $config->set('aws_cloud_long_running_instance_notification', 0);
+  $config->set('aws_cloud_long_running_instance_notify_owner', 0);
+  $config->set('aws_cloud_long_running_instance_notification_criteria', 30);
+  $config->set('aws_cloud_long_running_instance_notification_emails', '');
+  $config->set('aws_cloud_long_running_instance_notification_subject', 'Long running EC2 instances');
+  $config->set('aws_cloud_long_running_instance_notification_msg', "The following EC2 instance have been running for a long time. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]");
+  $config->set('aws_cloud_long_running_instance_notification_instance_info', "--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------");
+
+  // Add configurations for low utilization instance.
+  $config->set('aws_cloud_low_utilization_instance_notification', 0);
+  $config->set('aws_cloud_low_utilization_instance_notify_owner', 0);
+  $config->set('aws_cloud_low_utilization_instance_notification_emails', '');
+  $config->set('aws_cloud_low_utilization_instance_notification_subject', 'Low utilization EC2 instances');
+  $config->set('aws_cloud_low_utilization_instance_notification_msg', "The following EC2 instance have been running in low utilization status for 2 weeks. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]");
+  $config->set('aws_cloud_low_utilization_instance_notification_instance_info', "--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------");
+
+  $config->save();
+}
+
+/**
+ * Add and update notification configurations for low utilization instance.
+ */
+function aws_cloud_update_8228() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+
+  // Add notification configurations for low utilization instance.
+  $config->set('aws_cloud_low_utilization_instance_cpu_utilization_threshold', 10);
+  $config->set('aws_cloud_low_utilization_instance_network_io_threshold', 5);
+  $config->set('aws_cloud_low_utilization_instance_period', 14);
+
+  // Update notification message.
+  $config->set('aws_cloud_low_utilization_instance_notification_msg', "The following EC2 instance have been running in low utilization status for several days. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]");
+
+  $config->save();
+}
+
+/**
+ * Add configuration aws_cloud_update_resources_queue_cron_time.
+ */
+function aws_cloud_update_8229() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('aws_cloud.settings');
+  $config->set('aws_cloud_update_resources_queue_cron_time', 5);
+  $config->save();
+}
+
+/**
+ * Add menu tabs for AWS resources listing views.
+ */
+function aws_cloud_update_8230() {
+  drupal_flush_all_caches();
+}

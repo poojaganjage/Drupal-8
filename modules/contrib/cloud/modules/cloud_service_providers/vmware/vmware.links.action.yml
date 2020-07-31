@@ -1,0 +1,27 @@
+###########
+# VMware VM.
+###########
+
+entity.vmware_vm.collection:
+  route_name: view.vmware_vm.list
+  title: 'List VMware VMs'
+  appears_on:
+    - entity.vmware_vm.canonical
+
+entity.vmware_vm.start:
+  route_name: entity.vmware_vm.start_form
+  title: 'Start'
+  appears_on:
+    - entity.vmware_vm.canonical
+
+entity.vmware_vm.stop:
+  route_name: entity.vmware_vm.stop_form
+  title: 'Stop'
+  appears_on:
+    - entity.vmware_vm.canonical
+
+entity.vmware_vm.refresh:
+  route_name: entity.vmware_vm.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.vmware_vm.list

@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+    - options
+  enforced:
+    module:
+      - openstack
+id: cloud_server_template.field_openstack_vpc
+field_name: field_openstack_vpc
+entity_type: cloud_server_template
+type: list_string
+settings:
+  allowed_values: {  }
+  allowed_values_function: openstack_vpc_allowed_values_function
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,890 @@
+<?php
+
+/**
+ * @file
+ * Install/Uninstall file for OpenStack.
+ */
+
+use Drupal\Core\Database\Database;
+use Drupal\Core\Field\BaseFieldDefinition;
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
+use Drupal\Component\Serialization\Yaml;
+
+/**
+ * Implements hook_install().
+ */
+function openstack_install() {
+  // Setup default icons.
+  \Drupal::service('cloud')->addDefaultIcon('openstack');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function openstack_uninstall() {
+
+  // Delete OpenStack cloud service provider entities.
+  \Drupal::service('cloud')->uninstallServiceProvider('openstack');
+
+  // Delete default icon.
+  \Drupal::service('cloud')->deleteDefaultIcon('openstack');
+
+  // Delete cloud config fields.
+  // NOTE: field_location_* fields consists of two kinds of information
+  // such as field.field.cloud_config.aws_cloud.field_location_* and
+  // field.storage.cloud_config.field_location_*.
+  // field.field.cloud_config.*.field_location_* should be explicitly
+  // removed here when we uninstall this module.
+  // Removing field.storage.cloud_config.field_location_* are automatically
+  // taken care by Cloud module.
+  \Drupal::service('cloud')->uninstallLocationFields('openstack');
+}
+
+/**
+ * Add entity type.
+ */
+function openstack_add_entity_type($entity_id) {
+  // Add entity type.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition($entity_id);
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+}
+
+/**
+ * Drop database table.
+ */
+function openstack_drop_db_table($tables) {
+  $schema = Database::getConnection()->schema();
+  foreach ($tables ?: [] as $table) {
+    $schema->dropTable($table);
+  }
+}
+
+/**
+ * Add fields about Locaion to cloud_config.
+ */
+function openstack_update_8201() {
+  // Add new fields and update entity cloud_config.openstack.
+  $files = [
+    'field.field.cloud_config.openstack.field_location_country.yml',
+    'field.field.cloud_config.openstack.field_location_city.yml',
+    'field.field.cloud_config.openstack.field_location_latitude.yml',
+    'field.field.cloud_config.openstack.field_location_longitude.yml',
+    'core.entity_form_display.cloud_config.openstack.default.yml',
+    'core.entity_view_display.cloud_config.openstack.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update views.view.openstack_instance.yml file.
+ */
+function openstack_update_8202() {
+  $view_ids = [
+    'openstack_instance_all',
+  ];
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  $files = [
+    'views.view.openstack_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_image and view openstack_image.
+ */
+function openstack_update_8203() {
+
+  openstack_add_entity_type('openstack_image');
+
+  // Add view openstack_image.
+  $files = [
+    'views.view.openstack_image.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_key_pair and view openstack_key_pair.
+ */
+function openstack_update_8204() {
+
+  openstack_add_entity_type('openstack_key_pair');
+
+  // Add view openstack_key_pair.
+  $files = [
+    'views.view.openstack_key_pair.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_security_group.
+ *
+ * Add openstack_security_group view.
+ */
+function openstack_update_8205() {
+
+  openstack_add_entity_type('openstack_security_group');
+
+  // Add view openstack_security_group.
+  $files = [
+    'views.view.openstack_security_group.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_volume and view openstack_volume.
+ */
+function openstack_update_8206() {
+
+  openstack_add_entity_type('openstack_volume');
+
+  // Add view openstack_volume.
+  $files = [
+    'views.view.openstack_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_snapshot and view openstack_snapshot.
+ */
+function openstack_update_8207() {
+
+  openstack_add_entity_type('openstack_snapshot');
+
+  // Add view openstack_snapshot.
+  $files = [
+    'views.view.openstack_snapshot.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add entity type openstack_network_interface.
+ *
+ * Add view openstack_network_interface.
+ */
+function openstack_update_8208() {
+
+  openstack_add_entity_type('openstack_network_interface');
+
+  // Add view openstack_network_interface.
+  $files = [
+    'views.view.openstack_network_interface.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type (openstack_instance -> openstack_instance).
+ */
+function openstack_update_8209() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_instance',
+    'openstack_instance__security_groups',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_instance');
+
+  $view_ids = [
+    'openstack_instance_all',
+    'openstack_instance',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_instance.
+  $files = [
+    'views.view.openstack_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type (openstack_image -> openstack_image).
+ */
+function openstack_update_8210() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_image',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_image');
+
+  $view_ids = [
+    'openstack_image',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_image.
+  $files = [
+    'views.view.openstack_image.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type (openstack_key_pair -> openstack_key_pair).
+ */
+function openstack_update_8211() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_key_pair',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_key_pair');
+
+  $view_ids = [
+    'openstack_key_pair',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_key_pair.
+  $files = [
+    'views.view.openstack_key_pair.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type(openstack_security_group->openstack_security_group).
+ */
+function openstack_update_8212() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_security_group',
+    'openstack_security_group__c4fbbd85c0',
+    'openstack_security_group__ip_permission',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_security_group');
+
+  $view_ids = [
+    'openstack_security_group',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_key_pair.
+  $files = [
+    'views.view.openstack_security_group.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type (openstack_volume -> openstack_volume).
+ */
+function openstack_update_8213() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_volume',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_volume');
+
+  $view_ids = [
+    'openstack_volume',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_volume.
+  $files = [
+    'views.view.openstack_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Rename entity type (openstack_snapshot -> openstack_snapshot).
+ */
+function openstack_update_8214() {
+  // Drop old entity tables.
+  $tables = [
+    'openstack_snapshot',
+  ];
+
+  openstack_drop_db_table($tables);
+
+  openstack_add_entity_type('openstack_snapshot');
+
+  $view_ids = [
+    'openstack_snapshot',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  // Add view openstack_snapshot.
+  $files = [
+    'views.view.openstack_snapshot.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update view openstack_network_interface.
+ */
+function openstack_update_8215() {
+
+  $files = [
+    'views.view.openstack_network_interface.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Delete old block_devices field.
+ *
+ * Add new block_device_mappings multi valued field.
+ */
+function openstack_update_8216() {
+  $files = [
+    'views.view.openstack_image.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+
+  drupal_flush_all_caches();
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $db = \Drupal::database();
+
+  $entity_type = 'openstack_image';
+  if ($db->schema()->fieldExists($entity_type, 'block_devices')) {
+    $db->update($entity_type)
+      ->fields(['block_devices' => NULL])
+      ->execute();
+  }
+  $field_storage_definition = $definition_update_manager->getFieldStorageDefinition(
+    'block_devices',
+    $entity_type
+  );
+
+  if ($field_storage_definition) {
+    $definition_update_manager->uninstallFieldStorageDefinition($field_storage_definition);
+  }
+
+  $field_storage_definition = BaseFieldDefinition::create('block_device_mappings')
+    ->setLabel(t('Block Device Mappings'))
+    ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+    ->setDescription(t('Any block device mapping entries.'))
+    ->setDisplayOptions('view', [
+      'type' => 'block_device_mappings_formatter',
+      'weight' => -5,
+    ]);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'block_device_mappings',
+    $entity_type,
+    'openstack',
+    $field_storage_definition
+  );
+
+  // Update entities of Instance, Vpc, Subnet and Server templates.
+  $ec2_service = \Drupal::service('openstack.ec2');
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('openstack');
+  foreach ($config_entities ?: [] as $config_entity) {
+    try {
+      $account_id = $config_entity->get('field_account_id')->value;
+
+      $ec2_service->setCloudContext($config_entity->getCloudContext());
+      $ec2_service->updateImagesWithoutBatch(['Owners' => [$account_id]], FALSE);
+    }
+    catch (\Exception $e) {
+      // When OpenStack credentials are not properly configured in
+      // $config_entity (OpenStack Cloud service provider), catch an exception
+      // and simply move onto the next $config_entity.
+      continue;
+    }
+  }
+}
+
+/**
+ * Add openstack_image delete action.
+ *
+ * Update openstack_image view.
+ */
+function openstack_update_8217() {
+  $files = [
+    'views.view.openstack_image.yml',
+    'system.action.openstack_image_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add openstack_key_pair delete action.
+ *
+ * Update openstack_key_pair view.
+ */
+function openstack_update_8218() {
+
+  $files = [
+    'views.view.openstack_key_pair.yml',
+    'system.action.openstack_key_pair_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update view openstack_network_interface.
+ */
+function openstack_update_8219() {
+
+  $files = [
+    'views.view.openstack_network_interface.yml',
+    'system.action.openstack_network_interface_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add openstack_security_group delete action.
+ *
+ * Update openstack_security_group view.
+ */
+function openstack_update_8220() {
+
+  $files = [
+    'views.view.openstack_security_group.yml',
+    'system.action.openstack_security_group_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add openstack_snapshot delete action.
+ *
+ * Update openstack_snapshot view.
+ */
+function openstack_update_8221() {
+
+  $files = [
+    'views.view.openstack_snapshot.yml',
+    'system.action.openstack_snapshot_delete_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add/update view for volumes.
+ */
+function openstack_update_8222() {
+
+  $files = [
+    'views.view.openstack_volume.yml',
+    'system.action.openstack_volume_delete_action.yml',
+    'system.action.openstack_volume_detach_action.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add OpenStack test mode configuration item.
+ */
+function openstack_update_8223() {
+
+  $config_path = realpath(drupal_get_path('module', 'openstack')) . '/config/install';
+
+  $filename = $config_path . '/openstack.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values) && isset($values['openstack_test_mode'])) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('openstack.settings');
+      $config->set('openstack_test_mode', $values['openstack_test_mode']);
+      $config->save();
+    }
+  }
+}
+
+/**
+ * Add entity type openstack_floating_ip.
+ *
+ * Add view openstack_floating_ip.
+ */
+function openstack_update_8224() {
+
+  openstack_add_entity_type('openstack_floating_ip');
+
+  // Add view openstack_floating_ip.
+  $files = [
+    'views.view.openstack_floating_ip.yml',
+    'system.action.openstack_floating_ip_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add new launch_permission_account_ids field to AWS Image.
+ */
+function openstack_update_8225() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = 'openstack_image';
+
+  $field_storage_definition = BaseFieldDefinition::create('string')
+    ->setLabel(t('OpenStack Account IDs'))
+    ->setCardinality(FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED)
+    ->setDescription(t('The Launch Permissions.'))
+    ->setDisplayOptions('view', [
+      'type' => 'string',
+      'weight' => -5,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'string',
+      'weight' => 5,
+    ])
+    ->setDisplayConfigurable('form', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'launch_permission_account_ids',
+    $entity_type,
+    'aws_cloud',
+    $field_storage_definition
+  );
+
+  drupal_flush_all_caches();
+
+  // Update images.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('openstack');
+  $ec2_service = \Drupal::service('openstack.ec2');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $ec2_service->setCloudContext($config_entity->getCloudContext());
+
+    $account_id = $config_entity->get('field_account_id')->value;
+    $ec2_service->updateImagesWithoutBatch(['Owners' => [$account_id]], TRUE);
+  }
+}
+
+/**
+ * Update view openstack_floating_ip.
+ */
+function openstack_update_8226() {
+
+  // Update view openstack_floating_ip.
+  $files = [
+    'views.view.openstack_floating_ip.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add openstack_instance delete action.
+ *
+ * Update openstack_instance view.
+ */
+function openstack_update_8227() {
+  try {
+    openstack_add_entity_type('openstack_instance');
+
+    $files = [
+      'views.view.openstack_instance.yml',
+      'system.action.openstack_instance_delete_action.yml',
+    ];
+
+    \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+
+    // Update Instances.
+    /* @var \Drupal\aws_cloud\Service\Ec2\Ec2ServiceInterface $openstack_ec2_service */
+    $openstack_ec2_service = \Drupal::service('openstack.ec2');
+    $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('openstack');
+
+    foreach ($entities ?: [] as $entity) {
+      /* @var \Drupal\cloud\Entity\CloudConfig $entity */
+      $openstack_ec2_service->setCloudContext($entity->getCloudContext());
+      $openstack_ec2_service->updateInstancesWithoutBatch();
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Add openstack_instance_stop_action.
+ *
+ * Add openstack_instance_reboot_action.
+ */
+function openstack_update_8228() {
+  $files = [
+    'system.action.openstack_instance_stop_action.yml',
+    'system.action.openstack_instance_reboot_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add openstack_instance_start_action.
+ */
+function openstack_update_8229() {
+  $files = [
+    'system.action.openstack_instance_start_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Remove old openstack_cloud_instance definition.
+ */
+function openstack_update_8230() {
+  // Remove openstack_cloud_instance definition if it still exists.
+  /** @var \Drupal\Core\Entity\EntityLastInstalledSchemaRepositoryInterface $entity_repository */
+  $entity_repository = \Drupal::service('entity.last_installed_schema.repository');
+  $entity_repository->deleteLastInstalledDefinition('openstack_cloud_instance');
+
+  // Clear definition cache.
+  /* @var \Drupal\Core\Entity\EntityFieldManager $field_manager */
+  $field_manager = \Drupal::service('entity_field.manager');
+  $field_manager->clearCachedFieldDefinitions();
+  \Drupal::entityTypeManager()->clearCachedDefinitions();
+}
+
+/**
+ * Update singular and plural label annotation.
+ */
+function openstack_update_8231() {
+  \Drupal::service('cloud')->updateEntityPluralLabels('openstack');
+}
+
+/**
+ * Update Region field of cloud config.
+ */
+function openstack_update_8232() {
+  $files = [
+    'field.field.cloud_config.openstack.field_os_region.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function openstack_update_8233() {
+
+  $annotations = [
+    'openstack_floating_ip' => [
+      'id_plural' => 'openstack_floating_ips',
+      'label' => 'Floating IP',
+      'label_collection' => 'Floating IPs',
+      'label_singular' => 'Floating IP',
+      'label_plural' => 'Floating IPs',
+    ],
+    'openstack_image' => [
+      'id_plural' => 'openstack_images',
+      'label' => 'Image',
+      'label_collection' => 'Images',
+      'label_singular' => 'Image',
+      'label_plural' => 'Images',
+    ],
+    'openstack_network_interface' => [
+      'id_plural' => 'openstack_network_interfaces',
+      'label' => 'Network Interface',
+      'label_collection' => 'Network Interfaces',
+      'label_singular' => 'Network Interface',
+      'label_plural' => 'Network Interfaces',
+    ],
+    'openstack_instance' => [
+      'label' => 'Instance',
+      'id_plural' => 'openstack_instances',
+      'label_collection' => 'Instances',
+      'label_singular' => 'Instance',
+      'label_plural' => 'Instances',
+    ],
+    'openstack_volume' => [
+      'id_plural' => 'openstack_volumes',
+      'label' => 'Volume',
+      'label_collection' => 'Volumes',
+      'label_singular' => 'Volume',
+      'label_plural' => 'Volumes',
+    ],
+    'openstack_key_pair' => [
+      'id_plural' => 'openstack_key_pair',
+      'label' => 'Key Pair',
+      'label_collection' => 'Key Pairs',
+      'label_singular' => 'Key Pair',
+      'label_plural' => 'Key Pairs',
+    ],
+    'openstack_snapshot' => [
+      'id_plural' => 'openstack_snapshots',
+      'label' => 'Snapshot',
+      'label_collection' => 'Snapshots',
+      'label_singular' => 'Snapshot',
+      'label_plural' => 'Snapshots',
+    ],
+    'openstack_security_group' => [
+      'id_plural' => 'openstack_security_groups',
+      'label' => 'Security Group',
+      'label_collection' => 'Security Groups',
+      'label_singular' => 'Security Group',
+      'label_plural' => 'Security Groups',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Update server template files.
+ */
+function openstack_update_8234() {
+  $files = [
+    'cloud.cloud_server_template_type.openstack.yml',
+    'field.storage.cloud_server_template.field_openstack_image_id.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_image_id.yml',
+    'field.storage.cloud_server_template.field_os_availability_zone.yml',
+    'field.field.cloud_server_template.openstack.field_os_availability_zone.yml',
+    'field.storage.cloud_server_template.field_openstack_vpc.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_vpc.yml',
+    'field.storage.cloud_server_template.field_openstack_subnet.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_subnet.yml',
+    'field.storage.cloud_server_template.field_openstack_ssh_key.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_ssh_key.yml',
+    'field.storage.cloud_server_template.field_openstack_security_group.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_security_group.yml',
+    'field.storage.cloud_server_template.field_openstack_network.yml',
+    'field.field.cloud_server_template.openstack.field_openstack_network.yml',
+    'field.field.cloud_server_template.openstack.field_description.yml',
+    'field.field.cloud_server_template.openstack.field_instance_shutdown_behavior.yml',
+    'field.field.cloud_server_template.openstack.field_instance_type.yml',
+    'field.field.cloud_server_template.openstack.field_kernel_id.yml',
+    'field.field.cloud_server_template.openstack.field_max_count.yml',
+    'field.field.cloud_server_template.openstack.field_min_count.yml',
+    'field.field.cloud_server_template.openstack.field_monitoring.yml',
+    'field.field.cloud_server_template.openstack.field_ram.yml',
+    'field.field.cloud_server_template.openstack.field_tags.yml',
+    'field.field.cloud_server_template.openstack.field_termination_protection.yml',
+    'field.field.cloud_server_template.openstack.field_test_only.yml',
+    'field.field.cloud_server_template.openstack.field_user_data.yml',
+    'field.field.cloud_server_template.openstack.field_version.yml',
+    'core.entity_form_display.cloud_server_template.openstack.default.yml',
+    'core.entity_view_display.cloud_server_template.openstack.default.yml',
+    'views.view.openstack_key_pair.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update openstack_instance view.
+ */
+function openstack_update_8235() {
+  $files = [
+    'views.view.openstack_instance.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add default icon for OpenStack cloud_config.
+ */
+function openstack_update_8236() {
+  \Drupal::service('cloud')->addDefaultIcon('openstack');
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add an 'views.*.all' view for openstack entities.
+ */
+function openstack_update_8237() {
+  $files = [
+    'views.view.openstack_floating_ip.yml',
+    'views.view.openstack_image.yml',
+    'views.view.openstack_instance.yml',
+    'views.view.openstack_key_pair.yml',
+    'views.view.openstack_network_interface.yml',
+    'views.view.openstack_security_group.yml',
+    'views.view.openstack_snapshot.yml',
+    'views.view.openstack_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+
+  \Drupal::service('cloud')->deleteViews(['openstack_instance_all']);
+}
+
+/**
+ * Update openstack_key_pair view.
+ */
+function openstack_update_8238() {
+  $files = [
+    'views.view.openstack_key_pair.yml',
+  ];
+
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Update each OpenStack resource view.
+ */
+function openstack_update_8239() {
+  $files = [
+    'views.view.openstack_floating_ip.yml',
+    'views.view.openstack_image.yml',
+    'views.view.openstack_instance.yml',
+    'views.view.openstack_key_pair.yml',
+    'views.view.openstack_network_interface.yml',
+    'views.view.openstack_security_group.yml',
+    'views.view.openstack_snapshot.yml',
+    'views.view.openstack_volume.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'openstack');
+}
+
+/**
+ * Add configuration openstack_update_resources_queue_cron_time.
+ */
+function openstack_update_8240() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('openstack.settings');
+  $config->set('openstack_update_resources_queue_cron_time', 5);
+  $config->save();
+}
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function openstack_update_dependencies() {
+  $dependencies = [];
+
+  $dependencies['openstack'] = [
+    8201 => ['cloud' => 8122],
+  ];
+
+  return $dependencies;
+}

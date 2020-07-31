@@ -1,0 +1,6 @@
+###########
+# Docker
+###########
+administer docker:
+  title: 'Administer Docker settings'
+  description: 'Perform administration tasks for Docker.'

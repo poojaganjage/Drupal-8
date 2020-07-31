@@ -1,0 +1,481 @@
+# Kubernetes Routing Definition
+
+# Kubernetes Admin Settings
+k8s.settings:
+  path: '/admin/config/services/cloud/k8s'
+  defaults:
+    _entity_list: 'cloud_config'
+    _title: Kubernetes
+  requirements:
+    _permission: 'administer k8s'
+
+k8s.settings.options:
+  path: '/admin/config/services/cloud/k8s/settings'
+  defaults:
+    _title: Kubernetes
+    _form: '\Drupal\k8s\Form\Config\K8sAdminSettings'
+  requirements:
+    _permission: 'administer k8s'
+
+k8s.update_all_resources:
+  path: '/clouds/k8s/{cloud_context}/node/update_all_resources'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateAllResources'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view k8s node'
+
+entity.k8s_node.list_update:
+  path: '/clouds/k8s/{cloud_context}/node/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateNodeList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view k8s node'
+
+entity.k8s_node.metrics:
+  path: '/clouds/k8s/{cloud_context}/node/{k8s_node}/metrics'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getNodeMetrics'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view k8s node'
+      parameters:
+        k8s_node:
+          type: 'entity:k8s_node'
+          converter: paramconverter.entity
+
+entity.k8s_node.usage_lists:
+  path: '/clouds/k8s/node/all_allocated_resources'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getAllNodeAllocatedResources'
+  requirements:
+    _permission: 'view k8s node'
+
+entity.k8s_node.usage_list:
+  path: '/clouds/k8s/{cloud_context}/node/allocated_resources'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getNodeAllocatedResourcesList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'view k8s node'
+
+entity.k8s_node.usage:
+  path: '/clouds/k8s/{cloud_context}/node/{k8s_node}/allocated_resources'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getNodeAllocatedResources'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'view k8s node'
+
+entity.k8s_node.cloud_project.usage:
+  path: '/clouds/k8s/{cloud_context}/{cloud_project}/node/allocated_resources'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getNodeAllocatedResources'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+    _entity_access: 'cloud_project.view'
+    cloud_project: \d+
+  options:
+    perm: 'view k8s node'
+
+entity.k8s_namespace.list_update:
+  path: '/clouds/k8s/{cloud_context}/namespace/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateNamespaceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s namespace'
+
+entity.k8s_pod.list_update:
+  path: '/clouds/k8s/{cloud_context}/pod/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updatePodList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any k8s pod+edit own k8s pod'
+
+entity.k8s_pod.metrics:
+  path: '/clouds/k8s/{cloud_context}/pod/{k8s_pod}/metrics'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::getPodMetrics'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view any k8s pod+view own k8s pod'
+      parameters:
+        k8s_pod:
+          type: 'entity:k8s_pod'
+          converter: paramconverter.entity
+
+entity.k8s_deployment.list_update:
+  path: '/clouds/k8s/{cloud_context}/deployment/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateDeploymentList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any k8s deployment+edit own k8s deployment'
+
+entity.k8s_deployment.scale_form:
+  path: '/clouds/k8s/{cloud_context}/deployment/{k8s_deployment}/scale'
+  defaults:
+    _entity_form: 'k8s_deployment.scale'
+    _title: 'Scale'
+  requirements:
+    _entity_access: 'k8s_deployment.edit'
+
+entity.k8s_replica_set.list_update:
+  path: '/clouds/k8s/{cloud_context}/replica_set/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateReplicaSetList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit k8s replica set'
+
+entity.k8s_service.list_update:
+  path: '/clouds/k8s/{cloud_context}/service/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateServiceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s service'
+
+entity.k8s_cron_job.list_update:
+  path: '/clouds/k8s/{cloud_context}/cron_job/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateCronJobList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s cron job'
+
+entity.k8s_job.list_update:
+  path: '/clouds/k8s/{cloud_context}/job/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateJobList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s job'
+
+entity.k8s_resource_quota.list_update:
+  path: '/clouds/k8s/{cloud_context}/resource_quota/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateResourceQuotaList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s resource quota'
+
+entity.k8s_limit_range.list_update:
+  path: '/clouds/k8s/{cloud_context}/limit_range/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateLimitRangeList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s limit range'
+
+entity.k8s_secret.list_update:
+  path: '/clouds/k8s/{cloud_context}/secret/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateSecretList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s secret'
+
+entity.k8s_config_map.list_update:
+  path: '/clouds/k8s/{cloud_context}/config_map/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateConfigMapList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s configmap'
+
+entity.k8s_role.list_update:
+  path: '/clouds/k8s/{cloud_context}/role/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateRoleList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s role'
+
+entity.k8s_cluster_role.list_update:
+  path: '/clouds/k8s/{cloud_context}/cluster_role/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateClusterRoleList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s cluster role'
+
+entity.k8s_pod.log_form:
+  path: '/clouds/k8s/{cloud_context}/pod/{k8s_pod}/log'
+  defaults:
+    _entity_form: 'k8s_pod.log'
+    _title: 'Log'
+  requirements:
+    _entity_access: 'k8s_pod.log'
+
+entity.k8s_network_policy.list_update:
+  path: '/clouds/k8s/{cloud_context}/network_policy/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateNetworkPolicyList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit k8s network policy'
+
+entity.k8s_persistent_volume.list_update:
+  path: '/clouds/k8s/{cloud_context}/persistent_volume/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updatePersistentVolumeList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit k8s persistent volume'
+
+entity.k8s_storage_class.list_update:
+  path: '/clouds/k8s/{cloud_context}/storage_class/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateStorageClassList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s storage class'
+
+entity.k8s_stateful_set.list_update:
+  path: '/clouds/k8s/{cloud_context}/stateful_set/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateStatefulSetsList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s stateful set'
+
+entity.k8s_ingress.list_update:
+  path: '/clouds/k8s/{cloud_context}/ingress/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateIngressList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s ingress'
+
+entity.k8s_daemon_set.list_update:
+  path: '/clouds/k8s/{cloud_context}/daemon_set/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateDaemonSetList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s daemon set'
+
+entity.k8s_endpoint.list_update:
+  path: '/clouds/k8s/{cloud_context}/endpoint/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateEndpointList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s endpoint'
+
+entity.k8s_event.list_update:
+  path: '/clouds/k8s/{cloud_context}/event/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateEventList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view k8s event'
+
+entity.k8s_persistent_volume_claim.list_update:
+  path: '/clouds/k8s/{cloud_context}/persistent_volume_claim/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updatePersistentVolumeClaimList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s persistent volume claim'
+
+entity.k8s_api_service.list_update:
+  path: '/clouds/k8s/{cloud_context}/api_service/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateApiServiceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s api service'
+
+entity.k8s_cluster_role_binding.list_update:
+  path: '/clouds/k8s/{cloud_context}/cluster_role_binding/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateClusterRoleBindingList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s cluster role binding'
+
+entity.k8s_role_binding.list_update:
+  path: '/clouds/k8s/{cloud_context}/role_binding/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateRoleBindingsList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s role binding'
+
+entity.k8s_namespace.all_costs:
+  path: '/clouds/k8s/all_k8s_namespace_costs'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getAllK8sNamespaceCosts'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.costs:
+  path: '/clouds/k8s/{cloud_context}/k8s_namespace_costs'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getK8sNamespaceCosts'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.cost:
+  path: '/clouds/k8s/{cloud_context}/k8s_namespace_costs/{k8s_namespace}'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getK8sNamespaceCosts'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.cloud_project.costs:
+  path: '/clouds/k8s/{cloud_context}/{cloud_project}/k8s_namespace_costs'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getK8sNamespaceCosts'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.cost_types:
+  path: '/clouds/k8s/k8s_namespace_costs/cost_types/{json}'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getEc2CostTypes'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.chart_periods:
+  path: '/clouds/k8s/{cloud_context}/k8s_namespace_costs/chart_periods/{json}'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getEc2ChartPeriod'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.all_chart_periods:
+  path: '/clouds/k8s/k8s_namespace_costs/chart_periods/{json}'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getEc2ChartPeriod'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_namespace.cloud_project.chart_periods:
+  path: '/clouds/k8s/{cloud_context}/{cloud_project}/k8s_namespace_costs/chart_periods/{json}'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::getEc2ChartPeriod'
+  requirements:
+    _custom_access: '\Drupal\k8s\Controller\K8sNamespaceCostsChartController::access'
+
+entity.k8s_service_account.list_update:
+  path: '/clouds/k8s/{cloud_context}/service_account/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updateServiceAccountsList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit k8s service account'
+
+entity.k8s_priority_class.list_update:
+  path: '/clouds/k8s/{cloud_context}/priority_class/update'
+  defaults:
+    _controller: '\Drupal\k8s\Controller\ApiController::updatePriorityClassesList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit k8s priority class'

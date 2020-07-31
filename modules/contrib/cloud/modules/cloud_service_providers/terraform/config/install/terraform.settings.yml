@@ -1,0 +1,2 @@
+terraform_js_refresh_interval: 10
+terraform_update_resources_queue_cron_time: 5

@@ -1,0 +1,4 @@
+services:
+  openstack.ec2:
+    class: Drupal\openstack\Service\OpenStackEc2Service
+    arguments: ['@entity_type.manager', '@config.factory', '@current_user', '@plugin.manager.cloud_config_plugin', '@plugin.manager.field.field_type', '@entity_field.manager', '@lock', '@queue']

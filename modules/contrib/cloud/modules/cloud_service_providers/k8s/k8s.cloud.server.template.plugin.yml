@@ -1,0 +1,9 @@
+# cloud_server_template_plugin plugin definitions.
+# Plugin property $defaults are defined in CloudServerTemplatePluginManager.
+k8s.cloud.cloud_server_template:
+  id: k8s
+  entity_type: cloud_server_template
+  entity_bundle: k8s
+  cloud_config_bundle: k8s
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudServerTemplateCloudContextBundleDeriver'
+  class: 'Drupal\k8s\Plugin\cloud\server_template\K8sCloudServerTemplatePlugin'

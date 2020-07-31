@@ -1,0 +1,10 @@
+# GApps Routing Definition.
+
+# GApps Admin Settings.
+gapps.settings:
+  path: '/admin/config/services/cloud/gapps/settings'
+  defaults:
+    _title: GApps
+    _form: '\Drupal\gapps\Form\Config\GAppsAdminSettings'
+  requirements:
+    _permission: 'administer gapps'

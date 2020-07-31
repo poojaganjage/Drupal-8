@@ -1,0 +1,671 @@
+# AWS Cloud Routing Definition.
+
+# AWS SDK API Callback.
+entity.aws_cloud_instance.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateInstanceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud instance+edit own aws cloud instance'
+
+entity.aws_cloud_instance.list_update.all:
+  path: '/clouds/aws_cloud/instance/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllInstanceList'
+  requirements:
+    _permission: 'edit any aws cloud instance+edit own aws cloud instance'
+
+# Commented out.  This operation takes too long to complete and returns everything.
+entity.aws_cloud_image.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/image/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateImageList'
+  requirements:
+    _permission: 'edit any aws cloud image+edit own aws cloud image'
+
+entity.aws_cloud_image.list_update.all:
+  path: '/clouds/aws_cloud/image/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllImageList'
+  requirements:
+    _permission: 'edit any aws cloud image+edit own aws cloud image'
+
+entity.aws_cloud_security_group.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/security_group/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateSecurityGroupList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud security group+edit own aws cloud security group'
+
+entity.aws_cloud_security_group.list_update.all:
+  path: '/clouds/aws_cloud/security_group/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllSecurityGroupList'
+  requirements:
+    _permission: 'edit any aws cloud security group+edit own aws cloud security group'
+
+entity.aws_cloud_network_interface.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/network_interface/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateNetworkInterfaceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud network interface+edit own aws cloud network interface'
+
+entity.aws_cloud_network_interface.list_update.all:
+  path: '/clouds/aws_cloud/network_interface/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllNetworkInterfaceList'
+  requirements:
+    _permission: 'edit any aws cloud network interface+edit own aws cloud network interface'
+
+entity.aws_cloud_elastic_ip.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/elastic_ip/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateElasticIpList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud elastic ip+edit own aws cloud elastic ip'
+
+entity.aws_cloud_elastic_ip.list_update.all:
+  path: '/clouds/aws_cloud/elastic_ip/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllElasticIpList'
+  requirements:
+    _permission: 'edit any aws cloud elastic ip+edit own aws cloud elastic ip'
+
+entity.aws_cloud_key_pair.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/key_pair/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateKeyPairList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud key pair+edit own aws cloud key pair'
+
+entity.aws_cloud_key_pair.list_update.all:
+  path: '/clouds/aws_cloud/key_pair/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllKeyPairList'
+  requirements:
+    _permission: 'edit any aws cloud key pair+edit own aws cloud key pair'
+
+entity.aws_cloud_volume.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateVolumeList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud volume+edit own aws cloud volume'
+
+entity.aws_cloud_volume.list_update.all:
+  path: '/clouds/aws_cloud/volume/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllVolumeList'
+  requirements:
+    _permission: 'edit any aws cloud volume+edit own aws cloud volume'
+
+entity.aws_cloud_snapshot.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/snapshot/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateSnapshotList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud snapshot+edit own aws cloud snapshot'
+
+entity.aws_cloud_snapshot.list_update.all:
+  path: '/clouds/aws_cloud/snapshot/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAllSnapshotList'
+  requirements:
+    _permission: 'edit any aws cloud snapshot+edit own aws cloud snapshot'
+
+entity.aws_cloud_vpc.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/vpc/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateVpcList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud vpc+edit own aws cloud vpc'
+
+entity.aws_cloud_vpc.list_update.all:
+  path: '/clouds/aws_cloud/vpc/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateAllVpcList'
+  requirements:
+    _permission: 'edit any aws cloud vpc+edit own aws cloud vpc'
+
+entity.aws_cloud_vpc_peering_connection.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/vpc_peering_connection/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateVpcPeeringConnectionList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud vpc peering connection+edit own aws cloud vpc peering connection'
+
+entity.aws_cloud_vpc_peering_connection.list_update.all:
+  path: '/clouds/aws_cloud/vpc_peering_connection/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateAllVpcPeeringConnectionList'
+  requirements:
+    _permission: 'edit any aws cloud vpc peering connection+edit own aws cloud vpc peering connection'
+
+entity.aws_cloud_subnet.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/subnet/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateSubnetList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any aws cloud subnet+edit own aws cloud subnet'
+
+entity.aws_cloud_subnet.list_update.all:
+  path: '/clouds/aws_cloud/subnet/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Vpc\ApiController::updateAllSubnetList'
+  requirements:
+    _permission: 'edit any aws cloud subnet+edit own aws cloud subnet'
+
+entity.aws_cloud.update_all:
+  path: '/clouds/aws_cloud/update_all'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::updateAll'
+  requirements:
+    _permission: 'add cloud service providers'
+
+# AWS Cloud Admin Settings.
+aws_cloud.settings:
+  path: '/admin/config/services/cloud/aws_cloud'
+  defaults:
+    _entity_list: 'cloud_config'
+    _title: AWS Cloud
+  requirements:
+    _permission: 'administer aws_cloud'
+
+aws_cloud.settings.options:
+  path: '/admin/config/services/cloud/aws_cloud/settings'
+  defaults:
+    _title: AWS Cloud
+    _form: '\Drupal\aws_cloud\Form\Config\AwsCloudAdminSettings'
+  requirements:
+    _permission: 'administer aws_cloud'
+
+aws_cloud.settings.notification:
+  path: '/admin/config/services/cloud/aws_cloud/notification'
+  defaults:
+    _title: AWS Cloud
+    _form: '\Drupal\aws_cloud\Form\Config\AwsCloudAdminNotificationSettings'
+  requirements:
+    _permission: 'administer aws_cloud'
+aws_cloud.settings.location:
+  path: '/admin/config/services/cloud/aws_cloud/location'
+  defaults:
+    _title: AWS Cloud
+    _form: '\Drupal\aws_cloud\Form\Config\AwsCloudAdminLocationSettings'
+  requirements:
+    _permission: 'administer aws_cloud'
+
+# AWS Cloud Instance Type Prices.
+aws_cloud.instance_type_prices:
+  path: '/clouds/aws_cloud/{cloud_context}/instance_type_price'
+  defaults:
+    _title: AWS Cloud Instance Type Prices
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\InstanceTypePriceController::show'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view aws cloud instance type prices'
+
+aws_cloud.instance_type_prices.list_update:
+  path: '/clouds/aws_cloud/{cloud_context}/instance_type_price/update'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\InstanceTypePriceController::update'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'view aws cloud instance type prices'
+
+# AWS Cloud Instances Routes.
+entity.aws_cloud_instance.stop_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/stop'
+  defaults:
+    _entity_form: 'aws_cloud_instance.stop'
+    _title: 'Stop Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.stop'
+
+entity.aws_cloud_instance.start_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/start'
+  defaults:
+    _entity_form: 'aws_cloud_instance.start'
+    _title: 'Start Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.start'
+
+entity.aws_cloud_instance.reboot_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/reboot'
+  defaults:
+    _entity_form: 'aws_cloud_instance.reboot'
+    _title: 'Reboot Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.reboot'
+
+entity.aws_cloud_instance.create_image_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/create_image'
+  defaults:
+    _entity_form: 'aws_cloud_instance.create_image'
+    _title: 'Create Image from Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.edit'
+
+entity.aws_cloud_instance.associate_elastic_ip_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/associate_elastic_ip'
+  defaults:
+    _entity_form: 'aws_cloud_instance.associate_elastic_ip'
+    _title: 'Associate Elastic IP of Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.associate_elastic_ip'
+
+entity.aws_cloud_instance.monitor_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/monitor'
+  defaults:
+    _entity_form: 'aws_cloud_instance.monitor'
+    _title: 'Monitor of Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.view'
+
+entity.aws_cloud_instance.metrics:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/metrics'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::getInstanceMetrics'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'view any aws cloud instance'
+
+entity.aws_cloud_instance.console_output_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/{aws_cloud_instance}/console_output'
+  defaults:
+    _entity_form: 'aws_cloud_instance.console_output'
+    _title: 'Console Ouptut of Instance'
+  requirements:
+    _entity_access: 'aws_cloud_instance.view'
+
+entity.aws_cloud_instance.start_multiple_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/start_multiple'
+  defaults:
+    entity_type_id: 'aws_cloud_instance'
+    operation: start
+    _form: 'Drupal\aws_cloud\Form\Ec2\InstanceStartMultipleForm'
+    _title: 'Start AWS Cloud Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: aws_cloud_instance
+  options:
+    _access_checks: 'aws_cloud.access_check.entity_operate_multiple'
+
+entity.aws_cloud_instance.stop_multiple_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/stop_multiple'
+  defaults:
+    entity_type_id: 'aws_cloud_instance'
+    operation: stop
+    _form: 'Drupal\aws_cloud\Form\Ec2\InstanceStopMultipleForm'
+    _title: 'Stop AWS Cloud Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: aws_cloud_instance
+  options:
+    _access_checks: 'aws_cloud.access_check.entity_operate_multiple'
+
+entity.aws_cloud_instance.reboot_multiple_form:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/reboot_multiple'
+  defaults:
+    entity_type_id: 'aws_cloud_instance'
+    operation: reboot
+    _form: 'Drupal\aws_cloud\Form\Ec2\InstanceRebootMultipleForm'
+    _title: 'Reboot AWS Cloud Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: aws_cloud_instance
+  options:
+    _access_checks: 'aws_cloud.access_check.entity_operate_multiple'
+
+
+# AWS Cloud Images Routes.
+entity.aws_cloud_image.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/image/add'
+  defaults:
+    _entity_form: 'aws_cloud_image.add'
+    _title: 'Add AWS Cloud Image'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud image'
+
+entity.aws_cloud_image.import:
+  path: '/clouds/aws_cloud/{cloud_context}/images/import'
+  defaults:
+    _form: '\Drupal\aws_cloud\Form\Ec2\ImageImportForm'
+    _title: 'Import Images'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud image'
+
+entity.aws_cloud_image.search_images:
+  path: '/clouds/aws_cloud/{cloud_context}/images/search'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::searchImages'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud image'
+
+# AWS Cloud Network Interfaces Routes.
+entity.aws_cloud_network_interface.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/network_interface/add'
+  defaults:
+    _entity_form: 'aws_cloud_network_interface.add'
+    _title: 'Add AWS Cloud Network Interface'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud network interface'
+
+# AWS Cloud Elastic IP Routes.
+entity.aws_cloud_elastic_ip.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/elastic_ip/add'
+  defaults:
+    _entity_form: 'aws_cloud_elastic_ip.add'
+    _title: 'Add AWS Cloud Elastic IP'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud elastic ip'
+
+entity.aws_cloud_elastic_ip.associate_form:
+  path: '/clouds/aws_cloud/{cloud_context}/elastic_ip/{aws_cloud_elastic_ip}/associate'
+  defaults:
+    _entity_form: 'aws_cloud_elastic_ip.associate'
+    _title: 'Associate AWS Cloud Elastic IP'
+  requirements:
+    _entity_access: 'aws_cloud_elastic_ip.associate'
+
+entity.aws_cloud_elastic_ip.disassociate_form:
+  path: '/clouds/aws_cloud/{cloud_context}/elastic_ip/{aws_cloud_elastic_ip}/disassociate'
+  defaults:
+    _entity_form: 'aws_cloud_elastic_ip.disassociate'
+    _title: 'Disassociate AWS Cloud Elastic IP'
+  requirements:
+    _entity_access: 'aws_cloud_elastic_ip.disassociate'
+
+entity.aws_cloud_elastic_ip.disassociate_multiple_form:
+  path: '/clouds/aws_cloud/{cloud_context}/elastic_ip/disassociate_multiple'
+  defaults:
+    entity_type_id: 'aws_cloud_elastic_ip'
+    operation: disassociate
+    _form: 'Drupal\aws_cloud\Form\Ec2\ElasticIpDisassociateMultipleForm'
+    _title: 'Disassociate AWS Cloud Elastic IP(s)'
+  requirements:
+    _entity_operate_multiple_access: aws_cloud_elastic_ip
+  options:
+    _access_checks: 'aws_cloud.access_check.entity_operate_multiple'
+
+
+# AWS Cloud Security Groups Routes.
+entity.aws_cloud_security_group.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/security_group/add'
+  defaults:
+    _entity_form: 'aws_cloud_security_group.add'
+    _title: 'Add AWS Cloud Security Group'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud security group'
+
+entity.aws_cloud_security_group.revoke_form:
+  path: '/clouds/aws_cloud/{cloud_context}/security_group/{aws_cloud_security_group}/revoke'
+  defaults:
+    _entity_form: 'aws_cloud_security_group.revoke'
+    _title: 'Revoke AWS Cloud Security Group Permission'
+  requirements:
+    _entity_access: 'aws_cloud_security_group.delete'
+
+entity.aws_cloud_security_group.copy_form:
+  path: '/clouds/aws_cloud/{cloud_context}/security_group/{aws_cloud_security_group}/copy'
+  defaults:
+    _entity_form: 'aws_cloud_security_group.copy'
+    _title: 'Copy AWS Cloud Security Group'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud security group'
+
+# AWS Cloud Key Pairs Routes.
+entity.aws_cloud_key_pair.download:
+  path: '/clouds/aws_cloud/{cloud_context}/key_pair/{key_pair}/download'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\AwsCloudKeyPairController::downloadKey'
+    _title: 'Download Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud key pair'
+
+entity.aws_cloud_key_pair.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/key_pair/add'
+  defaults:
+    _entity_form: 'aws_cloud_key_pair.add'
+    _title: 'Add AWS Cloud Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud key pair'
+
+entity.aws_cloud_key_pair.import_form:
+  path: '/clouds/aws_cloud/{cloud_context}/key_pair/import'
+  defaults:
+    _entity_form: 'aws_cloud_key_pair.import'
+    _title: 'Import AWS Cloud Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud key pair'
+
+# AWS Cloud Volume Routes.
+entity.aws_cloud_volume.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/add'
+  defaults:
+    _entity_form: 'aws_cloud_volume.add'
+    _title: 'Add AWS Cloud Volume'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud volume'
+
+entity.aws_cloud_volume.attach_form:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/{aws_cloud_volume}/attach'
+  defaults:
+    _entity_form: 'aws_cloud_volume.attach'
+    _title: 'Attach Volume'
+  requirements:
+    _entity_access: 'aws_cloud_volume.attach'
+
+entity.aws_cloud_volume.detach_form:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/{aws_cloud_volume}/detach'
+  defaults:
+    _entity_form: 'aws_cloud_volume.detach'
+    _title: 'Detach Volume'
+  requirements:
+    _entity_access: 'aws_cloud_volume.detach'
+
+entity.aws_cloud_volume.detach_multiple_form:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/detach_multiple'
+  defaults:
+    entity_type_id: 'aws_cloud_volume'
+    operation: detach
+    _form: 'Drupal\aws_cloud\Form\Ec2\VolumeDetachMultipleForm'
+    _title: 'Detach AWS Cloud Volume(s)'
+  requirements:
+    _entity_operate_multiple_access: aws_cloud_volume
+  options:
+    _access_checks: 'aws_cloud.access_check.entity_operate_multiple'
+
+# AWS Cloud Snapshots Routes.
+entity.aws_cloud_snapshot.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/snapshot/add'
+  defaults:
+    _entity_form: 'aws_cloud_snapshot.add'
+    _title: 'Add AWS Cloud Snapshot'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud snapshot'
+
+entity.aws_cloud_snapshot.delete_form:
+  path: '/clouds/aws_cloud/{cloud_context}/snapshot/{aws_cloud_snapshot}/delete'
+  defaults:
+    _entity_form: 'aws_cloud_snapshot.delete'
+    _title: 'Delete AWS Cloud Snapshot'
+  requirements:
+    _entity_access: 'aws_cloud_snapshot.delete'
+
+
+# AWS Cloud VPCs Routes.
+entity.aws_cloud_vpc.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/vpc/add'
+  defaults:
+    _entity_form: 'aws_cloud_vpc.add'
+    _title: 'Add AWS Cloud VPC'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud vpc'
+
+entity.aws_cloud_vpc_peering_connection.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/vpc_peering_connection/add'
+  defaults:
+    _entity_form: 'aws_cloud_vpc_peering_connection.add'
+    _title: 'Add AWS Cloud VPC Peering Connection'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud vpc peering connection'
+
+entity.aws_cloud_vpc_peering_connection.accept_form:
+  path: '/clouds/aws_cloud/{cloud_context}/vpc_peering_connection/{aws_cloud_vpc_peering_connection}/accept'
+  defaults:
+    _entity_form: 'aws_cloud_vpc_peering_connection.accept'
+    _title: 'Accept AWS Cloud VPC Peering Connection'
+  requirements:
+    _entity_access: 'aws_cloud_vpc_peering_connection.accept'
+
+# AWS Cloud Subnets Routes.
+entity.aws_cloud_subnet.add_form:
+  path: '/clouds/aws_cloud/{cloud_context}/subnet/add'
+  defaults:
+    _entity_form: 'aws_cloud_subnet.add'
+    _title: 'Add AWS Cloud Subnet'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add aws cloud subnet'
+
+entity.aws_cloud_instance.list_callback:
+  path: '/clouds/aws_cloud/{cloud_context}/instance/callback'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::listInstanceCallback'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list aws cloud instance'
+
+entity.aws_cloud_image.list_callback:
+  path: '/clouds/aws_cloud/{cloud_context}/image/callback'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::listImageCallback'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list aws cloud image'
+
+entity.aws_cloud_snapshot.list_callback:
+  path: '/clouds/aws_cloud/{cloud_context}/snapshot/callback'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::listSnapshotCallback'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list aws cloud snapshot'
+
+entity.aws_cloud_volume.list_callback:
+  path: '/clouds/aws_cloud/{cloud_context}/volume/callback'
+  defaults:
+    _controller: '\Drupal\aws_cloud\Controller\Ec2\ApiController::listVolumeCallback'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list aws cloud volume'

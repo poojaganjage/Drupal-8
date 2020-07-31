@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator - Cache'
+Parameters:
+  CacheNodeType:
+    Description: >-
+      Cache node instance class, e.g. cache.t2.micro(free tier).
+      See https://docs.aws.amazon.com/AmazonElastiCache/latest/UserGuide/CacheNodes.SelectSize.html
+    Type: String
+    Default: cache.t2.micro
+    ConstraintDescription: Node instance class not supported
+    AllowedValues:
+      - cache.t2.micro
+      - cache.t2.small
+      - cache.t2.medium
+      - cache.m4.large
+      - cache.m4.xlarge
+      - cache.m4.2xlarge
+      - cache.m4.4xlarge
+      - cache.m4.10xlarge
+      - cache.r4.large
+      - cache.r4.xlarge
+      - cache.r4.2xlarge
+      - cache.r4.4xlarge
+      - cache.r4.8xlarge
+      - cache.r4.16xlarge
+  CacheNodeCount:
+    Description: Number of nodes in the cluster.
+    Type: Number
+    MinValue: 1
+    MaxValue: 15
+    ConstraintDescription: Node count must be between 1 and 15
+    Default: 1
+  PrivateSubnet1:
+    Description: Private Subnet 1
+    Type: String
+  PrivateSubnet2:
+    Description: Private Subnet 2
+    Type: String
+  SubnetSecurityGroup:
+    Description: Subnet Security Group
+    Type: String
+Resources:
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Cache Subnet group
+      SubnetIds:
+      - Ref: PrivateSubnet1
+      - Ref: PrivateSubnet2
+  ElastiCacheCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      AutoMinorVersionUpgrade: true
+      Engine: memcached
+      CacheNodeType: !Ref CacheNodeType
+      NumCacheNodes: !Ref CacheNodeCount
+      VpcSecurityGroupIds:
+        - !Ref SubnetSecurityGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+Outputs:
+  ElastiCacheAddress:
+    Description: ElastiCache endpoint address
+    Value: !GetAtt ElastiCacheCluster.ConfigurationEndpoint.Address
+  ElastiCachePort:
+    Description: ElastiCache port
+    Value: 11211

@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_system_vpc
+  module:
+    - options
+id: cloud_config.aws_cloud.field_system_vpc
+field_name: field_system_vpc
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'System VPC'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

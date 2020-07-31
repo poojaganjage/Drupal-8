@@ -1,0 +1,7 @@
+gapps.settings:
+  type: config_object
+  mapping:
+    google_credential_file_path:
+      type: string
+    google_credential_signature:
+      type: string

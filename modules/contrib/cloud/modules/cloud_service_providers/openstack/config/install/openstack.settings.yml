@@ -1,0 +1,2 @@
+openstack_test_mode: false
+openstack_update_resources_queue_cron_time: 5

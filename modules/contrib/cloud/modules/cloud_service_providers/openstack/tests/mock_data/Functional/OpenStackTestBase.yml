@@ -1,0 +1,3 @@
+DescribeAvailabilityZones:
+  AvailabilityZones:
+    - ZoneName: RegionOne

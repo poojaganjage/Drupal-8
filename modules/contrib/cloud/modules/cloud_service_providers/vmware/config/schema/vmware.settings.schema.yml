@@ -1,0 +1,9 @@
+vmware.settings:
+  type: config_object
+  mapping:
+    vmware_test_mode:
+      type: boolean
+    vmware_mock_data:
+      type: string
+    vmware_cloud_config_icon:
+      type: integer

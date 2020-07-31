@@ -1,0 +1,9 @@
+cloud_budget.settings:
+  type: config_object
+  mapping:
+    credit_default_amount:
+      type: integer
+    cloud_budget_mock_data:
+      type: string
+    cloud_budget_test_mode:
+      type: boolean

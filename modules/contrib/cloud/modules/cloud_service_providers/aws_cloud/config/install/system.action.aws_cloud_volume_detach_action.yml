@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_volume_detach_action
+label: 'Detach volume(s)'
+type: aws_cloud_volume
+plugin: aws_cloud_volume_detach_action
+configuration: {  }

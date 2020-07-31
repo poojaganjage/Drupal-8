@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.terraform
+    - field.storage.cloud_config.field_aws_cloud
+  module:
+    - options
+id: cloud_config.terraform.field_aws_cloud
+field_name: field_aws_cloud
+entity_type: cloud_config
+bundle: terraform
+label: 'AWS Cloud'
+description: 'Select AWS Cloud service provider(s) to assign the credentials to a Variable in Workspace automatically.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

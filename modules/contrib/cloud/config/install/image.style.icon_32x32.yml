@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - image
+  enforced:
+    module:
+      - cloud
+name: icon_32x32
+label: 'Icon (32x32)'
+effects:
+  4cbe4a17-5842-46cb-806a-989c923599e0:
+    uuid: 4cbe4a17-5842-46cb-806a-989c923599e0
+    id: image_resize
+    weight: 1
+    data:
+      width: 32
+      height: 32

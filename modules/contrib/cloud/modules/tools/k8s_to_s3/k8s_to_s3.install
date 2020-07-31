@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Install file for k8s_to_s3.
+ */
+
+/**
+ * Enable the Docker module.
+ */
+function k8s_to_s3_update_8201() {
+  \Drupal::service('module_installer')->install(['docker']);
+}

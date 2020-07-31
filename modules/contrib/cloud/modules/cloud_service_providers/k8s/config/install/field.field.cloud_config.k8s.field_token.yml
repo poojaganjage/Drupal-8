@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.k8s
+    - field.storage.cloud_config.field_token
+id: cloud_config.k8s.field_token
+field_name: field_token
+entity_type: cloud_config
+bundle: k8s
+label: Token
+description: "To find the token, please run the following bash command (change <em>e.g. <code><strong>admin-user</strong><code></em> to your own admin user name):<br /><code><em>export ADMIN_USER='<strong>admin-user</strong>'; export POD=$(kubectl -n kube-system get secret | grep ${ADMIN_USER}-token | cut -f1 -d' ') && kubectl describe secret ${POD} --namespace kube-system</em></code>"
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

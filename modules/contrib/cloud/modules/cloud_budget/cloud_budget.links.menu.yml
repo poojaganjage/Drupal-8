@@ -1,0 +1,13 @@
+# MENU_NORMAL_ITEM.
+cloud_budget.budget.menu:
+  title: 'Budgets'
+  route_name: 'view.cloud_budget.list'
+  menu_name: main
+  expanded: true
+  weight: 105
+
+cloud_budget.settings:
+  title: Cloud Budget settings
+  description: 'Configure Cloud Budget.'
+  parent: system.admin_config_services
+  route_name: 'cloud_budget.settings'

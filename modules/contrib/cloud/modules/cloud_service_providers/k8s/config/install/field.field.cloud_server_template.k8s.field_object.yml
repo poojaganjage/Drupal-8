@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.storage.cloud_server_template.field_object
+  module:
+    - options
+  enforced:
+    module:
+      - k8s
+id: cloud_server_template.k8s.field_object
+field_name: field_object
+entity_type: cloud_server_template
+bundle: k8s
+label: Object
+description: 'The K8s object.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

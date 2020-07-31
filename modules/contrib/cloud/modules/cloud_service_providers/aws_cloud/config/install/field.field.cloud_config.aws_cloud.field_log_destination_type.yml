@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_log_destination_type
+  module:
+    - options
+id: cloud_config.aws_cloud.field_log_destination_type
+field_name: field_log_destination_type
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Destination Type'
+description: 'Specifies the type of destination to which the flow log data is to be published. Flow log data can be published to CloudWatch Logs or Amazon S3.'
+required: true
+translatable: false
+default_value:
+  -
+    value: cloud-watch-logs
+default_value_callback: ''
+settings: {  }
+field_type: list_string

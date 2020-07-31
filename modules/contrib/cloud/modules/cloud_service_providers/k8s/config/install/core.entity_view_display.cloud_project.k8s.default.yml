@@ -1,0 +1,132 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.field.cloud_project.k8s.field_enable_resource_scheduler
+    - field.field.cloud_project.k8s.field_enable_time_scheduler
+    - field.field.cloud_project.k8s.field_k8s_clusters
+    - field.field.cloud_project.k8s.field_pod_count
+    - field.field.cloud_project.k8s.field_request_cpu
+    - field.field.cloud_project.k8s.field_request_memory
+    - field.field.cloud_project.k8s.field_startup_time_hour
+    - field.field.cloud_project.k8s.field_startup_time_minute
+    - field.field.cloud_project.k8s.field_stop_time_hour
+    - field.field.cloud_project.k8s.field_stop_time_minute
+    - field.field.cloud_project.k8s.field_username
+  module:
+    - options
+    - user
+  enforced:
+    module:
+      - k8s
+id: cloud_project.k8s.default
+targetEntityType: cloud_project
+bundle: k8s
+mode: default
+content:
+  field_enable_resource_scheduler:
+    weight: 35
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  field_enable_time_scheduler:
+    weight: 36
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  field_k8s_clusters:
+    weight: 45
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_pod_count:
+    weight: 38
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_request_cpu:
+    weight: 39
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_request_memory:
+    weight: 40
+    label: above
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_startup_time_hour:
+    weight: 41
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_startup_time_minute:
+    weight: 42
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_stop_time_hour:
+    weight: 43
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_stop_time_minute:
+    weight: 44
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_username:
+    weight: 46
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  name:
+    label: above
+    type: string
+    weight: -4
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  uid:
+    label: hidden
+    type: author
+    weight: 11
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }

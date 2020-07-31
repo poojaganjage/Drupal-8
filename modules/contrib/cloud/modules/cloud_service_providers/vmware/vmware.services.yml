@@ -1,0 +1,8 @@
+services:
+  vmware.factory:
+    class: Drupal\vmware\Service\VmwareServiceFactory
+    arguments: ['@entity_type.manager', '@config.factory', '@http_client_factory', '@plugin.manager.cloud_config_plugin', '@lock', '@queue']
+
+  vmware:
+    factory: ['@vmware.factory', 'create']
+    class: Drupal\vmware\Service\VmwareServiceInterface

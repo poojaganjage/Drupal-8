@@ -1,0 +1,12 @@
+cloud.cloud_config_type.*:
+  type: config_entity
+  label: 'Cloud service provider type'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string

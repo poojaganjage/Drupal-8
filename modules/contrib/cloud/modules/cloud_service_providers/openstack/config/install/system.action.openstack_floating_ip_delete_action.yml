@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_floating_ip_delete_action
+label: 'Delete Floating IP(s)'
+type: openstack_floating_ip
+plugin: entity:delete_action:openstack_floating_ip
+configuration: {  }

@@ -1,0 +1,15 @@
+field.formatter.settings.memory_formatter:
+  type: mapping
+  label: 'Memory formatter'
+  mapping:
+    show_percentage:
+      type: boolean
+      label: 'Show percentage'
+
+field.formatter.settings.cpu_formatter:
+  type: mapping
+  label: 'Memory formatter'
+  mapping:
+    show_percentage:
+      type: boolean
+      label: 'Show percentage'

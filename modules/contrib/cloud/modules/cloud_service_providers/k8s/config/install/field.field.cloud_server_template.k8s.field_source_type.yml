@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.storage.cloud_server_template.field_source_type
+  module:
+    - options
+  enforced:
+    module:
+      - k8s
+id: cloud_server_template.k8s.field_source_type
+field_name: field_source_type
+entity_type: cloud_server_template
+bundle: k8s
+label: 'Source Type'
+description: 'The source type of YAML URL.'
+required: false
+translatable: false
+default_value:
+  -
+    value: git
+default_value_callback: ''
+settings: {  }
+field_type: list_string

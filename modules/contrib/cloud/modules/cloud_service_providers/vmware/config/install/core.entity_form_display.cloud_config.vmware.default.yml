@@ -1,0 +1,102 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.vmware
+    - field.field.cloud_config.vmware.field_vcenter_password
+    - field.field.cloud_config.vmware.field_vcenter_url
+    - field.field.cloud_config.vmware.field_vcenter_username
+    - field.field.cloud_config.vmware.field_location_city
+    - field.field.cloud_config.vmware.field_location_country
+    - field.field.cloud_config.vmware.field_location_latitude
+    - field.field.cloud_config.vmware.field_location_longitude
+    - image.style.thumbnail
+  module:
+    - image
+  enforced:
+    module:
+      - vmware
+id: cloud_config.vmware.default
+targetEntityType: cloud_config
+bundle: vmware
+mode: default
+content:
+  field_vcenter_password:
+    weight: 102
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_vcenter_url:
+    weight: 103
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_vcenter_username:
+    weight: 101
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_location_city:
+    weight: 100
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_location_country:
+    weight: 99
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_location_latitude:
+    weight: 98
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_location_longitude:
+    weight: 98
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  image:
+    type: image_image
+    weight: -3
+    region: content
+    settings:
+      progress_indicator: throbber
+      preview_image_style: thumbnail
+    third_party_settings: {  }
+  name:
+    type: string_textfield
+    weight: -4
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 99
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    region: content
+    third_party_settings: {  }
+hidden: {  }

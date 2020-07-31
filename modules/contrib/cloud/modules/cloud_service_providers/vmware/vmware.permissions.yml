@@ -1,0 +1,26 @@
+###########
+# VMware
+###########
+administer vmware:
+  title: 'Administer VMware settings'
+  description: 'Perform administration tasks for VMware.'
+
+
+############################
+# VMware VM
+############################
+add vmware vm:
+  title: 'Add VMware VM'
+  description: 'Allow users to add VMware VM.'
+list vmware vm:
+  title: 'List VMware VM'
+  description: 'Allow users to list VMware VM.'
+view vmware vm:
+  title: 'View VMware VM'
+  description: 'Allow users to view VMware VM.'
+edit vmware vm:
+  title: 'Edit VMware VM'
+  description: 'Allow users to edit VMware VM.'
+delete vmware vm:
+  title: 'Delete VMware VM'
+  description: 'Allow users to delete VMware VM.'

@@ -1,0 +1,262 @@
+openstack.local_tasks.cloud_context:
+  deriver: 'Drupal\openstack\Plugin\Derivative\OpenStackLocalTasks'
+  weight: 10
+
+openstack.local_tasks.all_resources:
+  deriver: 'Drupal\openstack\Plugin\Derivative\OpenStackAllResourcesLocalTasks'
+  weight: 10
+
+openstack.local_tasks.instance:
+  title: 'Instances'
+  route_name: 'view.openstack_instance.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 10
+
+openstack.local_tasks.instance.all:
+  title: 'Instances'
+  route_name: 'view.openstack_instance.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 10
+
+openstack.local_tasks.image:
+  title: 'Images'
+  route_name: 'view.openstack_image.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 20
+
+openstack.local_tasks.image.all:
+  title: 'Images'
+  route_name: 'view.openstack_image.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 20
+
+openstack.local_tasks.security_group:
+  title: 'Security Groups'
+  route_name: 'view.openstack_security_group.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 30
+
+openstack.local_tasks.security_group.all:
+  title: 'Security Groups'
+  route_name: 'view.openstack_security_group.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 30
+
+openstack.local_tasks.floating_ip:
+  title: 'Floating IPs'
+  route_name: 'view.openstack_floating_ip.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 40
+
+openstack.local_tasks.floating_ip.all:
+  title: 'Floating IPs'
+  route_name: 'view.openstack_floating_ip.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 40
+
+openstack.local_tasks.network_interface:
+  title: 'Network Interfaces'
+  route_name: 'view.openstack_network_interface.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 50
+
+openstack.local_tasks.network_interface.all:
+  title: 'Network Interfaces'
+  route_name: 'view.openstack_network_interface.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 50
+
+openstack.local_tasks.key_pair:
+  title: 'Key Pairs'
+  route_name: 'view.openstack_key_pair.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 60
+
+openstack.local_tasks.key_pair.all:
+  title: 'Key Pairs'
+  route_name: 'view.openstack_key_pair.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 60
+
+openstack.local_tasks.volume:
+  title: 'Volumes'
+  route_name: 'view.openstack_volume.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 70
+
+openstack.local_tasks.volume.all:
+  title: 'Volumes'
+  route_name: 'view.openstack_volume.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 70
+
+openstack.local_tasks.snapshot:
+  title: 'Snapshots'
+  route_name: 'view.openstack_snapshot.list'
+  base_route: 'openstack.local_tasks.cloud_context'
+  weight: 80
+
+openstack.local_tasks.snapshot.all:
+  title: 'Snapshots'
+  route_name: 'view.openstack_snapshot.all'
+  base_route: 'openstack.local_tasks.all_resources'
+  weight: 80
+
+# OpenStack Instance routing definition
+openstack_instance.settings_tab:
+  route_name: openstack_instance.settings
+  title: 'Settings'
+  base_route: openstack_instance.settings
+
+entity.openstack_instance.canonical:
+  route_name: entity.openstack_instance.canonical
+  base_route: entity.openstack_instance.canonical
+  title: 'View'
+
+entity.openstack_instance.edit_form:
+  route_name: entity.openstack_instance.edit_form
+  base_route: entity.openstack_instance.canonical
+  title: 'Edit'
+
+entity.openstack_instance.delete_form:
+  route_name:  entity.openstack_instance.delete_form
+  base_route:  entity.openstack_instance.canonical
+  title: Delete
+  weight: 20
+
+# OpenStack Image routing definition
+entity.openstack_image.canonical:
+  route_name: entity.openstack_image.canonical
+  base_route: entity.openstack_image.canonical
+  title: 'View'
+
+entity.openstack_image.add_form:
+  route_name: entity.openstack_image.add_form
+  title: 'Add OpenStack Image'
+  appears_on:
+  - view.openstack_image.list
+
+entity.openstack_image.edit_form:
+  route_name: entity.openstack_image.edit_form
+  base_route: entity.openstack_image.canonical
+  title: 'Edit'
+
+entity.openstack_image.delete_form:
+  route_name:  entity.openstack_image.delete_form
+  base_route:  entity.openstack_image.canonical
+  title: Delete
+  weight: 30
+
+# OpenStack Key Pair routing definition
+entity.openstack_key_pair.add_form:
+  route_name: entity.openstack_key_pair.add_form
+  title: 'Add Openstack Key pair'
+  appears_on:
+  - view.openstack_key_pair.list
+
+entity.openstack_key_pair.canonical:
+  route_name: entity.openstack_key_pair.canonical
+  base_route: entity.openstack_key_pair.canonical
+  title: 'View'
+
+entity.openstack_key_pair.edit_form:
+  route_name: entity.openstack_key_pair.edit_form
+  base_route: entity.openstack_key_pair.canonical
+  title: 'Edit'
+
+entity.openstack_key_pair.delete_form:
+  route_name:  entity.openstack_key_pair.delete_form
+  base_route:  entity.openstack_key_pair.canonical
+  title: Delete
+  weight: 40
+
+# OpenStack Security Group routing definition
+entity.openstack_security_group.canonical:
+  route_name: entity.openstack_security_group.canonical
+  base_route: entity.openstack_security_group.canonical
+  title: 'View'
+
+entity.openstack_security_group.edit_form:
+  route_name: entity.openstack_security_group.edit_form
+  base_route: entity.openstack_security_group.canonical
+  title: 'Edit'
+
+entity.openstack_security_group.delete_form:
+  route_name:  entity.openstack_security_group.delete_form
+  base_route:  entity.openstack_security_group.canonical
+  title: Delete
+  weight: 50
+
+# OpenStack Volume routing definition
+entity.openstack_volume.canonical:
+  route_name: entity.openstack_volume.canonical
+  base_route: entity.openstack_volume.canonical
+  title: 'View'
+
+entity.openstack_volume.edit_form:
+  route_name: entity.openstack_volume.edit_form
+  base_route: entity.openstack_volume.canonical
+  title: 'Edit'
+
+entity.openstack_volume.delete_form:
+  route_name:  entity.openstack_volume.delete_form
+  base_route:  entity.openstack_volume.canonical
+  title: Delete
+  weight: 10
+
+# OpenStack Snapshot routing definition
+entity.openstack_snapshot.canonical:
+  route_name: entity.openstack_snapshot.canonical
+  base_route: entity.openstack_snapshot.canonical
+  title: 'View'
+
+entity.openstack_snapshot.edit_form:
+  route_name: entity.openstack_snapshot.edit_form
+  base_route: entity.openstack_snapshot.canonical
+  title: 'Edit'
+
+entity.openstack_snapshot.delete_form:
+  route_name:  entity.openstack_snapshot.delete_form
+  base_route:  entity.openstack_snapshot.canonical
+  title: Delete
+  weight: 10
+
+# OpenStack Network Interface routing definition
+entity.openstack_network_interface.canonical:
+  route_name: entity.openstack_network_interface.canonical
+  base_route: entity.openstack_network_interface.canonical
+  title: 'View'
+
+entity.openstack_network_interface.edit_form:
+  route_name: entity.openstack_network_interface.edit_form
+  base_route: entity.openstack_network_interface.canonical
+  title: 'Edit'
+
+entity.openstack_network_interface.delete_form:
+  route_name:  entity.openstack_network_interface.delete_form
+  base_route:  entity.openstack_network_interface.canonical
+  title: Delete
+  weight: 10
+
+entity.openstack_network_interface.add_form:
+  route_name: entity.openstack_network_interface.add_form
+  title: 'Add Openstack Network Interface'
+  appears_on:
+  - view.openstack_network_interface.list
+
+# OpenStack Floating IP routing definition
+entity.openstack_floating_ip.canonical:
+  route_name: entity.openstack_floating_ip.canonical
+  base_route: entity.openstack_floating_ip.canonical
+  title: 'View'
+
+entity.openstack_floating_ip.edit_form:
+  route_name: entity.openstack_floating_ip.edit_form
+  base_route: entity.openstack_floating_ip.canonical
+  title: 'Edit'
+
+entity.openstack_floating_ip.delete_form:
+  route_name:  entity.openstack_floating_ip.delete_form
+  base_route:  entity.openstack_floating_ip.canonical
+  title: Delete
+  weight: 10

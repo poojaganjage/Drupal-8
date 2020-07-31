@@ -1,0 +1,6 @@
+{
+  "name": "drupal/k8s",
+  "require": {
+    "maclof/kubernetes-client": "~0.16"
+  }
+}

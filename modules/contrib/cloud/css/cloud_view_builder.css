@@ -1,0 +1,8 @@
+.field--label-inline,
+.field--label-above {
+  clear: both;
+}
+
+.table td {
+  word-break: break-all;
+}

@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+    - options
+  enforced:
+    module:
+    - k8s
+id: cloud_project.field_k8s_clusters
+field_name: field_k8s_clusters
+entity_type: cloud_project
+type: list_string
+settings:
+  allowed_values: {  }
+  allowed_values_function: 'k8s_cluster_allowed_values'
+module: options
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

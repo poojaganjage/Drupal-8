@@ -1,0 +1,23 @@
+cloud.settings:
+  type: config_object
+  mapping:
+    cloud_default_location_map_json_url:
+      type: string
+    cloud_custom_location_map_json_url:
+      type: string
+    cloud_use_default_urls:
+      type: string
+    cloud_custom_d3_js_url:
+      type: string
+    cloud_custom_c3_js_url:
+      type: string
+    cloud_custom_c3_css_url:
+      type: string
+    cloud_custom_chart_js_url:
+      type: string
+    cloud_custom_select2_js_url:
+      type: string
+    cloud_custom_select2_css_url:
+      type: string
+    cloud_location_geocoder_plugin:
+      type: string

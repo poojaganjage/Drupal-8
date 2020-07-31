@@ -1,0 +1,295 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.field.cloud_config.aws_cloud.field_access_key
+    - field.field.cloud_config.aws_cloud.field_account_id
+    - field.field.cloud_config.aws_cloud.field_api_endpoint_uri
+    - field.field.cloud_config.aws_cloud.field_api_version
+    - field.field.cloud_config.aws_cloud.field_automatically_assign_vpc
+    - field.field.cloud_config.aws_cloud.field_default_subnet_cidr_block
+    - field.field.cloud_config.aws_cloud.field_default_subnet_name
+    - field.field.cloud_config.aws_cloud.field_default_vpc_cidr_block
+    - field.field.cloud_config.aws_cloud.field_default_vpc_name
+    - field.field.cloud_config.aws_cloud.field_description
+    - field.field.cloud_config.aws_cloud.field_get_price_list
+    - field.field.cloud_config.aws_cloud.field_iam_role
+    - field.field.cloud_config.aws_cloud.field_image_upload_url
+    - field.field.cloud_config.aws_cloud.field_location_city
+    - field.field.cloud_config.aws_cloud.field_location_country
+    - field.field.cloud_config.aws_cloud.field_location_latitude
+    - field.field.cloud_config.aws_cloud.field_location_longitude
+    - field.field.cloud_config.aws_cloud.field_log_destination
+    - field.field.cloud_config.aws_cloud.field_log_destination_type
+    - field.field.cloud_config.aws_cloud.field_log_group_name
+    - field.field.cloud_config.aws_cloud.field_logs_permission_arn
+    - field.field.cloud_config.aws_cloud.field_region
+    - field.field.cloud_config.aws_cloud.field_secret_key
+    - field.field.cloud_config.aws_cloud.field_spreadsheet_pricing_url
+    - field.field.cloud_config.aws_cloud.field_switch_role_account_id
+    - field.field.cloud_config.aws_cloud.field_switch_role_iam_role
+    - field.field.cloud_config.aws_cloud.field_system_vpc
+    - field.field.cloud_config.aws_cloud.field_traffic_type
+    - field.field.cloud_config.aws_cloud.field_use_assume_role
+    - field.field.cloud_config.aws_cloud.field_use_instance_profile
+    - field.field.cloud_config.aws_cloud.field_use_switch_role
+    - field.field.cloud_config.aws_cloud.field_x_509_certificate
+  module:
+    - cloud
+  enforced:
+    module:
+      - aws_cloud
+id: cloud_config.aws_cloud.default
+targetEntityType: cloud_config
+bundle: aws_cloud
+mode: default
+content:
+  field_access_key:
+    weight: 6
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_account_id:
+    weight: 8
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_api_endpoint_uri:
+    weight: 4
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_api_version:
+    weight: 3
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_use_assume_role:
+    weight: 11
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_automatically_assign_vpc:
+    weight: 27
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_default_subnet_cidr_block:
+    weight: 21
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_default_subnet_name:
+    weight: 20
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_default_vpc_cidr_block:
+    weight: 19
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_default_vpc_name:
+    weight: 18
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_description:
+    weight: 2
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  field_get_price_list:
+    weight: 32
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_iam_role:
+    weight: 12
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_image_upload_url:
+    weight: 9
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_location_city:
+    weight: 29
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_location_country:
+    weight: 28
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_location_latitude:
+    weight: 30
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_location_longitude:
+    weight: 31
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_log_destination:
+    weight: 26
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_log_destination_type:
+    weight: 22
+    settings: {  }
+    third_party_settings: {  }
+    type: options_buttons
+    region: content
+  field_log_group_name:
+    weight: 24
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_logs_permission_arn:
+    weight: 25
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_region:
+    weight: 5
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_secret_key:
+    weight: 7
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_use_switch_role:
+    weight: 14
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_switch_role_account_id:
+    weight: 15
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_switch_role_iam_role:
+    weight: 16
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_system_vpc:
+    weight: 17
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_traffic_type:
+    weight: 23
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_use_instance_profile:
+    weight: 13
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_x_509_certificate:
+    weight: 10
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  name:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 1
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    region: content
+    third_party_settings: {  }
+hidden:
+  field_spreadsheet_pricing_url: true

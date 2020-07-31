@@ -1,0 +1,7 @@
+docker.settings:
+  path: '/admin/config/services/cloud/docker/settings'
+  defaults:
+    _title: Docker
+    _form: '\Drupal\docker\Form\Config\DockerAdminSettings'
+  requirements:
+    _permission: 'administer docker'

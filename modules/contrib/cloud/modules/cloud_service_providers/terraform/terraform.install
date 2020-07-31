@@ -1,0 +1,279 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for terraform.
+ */
+
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Implements hook_install().
+ */
+function terraform_install() {
+  // Setup default icons.
+  \Drupal::service('cloud')->addDefaultIcon('terraform');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function terraform_uninstall() {
+
+  // Delete Terraform cloud service provider entities.
+  \Drupal::service('cloud')->uninstallServiceProvider('terraform');
+
+  // Delete default icon.
+  \Drupal::service('cloud')->deleteDefaultIcon('terraform');
+}
+
+/**
+ * Add entity type terraform_workspace and view terraform_workspace.
+ */
+function terraform_update_8201() {
+  // Add entity type terraform_workspace.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('terraform_workspace');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view terraform_workspace.
+  $files = [
+    'views.view.terraform_workspace.yml',
+    'system.action.terraform_workspace_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Add entity type terraform_run and view terraform_run.
+ */
+function terraform_update_8202() {
+  // Add entity type terraform_run.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('terraform_run');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view terraform_run.
+  $files = [
+    'views.view.terraform_run.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Add entity type and view for terraform_state. Update view for terraform_run.
+ */
+function terraform_update_8203() {
+  // Add entity type terraform_state.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('terraform_state');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+
+  // Add view terraform_state and update view terraform_run.
+  $files = [
+    'views.view.terraform_state.yml',
+    'views.view.terraform_run.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Update entity type terraform_run and view terraform_run.
+ */
+function terraform_update_8204() {
+  // Add entity type terraform_run.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('terraform_run');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view terraform_run.
+  $files = [
+    'views.view.terraform_run.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Update singular and plural label annotation.
+ */
+function terraform_update_8205() {
+  \Drupal::service('cloud')->updateEntityPluralLabels('terraform');
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function terraform_update_8206() {
+
+  $annotations = [
+    'terraform_run' => [
+      'id_plural' => 'terraform_runs',
+      'label' => 'Run',
+      'label_collection' => 'Runs',
+      'label_singular' => 'Run',
+      'label_plural' => 'Runs',
+    ],
+    'terraform_workspace' => [
+      'id_plural' => 'terraform_workspaces',
+      'label' => 'Workspace',
+      'label_collection' => 'Workspaces',
+      'label_singular' => 'Workspace',
+      'label_plural' => 'Workspaces',
+    ],
+    'terraform_state' => [
+      'id_plural' => 'terraform_states',
+      'label' => 'State',
+      'label_collection' => 'States',
+      'label_singular' => 'State',
+      'label_plural' => 'States',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Update entity type terraform_variable and view terraform_variable.
+ */
+function terraform_update_8207() {
+  // Add entity type terraform_run.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('terraform_variable');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view terraform_run.
+  $files = [
+    'views.view.terraform_variable.yml',
+    'system.action.terraform_variable_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Add an 'views.*.all' view for terraform workspace entities.
+ */
+function terraform_update_8208() {
+  // Add all view for terraform_workspace.
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.terraform_workspace.yml'], 'terraform');
+}
+
+/**
+ * Add fields to terraform_variable, terraform_workspace and cloud_config.
+ *
+ * 1. Add category to terraform_variable.
+ * 2. Add aws_cloud to terraform_workspace.
+ * 3. Add field_aws_cloud to cloud_config.
+ */
+function terraform_update_8209() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string')
+    ->setLabel(t('Category'))
+    ->setDescription(t('The category.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ])
+    ->setReadOnly(TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'category',
+    'terraform_variable',
+    'terraform',
+    $field
+  );
+
+  $field = BaseFieldDefinition::create('string')
+    ->setLabel(t('AWS Cloud'))
+    ->setDescription(t('The AWS Cloud.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ])
+    ->setReadOnly(TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'aws_cloud',
+    'terraform_workspace',
+    'terraform',
+    $field
+  );
+
+  // Add view terraform_run.
+  $files = [
+    'views.view.terraform_variable.yml',
+    'field.storage.cloud_config.field_aws_cloud.yml',
+    'field.field.cloud_config.terraform.field_aws_cloud.yml',
+    'core.entity_form_display.cloud_config.terraform.default.yml',
+    'core.entity_view_display.cloud_config.terraform.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'terraform');
+}
+
+/**
+ * Add configuration terraform_js_refresh_interval and terraform_profile view.
+ */
+function terraform_update_8210() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('terraform.settings');
+  $config->set('terraform_js_refresh_interval', 10);
+  $config->save();
+
+  \Drupal::service('cloud')->updateYmlDefinitions(['views.view.terraform_profile.yml'], 'terraform');
+}
+
+/**
+ * Add field vcs_repo_branch to terraform_workspace.
+ */
+function terraform_update_8211() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('string')
+    ->setLabel(t('VCS Repository Branch'))
+    ->setDescription(t('The VCS Repository Branch.'))
+    ->setDisplayOptions('view', [
+      'label' => 'inline',
+      'type' => 'string',
+      'weight' => -5,
+    ])
+    ->setReadOnly(TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'vcs_repo_branch',
+    'terraform_workspace',
+    'terraform',
+    $field
+  );
+}
+
+/**
+ * Add configuration terraform_update_resources_queue_cron_time.
+ */
+function terraform_update_8212() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('terraform.settings');
+  $config->set('terraform_update_resources_queue_cron_time', 5);
+  $config->save();
+}

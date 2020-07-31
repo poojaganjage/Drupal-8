@@ -1,0 +1,85 @@
+###########
+# Terraform
+###########
+administer terraform:
+  title: 'Administer Terraform settings'
+  description: 'Perform administration tasks for Terraform.'
+
+############################
+# Terraform Workspace
+############################
+add terraform workspace:
+  title: 'Add Terraform Workspace'
+  description: 'Allow users to add Terraform Workspace.'
+list terraform workspace:
+  title: 'List Terraform Workspace'
+  description: 'Allow users to list Terraform Workspace.'
+view terraform workspace:
+  title: 'View Terraform Workspace'
+  description: 'Allow users to view Terraform Workspace.'
+edit terraform workspace:
+  title: 'Edit Terraform Workspace'
+  description: 'Allow users to edit Terraform Workspace.'
+delete terraform workspace:
+  title: 'Delete Terraform Workspace'
+  description: 'Allow users to delete Terraform Workspace.'
+
+
+############################
+# Terraform Run
+############################
+add terraform run:
+  title: 'Add Terraform Run'
+  description: 'Allow users to add Terraform Run.'
+list terraform run:
+  title: 'List Terraform Run'
+  description: 'Allow users to list Terraform Run.'
+view terraform run:
+  title: 'View Terraform Run'
+  description: 'Allow users to view Terraform Run.'
+edit terraform run:
+  title: 'Edit Terraform Run'
+  description: 'Allow users to edit Terraform Run.'
+delete terraform run:
+  title: 'Delete Terraform Run'
+  description: 'Allow users to delete Terraform Run.'
+
+
+############################
+# Terraform State
+############################
+add terraform state:
+  title: 'Add Terraform State'
+  description: 'Allow users to add Terraform State.'
+list terraform state:
+  title: 'List Terraform State'
+  description: 'Allow users to list Terraform State.'
+view terraform state:
+  title: 'View Terraform State'
+  description: 'Allow users to view Terraform State.'
+edit terraform state:
+  title: 'Edit Terraform State'
+  description: 'Allow users to edit Terraform State.'
+delete terraform state:
+  title: 'Delete Terraform State'
+  description: 'Allow users to delete Terraform State.'
+
+
+############################
+# Terraform Variable
+############################
+add terraform variable:
+  title: 'Add Terraform Variable'
+  description: 'Allow users to add Terraform Variable.'
+list terraform variable:
+  title: 'List Terraform Variable'
+  description: 'Allow users to list Terraform Variable.'
+view terraform variable:
+  title: 'View Terraform Variable'
+  description: 'Allow users to view Terraform Variable.'
+edit terraform variable:
+  title: 'Edit Terraform Variable'
+  description: 'Allow users to edit Terraform Variable.'
+delete terraform variable:
+  title: 'Delete Terraform Variable'
+  description: 'Allow users to delete Terraform Variable.'

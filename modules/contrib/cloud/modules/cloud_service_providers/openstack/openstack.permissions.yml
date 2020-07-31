@@ -1,0 +1,256 @@
+###############
+# OpenStack.
+###############
+administer openstack:
+  title: 'Administer OpenStack settings'
+  description: 'Perform administration tasks for OpenStack.'
+
+#############################
+# Compute Instances.
+#############################
+add openstack instance:
+  title: 'Launch OpenStack instance'
+  description: 'Allow users to launch Amazon EC2 instance.'
+administer openstack instance:
+  title: 'Administer OpenStack Instances'
+  description: 'Allow to access the administration form to configure OpenStack Instance entities.'
+  restrict access: true
+list openstack instances:
+  title: 'List OpenStack instance'
+view any openstack instance:
+  title: 'View any OpenStack instance'
+  description: 'Allow users to view instance.'
+edit any openstack instance:
+  title: 'Edit any OpenStack instance'
+  description: 'Allow users to view any Amazon EC2 instance.'
+delete any openstack instance:
+  title: 'Terminate any OpenStack instance'
+  description: 'Allow users to terminate any Amazon EC2 instance.'
+view own openstack instance:
+  title: 'View own OpenStack instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+edit own openstack instance:
+  title: 'Edit own OpenStack instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+delete own openstack instance:
+  title: 'Terminate own OpenStack instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+
+#############################
+# Compute Images.
+#############################
+add openstack image:
+  title: 'Create new OpenStack Image'
+  description: 'Allow users to add OpenStack image.'
+administer openstack image:
+  title: 'Administer OpenStack Images'
+  description: 'Allow to access the administration form to configure OpenStack Image entities.'
+  restrict access: true
+list openstack images:
+  title: 'List OpenStack Images'
+  description: 'Allow users to list OpenStack images.'
+view any openstack image:
+  title: 'View any OpenStack Image'
+  description: 'Allow users to view any OpenStack image.'
+edit any openstack image:
+  title: 'Edit any OpenStack Image'
+  description: 'Allow users to edit any OpenStack image.'
+delete any openstack image:
+  title: 'Delete any OpenStack Image'
+  description: 'Allow users to delete any OpenStack image.'
+view own openstack image:
+  title: 'View own OpenStack Image'
+  description: 'Allow users to view own OpenStack image.'
+edit own openstack image:
+  title: 'Edit own OpenStack Image'
+  description: 'Allow users to edit own OpenStack image.'
+delete own openstack image:
+  title: 'Delete own OpenStack Image'
+  description: 'Allow users to delete own OpenStack image.'
+
+#############################
+# Key Pairs.
+#############################
+administer openstack key pair:
+  title: 'Administer OpenStack Key Pairs'
+  description: 'Allow to access the administration form to configure OpenStack Key Pair.'
+  restrict access: true
+add openstack key pair:
+  title: 'Add OpenStack key pair'
+  description: 'Allow users to add key pair.'
+list openstack key pair:
+  title: 'List OpenStack Key Pairs'
+  description: 'Allow users to list key pair.'
+view any openstack key pair:
+  title: 'View any OpenStack key pair'
+  description: 'Allow users to view any key pair.'
+edit any openstack key pair:
+  title: 'Edit any OpenStack key pair'
+  description: 'Allow users to edit any key pair.'
+delete any openstack key pair:
+  title: 'Delete any OpenStack key pair'
+  description: 'Allow users to delete any key pair.'
+view own openstack key pair:
+  title: 'View own OpenStack key pair'
+  description: 'Allow users to view own key pair.'
+edit own openstack key pair:
+  title: 'Edit own OpenStack key pair'
+  description: 'Allow users to edit own key pair.'
+delete own openstack key pair:
+  title: 'Delete own OpenStack key pair'
+  description: 'Allow users to delete own key pair.'
+
+#############################
+# Compute Security Groups.
+#############################
+add openstack security group:
+  title: 'Add OpenStack Security Group'
+  description: 'Allow users to add OpenStack Security Group.'
+administer openstack security group:
+  title: 'Administer OpenStack Security Groups'
+  description: 'Allow to access the administration form to configure OpenStack Security Group entities.'
+  restrict access: true
+list openstack security group:
+  title: 'List OpenStack Security Group'
+  description: 'Allow users to list OpenStack Security Group.'
+view any openstack security group:
+  title: 'View any OpenStack Security Group'
+  description: 'Allow users to view any OpenStack Security Group.'
+edit any openstack security group:
+  title: 'Edit any OpenStack Security Group'
+  description: 'Allow users to edit any OpenStack Security Group.'
+delete any openstack security group:
+  title: 'Delete any OpenStack Security Group'
+  description: 'Allow users to delete any OpenStack Security Group.'
+view own openstack security group:
+  title: 'View own OpenStack Security Group'
+  description: 'Allow users to view own OpenStack Security Group.'
+edit own openstack security group:
+  title: 'Edit own OpenStack Security Group'
+  description: 'Allow users to edit own OpenStack Security Group.'
+delete own openstack security group:
+  title: 'Delete own OpenStack Security Group'
+  description: 'Allow users to delete own OpenStack Security Group.'
+
+###############
+# Volumes.
+###############
+add openstack volume:
+  title: 'Add OpenStack Volume'
+  description: 'Allow users to add OpenStack Volume.'
+list openstack volume:
+  title: 'List OpenStack Volume'
+  description: 'Allow users to list OpenStack Volume.'
+view any openstack volume:
+  title: 'View any OpenStack Volume'
+  description: 'Allow users to view any OpenStack Volume.'
+view own openstack volume:
+  title: 'View own OpenStack Volume'
+  description: 'Allow users to view own OpenStack Volume.'
+edit any openstack volume:
+  title: 'Edit any OpenStack Volume'
+  description: 'Allow users to edit any OpenStack Volume.'
+edit own openstack volume:
+  title: 'Edit own OpenStack Volume'
+  description: 'Allow users to edit own OpenStack Volume.'
+delete any openstack volume:
+  title: 'Delete any OpenStack Volume'
+  description: 'Allow users to delete any OpenStack Volume.'
+delete own openstack volume:
+  title: 'Delete own OpenStack Volume'
+  description: 'Allow users to delete own OpenStack Volume.'
+administer openstack volume:
+  title: 'Administer OpenStack Volume'
+  description: 'Allow to access the administration form to configure OpenStack Volume.'
+  restrict access: true
+
+###############
+# Snapshot.
+###############
+add openstack snapshot:
+  title: 'Create new OpenStack Snapshot'
+  description: 'Allow users to add OpenStack Snapshot.'
+
+list openstack snapshots:
+  title: 'List OpenStack snapshots'
+  description: 'Allow users to list OpenStack snapshot.'
+
+view any openstack snapshot:
+  title: 'View any OpenStack snapshot'
+  description: 'Allow users to view any OpenStack snapshot.'
+
+edit any openstack snapshot:
+  title: 'Edit any OpenStack snapshot'
+  description: 'Allow users to edit any OpenStack snapshot.'
+
+delete any openstack snapshot:
+  title: 'Delete any OpenStack snapshot'
+  description: 'Allow users to delete any OpenStack snapshot.'
+
+view own openstack snapshot:
+  title: 'View own OpenStack snapshot'
+  description: 'Allow users to view own OpenStack snapshot.'
+
+edit own openstack snapshot:
+  title: 'Edit own OpenStack snapshot'
+  description: 'Allow users to edit own OpenStack snapshot.'
+
+delete own openstack snapshot:
+  title: 'Delete own OpenStack snapshot'
+  description: 'Allow users to delete own OpenStack snapshot.'
+
+#########################
+# Network Interfaces.
+#########################
+add openstack network interface:
+  title: 'Add OpenStack Network Interface'
+  description: 'Allow users to add network interface.'
+list openstack network interface:
+  title: 'List OpenStack Network Interface'
+  description: 'Allow users to list network interface.'
+view any openstack network interface:
+  title: 'View any OpenStack Network Interface'
+  description: 'Allow users to view any network interface.'
+edit any openstack network interface:
+  title: 'Edit any OpenStack Network Interface'
+  description: 'Allow users to edit any network interface.'
+delete any openstack network interface:
+  title: 'Delete any OpenStack Network Interface'
+  description: 'Allow users to delete any network interface.'
+view own openstack network interface:
+  title: 'View own OpenStack Network Interface'
+  description: 'Allow users to view own network interface.'
+edit own openstack network interface:
+  title: 'Edit own OpenStack Network Interface'
+  description: 'Allow users to edit own network interface.'
+delete own openstack network interface:
+  title: 'Delete own OpenStack Network Interface'
+  description: 'Allow users to delete own network interface.'
+
+###################
+# Floting IP.
+###################
+add openstack floating ip:
+  title: 'Add OpenStack Floating IP'
+  description: 'Allow users to add Floating IP.'
+list openstack floating ip:
+  title: 'List OpenStack Floating IP'
+  description: 'Allow users to list Floating IP.'
+view any openstack floating ip:
+  title: 'View any OpenStack Floating IP'
+  description: 'Allow users to view any Floating IP.'
+edit any openstack floating ip:
+  title: 'Edit any OpenStack Floating IP'
+  description: 'Allow users to any edit Floating IP.'
+delete any openstack floating ip:
+  title: 'Delete any OpenStack Floating IP'
+  description: 'Allow users to any delete Floating IP.'
+view own openstack floating ip:
+  title: 'View own OpenStack Floating IP'
+  description: 'Allow users to view own Floating IP.'
+edit own openstack floating ip:
+  title: 'Edit own OpenStack Floating IP'
+  description: 'Allow users to own edit Floating IP.'
+delete own openstack floating ip:
+  title: 'Delete own OpenStack Floating IP'
+  description: 'Allow users to own delete Floating IP.'

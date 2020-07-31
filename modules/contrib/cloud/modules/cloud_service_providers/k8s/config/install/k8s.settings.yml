@@ -1,0 +1,6 @@
+k8s_js_refresh_interval: 10
+k8s_update_resources_queue_cron_time: 5
+k8s_update_resource_storage_queue_cron_time: 3600
+k8s_update_cost_storage_queue_cron_time: 60
+k8s_keep_resource_storage_time_range: 2
+k8s_yaml_file_extensions: 'yaml yml'

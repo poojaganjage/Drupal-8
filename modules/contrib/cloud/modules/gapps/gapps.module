@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Google Applications module.
+ *
+ * This module manage Google Applications.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function gapps_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.gapps':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Google Applications module allows users to manage Google Application services.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the Google Applications module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+      return $output;
+
+    default:
+      return '';
+  }
+}
+
+/**
+ * Return google credential file default path.
+ *
+ * @return string
+ *   Full path of the google credential file.
+ */
+function gapps_google_credential_file_default_path() {
+  return 'private://gapps/.gapps/client_secrets.json';
+}
+
+/**
+ * Return google credential file path.
+ *
+ * @return string
+ *   Full path of the google credential file.
+ */
+function gapps_google_credential_file_path() {
+  $config = \Drupal::config('gapps.settings');
+  $credential_file_path = $config->get('google_credential_file_path');
+  if (!empty($credential_file_path)) {
+    return $credential_file_path;
+  }
+  return gapps_google_credential_file_default_path();
+}
+
+/**
+ * Check whether the content of google credential file is valid.
+ *
+ * @return bool
+ *   Whether the content of google credential file is valid.
+ */
+function gapps_is_google_credential_valid() {
+  $config = \Drupal::config('gapps.settings');
+  $signature = $config->get('google_credential_signature');
+
+  $signature_of_file = '';
+  $credential_file_path = gapps_google_credential_file_path();
+  if (file_exists($credential_file_path)) {
+    $signature_of_file = hash(
+      'sha256',
+      json_encode(json_decode(file_get_contents($credential_file_path)))
+    );
+  }
+
+  return $signature === $signature_of_file;
+}

@@ -1,0 +1,15 @@
+action.configuration.openstack_instance_start_action:
+  type: action_configuration_default
+  label: 'Start the selected Instance(s) configuration'
+
+action.configuration.openstack_instance_stop_action:
+  type: action_configuration_default
+  label: 'Stop the selected Instance(s) configuration'
+
+action.configuration.openstack_instance_reboot_action:
+  type: action_configuration_default
+  label: 'Reboot the selected Instance(s) configuration'
+
+action.configuration.openstack_volume_detach_action:
+  type: action_configuration_default
+  label: 'Detach the selected Volume(s) configuration'

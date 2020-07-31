@@ -1,0 +1,374 @@
+#  base_route: 'k8s.settings'
+k8s.settings.local_tasks.profile_list:
+  title: 'Profiles'
+  route_name: 'k8s.settings'
+  base_route: 'k8s.settings'
+  description: 'K8s Profile List.'
+  weight: 0
+
+k8s.settings.local_tasks.options:
+  title: 'Settings'
+  route_name: 'k8s.settings.options'
+  base_route: 'k8s.settings'
+  description: 'Configure K8s.'
+  weight: 1
+
+k8s.local_tasks.cloud_context:
+  deriver: 'Drupal\k8s\Plugin\Derivative\K8sLocalTasks'
+  weight: 10
+
+k8s.local_tasks.all_resources:
+  deriver: 'Drupal\k8s\Plugin\Derivative\K8sAllResourcesLocalTasks'
+  weight: 10
+
+# Set weights separated by 10
+# base_route: 'k8s.local_tasks.cloud_context'
+# base_route: 'k8s.local_tasks.all_resources'
+k8s.local_tasks.node:
+  title: 'Nodes'
+  route_name: 'view.k8s_node.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 10
+
+k8s.local_tasks.node.all:
+  title: 'Nodes'
+  route_name: 'view.k8s_node.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 10
+
+k8s.local_tasks.namespace:
+  title: 'Namespaces'
+  route_name: 'view.k8s_namespace.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 20
+
+k8s.local_tasks.namespace.all:
+  title: 'Namespaces'
+  route_name: 'view.k8s_namespace.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 20
+
+k8s.local_tasks.deployment:
+  title: 'Deployments'
+  route_name: 'view.k8s_deployment.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 30
+
+k8s.local_tasks.deployment.all:
+  title: 'Deployments'
+  route_name: 'view.k8s_deployment.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 30
+
+k8s.local_tasks.pod:
+  title: 'Pods'
+  route_name: 'view.k8s_pod.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 40
+
+k8s.local_tasks.pod.all:
+  title: 'Pods'
+  route_name: 'view.k8s_pod.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 40
+
+k8s.local_tasks.replica_set:
+  title: 'Replica Sets'
+  route_name: 'view.k8s_replica_set.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 50
+
+k8s.local_tasks.replica_set.all:
+  title: 'Replica Sets'
+  route_name: 'view.k8s_replica_set.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 50
+
+k8s.local_tasks.cron_job:
+  title: 'Cron Jobs'
+  route_name: 'view.k8s_cron_job.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 60
+
+k8s.local_tasks.cron_job.all:
+  title: 'Cron Jobs'
+  route_name: 'view.k8s_cron_job.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 60
+
+k8s.local_tasks.job:
+  title: 'Jobs'
+  route_name: 'view.k8s_job.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 70
+
+k8s.local_tasks.job.all:
+  title: 'Jobs'
+  route_name: 'view.k8s_job.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 70
+
+k8s.local_tasks.service:
+  title: 'Services'
+  route_name: 'view.k8s_service.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 80
+
+k8s.local_tasks.service.all:
+  title: 'Services'
+  route_name: 'view.k8s_service.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 80
+
+k8s.local_tasks.network_policy:
+  title: 'Network Policies'
+  route_name: 'view.k8s_network_policy.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 90
+
+k8s.local_tasks.network_policy.all:
+  title: 'Network Policies'
+  route_name: 'view.k8s_network_policy.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 90
+
+k8s.local_tasks.resource_quota:
+  title: 'Resource Quotas'
+  route_name: 'view.k8s_resource_quota.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 100
+
+k8s.local_tasks.resource_quota.all:
+  title: 'Resource Quotas'
+  route_name: 'view.k8s_resource_quota.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 100
+
+k8s.local_tasks.limit_range:
+  title: 'Limit Ranges'
+  route_name: 'view.k8s_limit_range.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 110
+
+k8s.local_tasks.limit_range.all:
+  title: 'Limit Ranges'
+  route_name: 'view.k8s_limit_range.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 110
+
+k8s.local_tasks.priority_class:
+  title: 'Priority Classes'
+  route_name: 'view.k8s_priority_class.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 120
+
+k8s.local_tasks.priority_class.all:
+  title: 'Priority Classes'
+  route_name: 'view.k8s_priority_class.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 120
+
+k8s.local_tasks.config_map:
+  title: 'ConfigMaps'
+  route_name: 'view.k8s_config_map.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 130
+
+k8s.local_tasks.config_map.all:
+  title: 'ConfigMaps'
+  route_name: 'view.k8s_config_map.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 130
+
+k8s.local_tasks.secret:
+  title: 'Secrets'
+  route_name: 'view.k8s_secret.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 140
+
+k8s.local_tasks.secret.all:
+  title: 'Secrets'
+  route_name: 'view.k8s_secret.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 140
+
+k8s.local_tasks.role:
+  title: 'Roles'
+  route_name: 'view.k8s_role.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 150
+
+k8s.local_tasks.role.all:
+  title: 'Roles'
+  route_name: 'view.k8s_role.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 150
+
+k8s.local_tasks.role_binding:
+  title: 'Role Bindings'
+  route_name: 'view.k8s_role_binding.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 160
+
+k8s.local_tasks.role_binding.all:
+  title: 'Role Bindings'
+  route_name: 'view.k8s_role_binding.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 160
+
+k8s.local_tasks.cluster_role:
+  title: 'Cluster Roles'
+  route_name: 'view.k8s_cluster_role.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 170
+
+k8s.local_tasks.cluster_role.all:
+  title: 'Cluster Roles'
+  route_name: 'view.k8s_cluster_role.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 170
+
+k8s.local_tasks.cluster_role_binding:
+  title: 'Cluster Role Bindings'
+  route_name: 'view.k8s_cluster_role_binding.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 180
+
+k8s.local_tasks.cluster_role_binding.all:
+  title: 'Cluster Role Bindings'
+  route_name: 'view.k8s_cluster_role_binding.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 180
+
+k8s.local_tasks.persistent_volume:
+  title: 'Persistent Volumes'
+  route_name: 'view.k8s_persistent_volume.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 190
+
+k8s.local_tasks.persistent_volume.all:
+  title: 'Persistent Volumes'
+  route_name: 'view.k8s_persistent_volume.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 190
+
+k8s.local_tasks.persistent_volume_claim:
+  title: 'Persisent Volume Claims'
+  route_name: 'view.k8s_persistent_volume_claim.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 200
+
+k8s.local_tasks.persistent_volume_claim.all:
+  title: 'Persisent Volume Claims'
+  route_name: 'view.k8s_persistent_volume_claim.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 200
+
+k8s.local_tasks.storage_class:
+  title: 'Storage Classes'
+  route_name: 'view.k8s_storage_class.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 210
+
+k8s.local_tasks.storage_class.all:
+  title: 'Storage Classes'
+  route_name: 'view.k8s_storage_class.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 210
+
+k8s.local_tasks.stateful_set:
+  title: 'Stateful Sets'
+  route_name: 'view.k8s_stateful_set.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 220
+
+k8s.local_tasks.stateful_set.all:
+  title: 'Stateful Sets'
+  route_name: 'view.k8s_stateful_set.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 220
+  
+k8s.local_tasks.ingress:
+  title: 'Ingresses'
+  route_name: 'view.k8s_ingress.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 230
+
+k8s.local_tasks.ingress.all:
+  title: 'Ingresses'
+  route_name: 'view.k8s_ingress.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 230
+
+k8s.local_tasks.daemon_set:
+  title: 'Daemon Sets'
+  route_name: 'view.k8s_daemon_set.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 240
+
+k8s.local_tasks.daemon_set.all:
+  title: 'Daemon Sets'
+  route_name: 'view.k8s_daemon_set.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 240
+
+k8s.local_tasks.endpoint:
+  title: 'Endpoints'
+  route_name: 'view.k8s_endpoint.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 250
+
+k8s.local_tasks.endpoint.all:
+  title: 'Endpoints'
+  route_name: 'view.k8s_endpoint.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 250
+
+k8s.local_tasks.event:
+  title: 'Events'
+  route_name: 'view.k8s_event.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 260
+
+k8s.local_tasks.event.all:
+  title: 'Events'
+  route_name: 'view.k8s_event.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 260
+
+k8s.local_tasks.api_service:
+  title: 'API Services'
+  route_name: 'view.k8s_api_service.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 270
+
+k8s.local_tasks.api_service.all:
+  title: 'API Services'
+  route_name: 'view.k8s_api_service.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 270
+
+k8s.local_tasks.service_account:
+  title: 'Service Accounts'
+  route_name: 'view.k8s_service_account.list'
+  base_route: 'k8s.local_tasks.cloud_context'
+  weight: 280
+
+k8s.local_tasks.service_account.all:
+  title: 'Service Accounts'
+  route_name: 'view.k8s_service_account.all'
+  base_route: 'k8s.local_tasks.all_resources'
+  weight: 280
+
+# base_route: 'entity.k8s_pod.canonical'
+k8s.local_tasks.pod.view:
+  title: 'Info'
+  route_name: 'entity.k8s_pod.canonical'
+  base_route: 'entity.k8s_pod.canonical'
+  weight: 10
+
+k8s.local_tasks.pod.log:
+  title: 'Log'
+  route_name: 'entity.k8s_pod.log_form'
+  base_route: 'entity.k8s_pod.canonical'
+  weight: 20

@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - terraform
+id: terraform_variable_delete_action
+label: 'Delete Variable(s)'
+type: terraform_variable
+plugin: entity:delete_action:terraform_variable
+configuration: {  }

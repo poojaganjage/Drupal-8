@@ -1,0 +1,7 @@
+# Plugin property $defaults are defined in CloudConfigPluginManager.
+openstack.cloud_config:
+  id: openstack
+  entity_type: cloud_config
+  entity_bundle: openstack
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudConfigCloudContextBundleDeriver'
+  class: 'Drupal\openstack\Plugin\cloud\config\OpenStackCloudConfigPlugin'

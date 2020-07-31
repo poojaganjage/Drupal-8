@@ -1,0 +1,104 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.field.cloud_server_template.k8s.field_detail
+    - field.field.cloud_server_template.k8s.field_git_password
+    - field.field.cloud_server_template.k8s.field_git_path
+    - field.field.cloud_server_template.k8s.field_git_username
+    - field.field.cloud_server_template.k8s.field_launch_resources
+    - field.field.cloud_server_template.k8s.field_namespace
+    - field.field.cloud_server_template.k8s.field_object
+    - field.field.cloud_server_template.k8s.field_source_type
+    - field.field.cloud_server_template.k8s.field_yaml_url
+  module:
+    - cloud
+  enforced:
+    module:
+      - k8s
+id: cloud_server_template.k8s.default
+targetEntityType: cloud_server_template
+bundle: k8s
+mode: default
+content:
+  field_detail:
+    weight: 8
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: pre_string_formatter
+    region: content
+  field_git_password:
+    type: string
+    weight: 7
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_git_path:
+    type: string
+    weight: 5
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_git_username:
+    type: string
+    weight: 6
+    region: content
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  field_launch_resources:
+    weight: 9
+    label: above
+    settings:
+      value_converter_class: ''
+    third_party_settings: {  }
+    type: key_value_formatter
+    region: content
+  field_namespace:
+    weight: 1
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_object:
+    weight: 2
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_source_type:
+    weight: 3
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_yaml_url:
+    weight: 4
+    label: inline
+    settings:
+      trim_length: 80
+      url_only: false
+      url_plain: false
+      rel: ''
+      target: ''
+    third_party_settings: {  }
+    type: link
+    region: content
+  uid:
+    label: inline
+    type: author
+    weight: 9
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }

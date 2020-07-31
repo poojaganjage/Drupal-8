@@ -1,0 +1,108 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.field.cloud_server_template.k8s.field_detail
+    - field.field.cloud_server_template.k8s.field_git_password
+    - field.field.cloud_server_template.k8s.field_git_path
+    - field.field.cloud_server_template.k8s.field_git_username
+    - field.field.cloud_server_template.k8s.field_launch_resources
+    - field.field.cloud_server_template.k8s.field_namespace
+    - field.field.cloud_server_template.k8s.field_object
+    - field.field.cloud_server_template.k8s.field_source_type
+    - field.field.cloud_server_template.k8s.field_yaml_url
+  module:
+    - cloud
+  enforced:
+    module:
+      - k8s
+id: cloud_server_template.k8s.default
+targetEntityType: cloud_server_template
+bundle: k8s
+mode: default
+content:
+  field_detail:
+    weight: 35
+    settings:
+      rows: 20
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  field_git_password:
+    weight: 34
+    settings:
+      size: 25
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_git_path:
+    weight: 32
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_git_username:
+    weight: 33
+    settings:
+      size: 25
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_launch_resources:
+    weight: 36
+    settings:
+      reserved_key_checker_class: ''
+      value_converter_class: ''
+    third_party_settings: {  }
+    type: key_value_item
+    region: content
+  field_namespace:
+    weight: 28
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_object:
+    weight: 29
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_source_type:
+    weight: 30
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_yaml_url:
+    weight: 31
+    settings:
+      placeholder_url: ''
+      placeholder_title: ''
+    third_party_settings: {  }
+    type: link_default
+    region: content
+  name:
+    type: string_textfield
+    weight: -4
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    region: content
+    third_party_settings: {  }
+hidden: {  }

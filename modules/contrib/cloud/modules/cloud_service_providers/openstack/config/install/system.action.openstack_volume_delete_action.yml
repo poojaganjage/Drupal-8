@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_volume_delete_action
+label: 'Delete volume(s)'
+type: openstack_volume
+plugin: entity:delete_action:openstack_volume
+configuration: {  }

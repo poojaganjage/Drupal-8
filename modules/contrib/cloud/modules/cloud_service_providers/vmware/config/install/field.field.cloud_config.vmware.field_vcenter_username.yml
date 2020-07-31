@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.vmware
+    - field.storage.cloud_config.field_vcenter_username
+id: cloud_config.vmware.field_vcenter_username
+field_name: field_vcenter_username
+entity_type: cloud_config
+bundle: vmware
+label: 'vCenter Username'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

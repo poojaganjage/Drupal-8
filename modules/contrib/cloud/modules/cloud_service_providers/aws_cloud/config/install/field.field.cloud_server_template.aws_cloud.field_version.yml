@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.aws_cloud
+    - field.storage.cloud_server_template.field_version
+id: cloud_server_template.aws_cloud.field_version
+field_name: field_version
+entity_type: cloud_server_template
+bundle: aws_cloud
+label: Version
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

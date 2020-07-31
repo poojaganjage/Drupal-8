@@ -1,0 +1,23 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+    - options
+  enforced:
+    module:
+    - k8s
+id: cloud_project.field_username
+field_name: field_username
+entity_type: cloud_project
+type: list_string
+settings:
+  allowed_values: {  }
+  allowed_values_function: 'k8s_get_user_list'
+module: options
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

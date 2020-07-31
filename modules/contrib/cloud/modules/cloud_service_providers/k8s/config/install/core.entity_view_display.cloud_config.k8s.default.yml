@@ -1,0 +1,121 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.k8s
+    - field.field.cloud_config.k8s.field_api_server
+    - field.field.cloud_config.k8s.field_location_city
+    - field.field.cloud_config.k8s.field_location_country
+    - field.field.cloud_config.k8s.field_location_latitude
+    - field.field.cloud_config.k8s.field_location_longitude
+    - field.field.cloud_config.k8s.field_tags
+    - field.field.cloud_config.k8s.field_token
+    - field.field.cloud_config.k8s.field_enable_metrics_server
+    - image.style.icon_32x32
+  module:
+    - cloud
+    - options
+    - user
+  enforced:
+    module:
+      - k8s
+id: cloud_config.k8s.default
+targetEntityType: cloud_config
+bundle: k8s
+mode: default
+content:
+  field_api_server:
+    weight: 1
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_location_city:
+    weight: 4
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_location_country:
+    weight: 3
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_location_latitude:
+    weight: 5
+    label: inline
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 6
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_decimal
+    region: content
+  field_location_longitude:
+    weight: 6
+    label: inline
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 6
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_decimal
+    region: content
+  field_tags:
+    weight: 8
+    label: above
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_token:
+    weight: 2
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: basic_string
+    region: content
+  field_enable_metrics_server:
+    weight: 7
+    label: above
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  image:
+    label: inline
+    type: cloud_image
+    settings:
+      image_style: icon_32x32
+      image_link: ''
+    weight: 0
+    region: content
+    third_party_settings: {  }
+  name:
+    label: above
+    type: string
+    weight: 0
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  uid:
+    label: inline
+    type: author
+    weight: 7
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden: {  }

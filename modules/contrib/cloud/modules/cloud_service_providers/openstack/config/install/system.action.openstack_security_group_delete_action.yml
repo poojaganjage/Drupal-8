@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_security_group_delete_action
+label: 'Delete Security Group(s)'
+type: openstack_security_group
+plugin: entity:delete_action:openstack_security_group
+configuration: {  }

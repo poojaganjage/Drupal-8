@@ -1,0 +1,179 @@
+# Cloud server template entity view route
+entity.cloud_server_template.canonical:
+  path: '/clouds/design/server_template/{cloud_context}/{cloud_server_template}'
+  defaults:
+    _entity_view: 'cloud_server_template'
+    _title: 'Launch Template Content'
+  requirements:
+    _entity_access: 'cloud_server_template.view'
+
+entity.cloud_server_template.collection:
+  path: '/clouds/design/server_template/{cloud_context}'
+  defaults:
+    _entity_list: 'cloud_server_template'
+    _title: 'Launch Template List'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list cloud server template'
+
+# Cloud server template Type Form
+entity.cloud_server_template.add_form:
+  path: '/clouds/design/server_template/{cloud_context}/{cloud_server_template_type}/add'
+  defaults:
+    _entity_form: cloud_server_template.add
+    entity_type_id: 'cloud_server_template'
+    _title_callback: 'Drupal\Core\Entity\Controller\EntityController::addBundleTitle'
+    bundle_parameter: 'cloud_server_template_type'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add cloud server templates'
+      parameters:
+        cloud_server_template_type:
+          type: 'entity:cloud_server_template_type'
+          converter: 'paramconverter.entity'
+
+entity.cloud_server_template.launch:
+  path: '/clouds/design/server_template/{cloud_context}/{cloud_server_template}/launch'
+  defaults:
+    _entity_form: cloud_server_template.launch
+    _title: 'Launch'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'launch cloud server template'
+
+entity.cloud_server_template.copy:
+  path: '/clouds/design/server_template/{cloud_context}/{cloud_server_template}/copy'
+  defaults:
+    _entity_form: cloud_server_template.copy
+    _title: 'Copy launch template'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any cloud server templates+edit own cloud server templates'
+
+entity.cloud_server_template.list_update:
+  path: '/clouds/design/server_template/{cloud_context}/update'
+  defaults:
+    _controller: '\Drupal\cloud\Plugin\cloud\server_template\CloudServerTemplatePluginManager::updateCloudServerTemplateList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'edit any cloud server templates+edit own cloud server templates'
+
+entity.cloud_config.locations:
+  path: '/clouds/cloud_config_location'
+  defaults:
+    _controller: '\Drupal\cloud\Controller\CloudConfigLocationController::getCloudConfigLocation'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigLocationController::access'
+
+entity.cloud_config.location:
+  path: '/clouds/{cloud_config}/cloud_config_location'
+  defaults:
+    _controller: '\Drupal\cloud\Controller\CloudConfigLocationController::getCloudConfigLocation'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigLocationController::access'
+
+entity.cloud_config.geocoder:
+  path: '/clouds/geocoder/{country}/{city}'
+  defaults:
+    _controller: '\Drupal\cloud\Controller\CloudConfigLocationController::getGeoLocation'
+  requirements:
+    _access: 'TRUE'
+
+# Cloud project entity view route
+entity.cloud_project.canonical:
+  path: '/clouds/design/project/{cloud_context}/{cloud_project}'
+  defaults:
+    _entity_view: 'cloud_project'
+    _title: 'Project Content'
+  requirements:
+    _entity_access: 'cloud_project.view'
+
+entity.cloud_project.collection:
+  path: '/clouds/design/project/{cloud_context}'
+  defaults:
+    _entity_list: 'cloud_project'
+    _title: 'Project List'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'list cloud project'
+
+  # Cloud project Type Form
+entity.cloud_project.add_form:
+  path: '/clouds/design/project/{cloud_context}/{cloud_project_type}/add'
+  defaults:
+    _entity_form: cloud_project.add
+    entity_type_id: 'cloud_project'
+    _title_callback: 'Drupal\Core\Entity\Controller\EntityController::addBundleTitle'
+    bundle_parameter: 'cloud_project_type'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'add cloud projects'
+    parameters:
+      cloud_project_type:
+        type: 'entity:cloud_project_type'
+        converter: 'paramconverter.entity'
+
+entity.cloud_project.launch:
+  path: '/clouds/design/project/{cloud_context}/{cloud_project}/launch'
+  defaults:
+    _entity_form: cloud_project.launch
+    _title: 'Launch'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'launch cloud project'
+
+entity.cloud_project.copy:
+  path: '/clouds/design/project/{cloud_context}/{cloud_project}/copy'
+  defaults:
+    _entity_form: cloud_project.copy
+    _title: 'Copy cloud project'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any cloud projects+edit own cloud projects'
+
+entity.cloud_project.list_update:
+  path: '/clouds/design/project/{cloud_context}/{cloud_project}/update'
+  defaults:
+    _controller: '\Drupal\cloud\Plugin\cloud\project\CloudProjectPluginManager::updateCloudProjectList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any cloud projects+edit own cloud projects'
+
+# Cloud Admin Settings.
+cloud.settings:
+  path: '/admin/config/services/cloud/settings'
+  defaults:
+    _title: Cloud
+    _form: '\Drupal\cloud\Form\Config\CloudAdminSettings'
+  requirements:
+    _permission: 'administer cloud'

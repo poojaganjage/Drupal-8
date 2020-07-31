@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_use_assume_role
+id: cloud_config.aws_cloud.field_use_assume_role
+field_name: field_use_assume_role
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Use Assume Role'
+description: 'Enable assume role support.  Allows access to another AWS account and its EC2 entities.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

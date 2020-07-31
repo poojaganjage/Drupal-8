@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.aws_cloud
+    - field.storage.cloud_server_template.field_subnet
+  module:
+    - options
+id: cloud_server_template.aws_cloud.field_subnet
+field_name: field_subnet
+entity_type: cloud_server_template
+bundle: aws_cloud
+label: Subnet
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

@@ -1,0 +1,11 @@
+s3_to_k8s.settings:
+  type: config_object
+  mapping:
+    aws_cloud:
+      type: string
+    s3_bucket:
+      type: string
+    s3_path:
+      type: string
+    k8s_cluster:
+      type: string

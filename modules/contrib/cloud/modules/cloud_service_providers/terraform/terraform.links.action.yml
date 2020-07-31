@@ -1,0 +1,119 @@
+###########
+# Terraform Workspace.
+###########
+
+entity.terraform_workspace.add_form:
+  route_name: entity.terraform_workspace.add_form
+  title: 'Add Terraform Workspace'
+  appears_on:
+    - view.terraform_workspace.list
+
+entity.terraform_workspace.refresh:
+  route_name: entity.terraform_workspace.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.terraform_workspace.list
+
+entity.terraform_workspace.collection:
+  route_name: view.terraform_workspace.list
+  title: 'List Terraform Workspace'
+  appears_on:
+    - entity.terraform_workspace.add_form
+    - entity.terraform_workspace.delete_form
+    - entity.terraform_workspace.canonical
+
+entity.terraform_workspace.edit:
+  route_name: entity.terraform_workspace.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.terraform_workspace.canonical
+
+entity.terraform_workspace.delete:
+  route_name: entity.terraform_workspace.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.terraform_workspace.canonical
+
+
+###########
+# Terraform Run.
+###########
+
+entity.terraform_run.add_form:
+  route_name: entity.terraform_run.add_form
+  title: 'Add Terraform Run'
+  appears_on:
+    - view.terraform_run.list
+
+entity.terraform_run.refresh:
+  route_name: entity.terraform_run.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.terraform_run.list
+
+entity.terraform_run.collection:
+  route_name: view.terraform_run.list
+  title: 'List Terraform Runs'
+  appears_on:
+    - entity.terraform_run.add_form
+    - entity.terraform_run.canonical
+
+entity.terraform_run.apply_entity:
+  route_name: entity.terraform_run.apply_form
+  title: 'Apply'
+  appears_on:
+    - entity.terraform_run.canonical
+
+entity.terraform_run.refresh_entity:
+  route_name: entity.terraform_run.update
+  title: 'Refresh'
+  appears_on:
+    - entity.terraform_run.canonical
+
+###########
+# Terraform State.
+###########
+
+entity.terraform_state.refresh:
+  route_name: entity.terraform_state.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.terraform_state.list
+
+
+###########
+# Terraform Variable.
+###########
+
+entity.terraform_variable.add_form:
+  route_name: entity.terraform_variable.add_form
+  title: 'Add Terraform Variable'
+  appears_on:
+    - view.terraform_variable.list
+
+entity.terraform_variable.refresh:
+  route_name: entity.terraform_variable.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.terraform_variable.list
+
+entity.terraform_variable.collection:
+  route_name: view.terraform_variable.list
+  title: 'List Terraform Variables'
+  appears_on:
+    - entity.terraform_variable.add_form
+    - entity.terraform_variable.edit_form
+    - entity.terraform_variable.delete_form
+    - entity.terraform_variable.canonical
+
+entity.terraform_variable.edit:
+  route_name: entity.terraform_variable.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.terraform_variable.canonical
+
+entity.terraform_variable.delete:
+  route_name: entity.terraform_variable.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.terraform_variable.canonical

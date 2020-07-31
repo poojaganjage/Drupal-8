@@ -1,0 +1,6 @@
+{
+  "name": "drupal/gapps",
+  "require": {
+    "google/apiclient": "^2.0"
+  }
+}

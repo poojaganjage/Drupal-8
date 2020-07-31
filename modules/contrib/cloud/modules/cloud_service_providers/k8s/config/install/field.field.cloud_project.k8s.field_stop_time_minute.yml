@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.storage.cloud_project.field_stop_time_minute
+  module:
+    - options
+id: cloud_project.k8s.field_stop_time_minute
+field_name: field_stop_time_minute
+entity_type: cloud_project
+bundle: k8s
+label: 'Stop time minute'
+description:
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings: {  }
+field_type: list_integer

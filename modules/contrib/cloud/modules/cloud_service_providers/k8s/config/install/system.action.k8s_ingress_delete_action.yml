@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - k8s
+id: k8s_ingress_delete_action
+label: 'Delete Ingress(es)'
+type: k8s_ingress
+plugin: entity:delete_action:k8s_ingress
+configuration: {  }

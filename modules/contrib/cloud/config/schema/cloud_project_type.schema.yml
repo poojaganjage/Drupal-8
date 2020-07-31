@@ -1,0 +1,12 @@
+cloud.cloud_project_type.*:
+  type: config_entity
+  label: 'Cloud project type'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string

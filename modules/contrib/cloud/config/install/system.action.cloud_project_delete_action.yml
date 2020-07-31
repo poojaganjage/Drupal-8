@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+id: cloud_project_delete_action
+label: 'Delete cloud project(s)'
+type: cloud_project
+plugin: 'entity:delete_action:cloud_project'
+configuration: {  }

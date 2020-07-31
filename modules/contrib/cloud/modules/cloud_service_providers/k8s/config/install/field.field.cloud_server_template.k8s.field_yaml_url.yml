@@ -1,0 +1,25 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.storage.cloud_server_template.field_yaml_url
+  module:
+    - link
+  enforced:
+    module:
+      - k8s
+id: cloud_server_template.k8s.field_yaml_url
+field_name: field_yaml_url
+entity_type: cloud_server_template
+bundle: k8s
+label: 'Resource URL'
+description: 'The URL to load YAML file.  This field should be left blank if you want to modify the detail below.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  link_type: 16
+  title: 0
+field_type: link

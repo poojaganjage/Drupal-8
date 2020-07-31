@@ -1,0 +1,7 @@
+# Plugin property $defaults are defined in CloudConfigPluginManager.
+terraform.cloud_config:
+  id: terraform
+  entity_type: cloud_config
+  entity_bundle: terraform
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudConfigCloudContextBundleDeriver'
+  class: '\Drupal\terraform\Plugin\cloud\config\TerraformCloudConfigPlugin'

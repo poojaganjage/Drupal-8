@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_get_price_list
+id: cloud_config.aws_cloud.field_get_price_list
+field_name: field_get_price_list
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Get Instance Type Price List'
+description: 'If checked, the Instance Type Price List will be downloaded to this system from the Internet while creating / editing AWS Cloud service provider.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 1
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

@@ -1,0 +1,3 @@
+CreateSubnet:
+  Subnet:
+    SubnetId: {{subnet_id}}

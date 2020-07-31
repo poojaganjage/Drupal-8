@@ -1,0 +1,91 @@
+<?php
+
+namespace Drupal\aws_cloud\Entity;
+
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Routing\Access\AccessInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Symfony\Component\HttpFoundation\RequestStack;
+
+/**
+ * Checks if the current user has operate access to the items of the tempstore.
+ */
+class EntityOperateMultipleAccessCheck implements AccessInterface {
+
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
+  protected $entityTypeManager;
+
+  /**
+   * Request stack service.
+   *
+   * @var \Symfony\Component\HttpFoundation\RequestStack
+   */
+  protected $requestStack;
+
+  /**
+   * Constructs a new EntityOperateMultipleAccessCheck.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
+   * @param \Drupal\Core\TempStore\PrivateTempStoreFactory $temp_store_factory
+   *   The tempstore service.
+   * @param \Symfony\Component\HttpFoundation\RequestStack $request_stack
+   *   The request stack service.
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entity_type_manager,
+    PrivateTempStoreFactory $temp_store_factory,
+    RequestStack $request_stack
+  ) {
+    $this->entityTypeManager = $entity_type_manager;
+    $this->tempStoreFactory = $temp_store_factory;
+    $this->requestStack = $request_stack;
+  }
+
+  /**
+   * Checks if the user has operate access for at least one item of the store.
+   *
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   Run access checks for this account.
+   * @param string $entity_type_id
+   *   Entity type ID.
+   * @param string $operation
+   *   Operation.
+   *
+   * @return \Drupal\Core\Access\AccessResult
+   *   Allowed or forbidden, neutral if tempstore is empty.
+   */
+  public function access(AccountInterface $account, $entity_type_id, $operation) {
+    if (!$this->requestStack->getCurrentRequest()->hasSession()) {
+      return AccessResult::neutral();
+    }
+
+    $tempStoreKey = $account->id() . ':' . $entity_type_id;
+    $selection = $this->tempStoreFactory
+      ->get($tempStoreKey)
+      ->get($tempStoreKey);
+
+    if (empty($selection) || !is_array($selection)) {
+      return AccessResult::neutral();
+    }
+
+    $entities = $this->entityTypeManager
+      ->getStorage($entity_type_id)
+      ->loadMultiple(array_keys($selection));
+    foreach ($entities ?: [] as $entity) {
+      // As long as the user has access to operate one entity allow
+      // access to the operate form.
+      if ($entity->access($operation, $account)) {
+        return AccessResult::allowed();
+      }
+    }
+    return AccessResult::forbidden();
+  }
+
+}

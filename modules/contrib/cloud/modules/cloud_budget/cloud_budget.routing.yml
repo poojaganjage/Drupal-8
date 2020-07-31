@@ -1,0 +1,8 @@
+# Cloud Budget Admin Settings.
+cloud_budget.settings:
+  path: '/admin/config/services/cloud/cloud_budget/settings'
+  defaults:
+    _title: Cloud Budget
+    _form: '\Drupal\cloud_budget\Form\Config\CloudBudgetAdminSettings'
+  requirements:
+    _permission: 'administer cloud_budget'

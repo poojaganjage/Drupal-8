@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.k8s
+    - field.storage.cloud_config.field_api_server
+id: cloud_config.k8s.field_api_server
+field_name: field_api_server
+entity_type: cloud_config
+bundle: k8s
+label: 'API Server'
+description: "To find the API Server, please run a command: <code><strong><em>kubectl cluster-info</em></strong></code>.  Then you'll get the information about the master node: <em>e.g. <code>Kubernetes master is running at <strong>https://192.168.0.1:6443</strong></em></code>"
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

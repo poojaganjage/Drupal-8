@@ -1,0 +1,19 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - image
+  enforced:
+    module:
+      - cloud
+name: icon
+label: 'Icon (50x50)'
+effects:
+  8abcffbe-6164-4cd6-9ad7-97fa51f7f220:
+    uuid: 8abcffbe-6164-4cd6-9ad7-97fa51f7f220
+    id: image_scale
+    weight: 1
+    data:
+      width: 50
+      height: 50
+      upscale: false

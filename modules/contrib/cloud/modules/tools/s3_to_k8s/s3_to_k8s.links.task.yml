@@ -1,0 +1,6 @@
+k8s.settings.local_tasks.s3_to_k8s:
+  title: S3 to K8s
+  route_name: 'k8s.settings.s3_to_k8s'
+  base_route: 'k8s.settings'
+  description: 'Configure S3 as a source and K8s as the destination to import K8s resources.'
+  weight: 3

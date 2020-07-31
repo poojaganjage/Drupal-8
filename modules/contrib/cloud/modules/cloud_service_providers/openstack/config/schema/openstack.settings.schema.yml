@@ -1,0 +1,15 @@
+openstack.settings:
+  type: config_object
+  mapping:
+    openstack_test_mode:
+      type: boolean
+    openstack_mock_data:
+      type: string
+    openstack_instance_terminate:
+      type: boolean
+    openstack_unused_volume_criteria:
+      type: integer
+    openstack_cloud_config_icon:
+      type: integer
+    openstack_update_resources_queue_cron_time:
+      type: integer

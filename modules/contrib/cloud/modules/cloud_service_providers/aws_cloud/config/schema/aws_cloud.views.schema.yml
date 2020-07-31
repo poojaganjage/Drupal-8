@@ -1,0 +1,43 @@
+views.field.snapshot_bulk_form:
+  type: views_field_bulk_form
+  label: 'Snapshot bulk form'
+
+views.field.volume_bulk_form:
+  type: views_field_bulk_form
+  label: 'Volume bulk form'
+
+views.field.image_bulk_form:
+  type: views_field_bulk_form
+  label: 'Image bulk form'
+
+views.field.elastic_ip_bulk_form:
+  type: views_field_bulk_form
+  label: 'Elastic IP bulk form'
+
+views.field.instance_bulk_form:
+  type: views_field_bulk_form
+  label: 'Instance bulk form'
+
+views.field.key_pair_bulk_form:
+  type: views_field_bulk_form
+  label: 'Key Pair bulk form'
+
+views.field.vpc_bulk_form:
+  type: views_field_bulk_form
+  label: 'vpc bulk form'
+
+views.field.vpc_peering_connection_bulk_form:
+  type: views_field_bulk_form
+  label: 'vpc peering connection bulk form'
+
+views.field.subnet_bulk_form:
+  type: views_field_bulk_form
+  label: 'subnet bulk form'
+
+views.field.network_interface_bulk_form:
+  type: views_field_bulk_form
+  label: 'network interface bulk form'
+
+views.field.security_group_bulk_form:
+  type: views_field_bulk_form
+  label: 'security group bulk form'

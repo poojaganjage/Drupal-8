@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_default_subnet_name
+id: cloud_config.aws_cloud.field_default_subnet_name
+field_name: field_default_subnet_name
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Default Subnet Name'
+description: 'The default name of the user owned subnet. Available token is: [user_name]. e.g. default for user [user_name].'
+required: false
+translatable: false
+default_value:
+  -
+    value: 'default for user [user_name]'
+default_value_callback: ''
+settings: {  }
+field_type: string

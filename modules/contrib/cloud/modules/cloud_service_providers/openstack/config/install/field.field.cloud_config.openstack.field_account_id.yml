@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.openstack
+    - field.storage.cloud_config.field_account_id
+id: cloud_config.openstack.field_account_id
+field_name: field_account_id
+entity_type: cloud_config
+bundle: openstack
+label: 'Account ID'
+description: 'This field is not required at this time.'
+required: false
+translatable: true
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

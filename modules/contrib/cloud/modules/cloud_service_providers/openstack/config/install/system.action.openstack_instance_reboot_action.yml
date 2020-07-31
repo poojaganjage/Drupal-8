@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_instance_reboot_action
+label: 'Reboot Instance(s)'
+type: openstack_instance
+plugin: openstack_instance_reboot_action
+configuration: {  }

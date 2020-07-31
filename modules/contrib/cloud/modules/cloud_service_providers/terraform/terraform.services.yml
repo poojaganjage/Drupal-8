@@ -1,0 +1,8 @@
+services:
+  terraform.factory:
+    class: Drupal\terraform\Service\TerraformServiceFactory
+    arguments: ['@entity_type.manager', '@config.factory', '@http_client_factory', '@plugin.manager.cloud_config_plugin', '@lock', '@queue']
+
+  terraform:
+    factory: ['@terraform.factory', 'create']
+    class: Drupal\terraform\Service\TerraformServiceInterface

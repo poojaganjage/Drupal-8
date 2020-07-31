@@ -1,0 +1,1022 @@
+####################
+# Kubernetes Config.
+####################
+
+k8s.settings:
+  route_name: 'k8s.settings'
+  title: 'Kubernetes settings'
+  weight: -1
+  base_route: k8s.settings
+
+k8s.settings.cloud_config.add_form:
+  route_name: entity.cloud_config.add_page
+  title: 'Add Profile'
+  appears_on:
+    - k8s.settings
+
+###########
+# K8s Node.
+###########
+
+entity.k8s_node.refresh:
+  route_name: entity.k8s_node.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_node.list
+
+entity.k8s_node.refresh_all_resources:
+  route_name: k8s.update_all_resources
+  title: 'Refresh All Resources'
+  appears_on:
+    - view.k8s_node.list
+
+################
+# K8s Namespace.
+################
+
+entity.k8s_namespace.add_form:
+  route_name: entity.k8s_namespace.add_form
+  title: 'Add K8s Namespace'
+  appears_on:
+    - view.k8s_namespace.list
+
+entity.k8s_namespace.refresh:
+  route_name: entity.k8s_namespace.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_namespace.list
+
+entity.k8s_namespace.collection:
+  route_name: view.k8s_namespace.list
+  title: 'List K8s Namespaces'
+  appears_on:
+    - entity.k8s_namespace.add_form
+    - entity.k8s_namespace.edit_form
+    - entity.k8s_namespace.delete_form
+    - entity.k8s_namespace.canonical
+
+entity.k8s_namespace.edit:
+  route_name: entity.k8s_namespace.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_namespace.canonical
+
+entity.k8s_namespace.delete:
+  route_name: entity.k8s_namespace.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_namespace.canonical
+
+##########
+# K8s Pod.
+##########
+
+entity.k8s_pod.add_form:
+  route_name: entity.k8s_pod.add_form
+  title: 'Add K8s Pod'
+  appears_on:
+    - view.k8s_pod.list
+
+entity.k8s_pod.refresh:
+  route_name: entity.k8s_pod.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_pod.list
+
+entity.k8s_pod.collection:
+  route_name: view.k8s_pod.list
+  title: 'List K8s Pods'
+  appears_on:
+    - entity.k8s_pod.add_form
+    - entity.k8s_pod.edit_form
+    - entity.k8s_pod.delete_form
+    - entity.k8s_pod.canonical
+
+entity.k8s_pod.edit:
+  route_name: entity.k8s_pod.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_pod.canonical
+
+entity.k8s_pod.delete:
+  route_name: entity.k8s_pod.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_pod.canonical
+
+#################
+# K8s Deployment.
+#################
+
+entity.k8s_deployment.add_form:
+  route_name: entity.k8s_deployment.add_form
+  title: 'Add K8s Deployment'
+  appears_on:
+    - view.k8s_deployment.list
+
+entity.k8s_deployment.refresh:
+  route_name: entity.k8s_deployment.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_deployment.list
+
+entity.k8s_deployment.collection:
+  route_name: view.k8s_deployment.list
+  title: 'List K8s Deployments'
+  appears_on:
+    - entity.k8s_deployment.add_form
+    - entity.k8s_deployment.edit_form
+    - entity.k8s_deployment.delete_form
+    - entity.k8s_deployment.canonical
+
+entity.k8s_deployment.edit:
+  route_name: entity.k8s_deployment.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_deployment.canonical
+
+entity.k8s_deployment.scale:
+  route_name: entity.k8s_deployment.scale_form
+  title: 'Scale'
+  appears_on:
+    - entity.k8s_deployment.edit_form
+    - entity.k8s_deployment.canonical
+
+entity.k8s_deployment.delete:
+  route_name: entity.k8s_deployment.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_deployment.canonical
+
+
+##################
+# K8s Replica Set.
+##################
+
+entity.k8s_replica_set.add_form:
+  route_name: entity.k8s_replica_set.add_form
+  title: 'Add K8s Replica Set'
+  appears_on:
+    - view.k8s_replica_set.list
+
+entity.k8s_replica_set.refresh:
+  route_name: entity.k8s_replica_set.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_replica_set.list
+
+entity.k8s_replica_set.collection:
+  route_name: view.k8s_replica_set.list
+  title: 'List K8s Replica Sets'
+  appears_on:
+    - entity.k8s_replica_set.add_form
+    - entity.k8s_replica_set.edit_form
+    - entity.k8s_replica_set.delete_form
+    - entity.k8s_replica_set.canonical
+
+entity.k8s_replica_set.edit:
+  route_name: entity.k8s_replica_set.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_replica_set.canonical
+
+entity.k8s_replica_set.delete:
+  route_name: entity.k8s_replica_set.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_replica_set.canonical
+
+##############
+# K8s Service.
+##############
+
+entity.k8s_service.add_form:
+  route_name: entity.k8s_service.add_form
+  title: 'Add K8s Service'
+  appears_on:
+    - view.k8s_service.list
+
+entity.k8s_service.refresh:
+  route_name: entity.k8s_service.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_service.list
+
+entity.k8s_service.collection:
+  route_name: view.k8s_service.list
+  title: 'List K8s Services'
+  appears_on:
+    - entity.k8s_service.add_form
+    - entity.k8s_service.edit_form
+    - entity.k8s_service.delete_form
+    - entity.k8s_service.canonical
+
+entity.k8s_service.edit:
+  route_name: entity.k8s_service.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_service.canonical
+
+entity.k8s_service.delete:
+  route_name: entity.k8s_service.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_service.canonical
+
+###############
+# K8s Cron Job.
+###############
+
+entity.k8s_cron_job.add_form:
+  route_name: entity.k8s_cron_job.add_form
+  title: 'Add K8s Cron Job'
+  appears_on:
+    - view.k8s_cron_job.list
+
+entity.k8s_cron_job.refresh:
+  route_name: entity.k8s_cron_job.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_cron_job.list
+
+entity.k8s_cron_job.collection:
+  route_name: view.k8s_cron_job.list
+  title: 'List K8s Cron Jobs'
+  appears_on:
+    - entity.k8s_cron_job.add_form
+    - entity.k8s_cron_job.edit_form
+    - entity.k8s_cron_job.delete_form
+    - entity.k8s_cron_job.canonical
+
+entity.k8s_cron_job.edit:
+  route_name: entity.k8s_cron_job.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_cron_job.canonical
+
+entity.k8s_cron_job.delete:
+  route_name: entity.k8s_cron_job.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_cron_job.canonical
+
+##########
+# K8s Job.
+##########
+
+entity.k8s_job.add_form:
+  route_name: entity.k8s_job.add_form
+  title: 'Add K8s Job'
+  appears_on:
+    - view.k8s_job.list
+
+entity.k8s_job.refresh:
+  route_name: entity.k8s_job.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_job.list
+
+entity.k8s_job.collection:
+  route_name: view.k8s_job.list
+  title: 'List K8s Jobs'
+  appears_on:
+    - entity.k8s_job.add_form
+    - entity.k8s_job.edit_form
+    - entity.k8s_job.delete_form
+    - entity.k8s_job.canonical
+
+entity.k8s_job.edit:
+  route_name: entity.k8s_job.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_job.canonical
+
+entity.k8s_job.delete:
+  route_name: entity.k8s_job.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_job.canonical
+
+#####################
+# K8s Resource Quota.
+#####################
+
+entity.k8s_resource_quota.add_form:
+  route_name: entity.k8s_resource_quota.add_form
+  title: 'Add K8s Resource Quota'
+  appears_on:
+    - view.k8s_resource_quota.list
+
+entity.k8s_resource_quota.refresh:
+  route_name: entity.k8s_resource_quota.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_resource_quota.list
+
+entity.k8s_resource_quota.collection:
+  route_name: view.k8s_resource_quota.list
+  title: 'List K8s Resource Quotas'
+  appears_on:
+    - entity.k8s_resource_quota.add_form
+    - entity.k8s_resource_quota.edit_form
+    - entity.k8s_resource_quota.delete_form
+    - entity.k8s_resource_quota.canonical
+
+entity.k8s_resource_quota.edit:
+  route_name: entity.k8s_resource_quota.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_resource_quota.canonical
+
+entity.k8s_resource_quota.delete:
+  route_name: entity.k8s_resource_quota.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_resource_quota.canonical
+
+##################
+# K8s Limit Range.
+##################
+
+entity.k8s_limit_range.add_form:
+  route_name: entity.k8s_limit_range.add_form
+  title: 'Add K8s Limit Range'
+  appears_on:
+    - view.k8s_limit_range.list
+
+entity.k8s_limit_range.refresh:
+  route_name: entity.k8s_limit_range.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_limit_range.list
+
+entity.k8s_limit_range.collection:
+  route_name: view.k8s_limit_range.list
+  title: 'List K8s Limit Ranges'
+  appears_on:
+    - entity.k8s_limit_range.add_form
+    - entity.k8s_limit_range.edit_form
+    - entity.k8s_limit_range.delete_form
+    - entity.k8s_limit_range.canonical
+
+entity.k8s_limit_range.edit:
+  route_name: entity.k8s_limit_range.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_limit_range.canonical
+
+entity.k8s_limit_range.delete:
+  route_name: entity.k8s_limit_range.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_limit_range.canonical
+
+#############
+# K8s Secret.
+#############
+
+entity.k8s_secret.add_form:
+  route_name: entity.k8s_secret.add_form
+  title: 'Add K8s Secret'
+  appears_on:
+    - view.k8s_secret.list
+
+entity.k8s_secret.refresh:
+  route_name: entity.k8s_secret.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_secret.list
+
+entity.k8s_secret.collection:
+  route_name: view.k8s_secret.list
+  title: 'List K8s Secrets'
+  appears_on:
+    - entity.k8s_secret.add_form
+    - entity.k8s_secret.edit_form
+    - entity.k8s_secret.delete_form
+    - entity.k8s_secret.canonical
+
+entity.k8s_secret.edit:
+  route_name: entity.k8s_secret.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_secret.canonical
+
+entity.k8s_secret.delete:
+  route_name: entity.k8s_secret.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_secret.canonical
+
+#################
+# K8s ConfigMap.
+#################
+
+entity.k8s_config_map.add_form:
+  route_name: entity.k8s_config_map.add_form
+  title: 'Add K8s ConfigMap'
+  appears_on:
+    - view.k8s_config_map.list
+
+entity.k8s_config_map.refresh:
+  route_name: entity.k8s_config_map.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_config_map.list
+
+entity.k8s_config_map.collection:
+  route_name: view.k8s_config_map.list
+  title: 'List K8s ConfigMaps'
+  appears_on:
+    - entity.k8s_config_map.add_form
+    - entity.k8s_config_map.edit_form
+    - entity.k8s_config_map.delete_form
+    - entity.k8s_config_map.canonical
+
+entity.k8s_config_map.edit:
+  route_name: entity.k8s_config_map.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_config_map.canonical
+
+entity.k8s_config_map.delete:
+  route_name: entity.k8s_config_map.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_config_map.canonical
+
+#####################
+# K8s Network Policy.
+#####################
+
+entity.k8s_network_policy.add_form:
+  route_name: entity.k8s_network_policy.add_form
+  title: 'Add K8s Network Policy'
+  appears_on:
+    - view.k8s_network_policy.list
+
+entity.k8s_network_policy.refresh:
+  route_name: entity.k8s_network_policy.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_network_policy.list
+
+entity.k8s_network_policy.collection:
+  route_name: view.k8s_network_policy.list
+  title: 'List K8s Network Policy'
+  appears_on:
+    - entity.k8s_network_policy.add_form
+    - entity.k8s_network_policy.edit_form
+    - entity.k8s_network_policy.delete_form
+    - entity.k8s_network_policy.canonical
+
+entity.k8s_network_policy.edit:
+  route_name: entity.k8s_network_policy.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_network_policy.canonical
+
+entity.k8s_network_policy.delete:
+  route_name: entity.k8s_network_policy.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_network_policy.canonical
+
+###########
+# K8s Role.
+###########
+
+entity.k8s_role.add_form:
+  route_name: entity.k8s_role.add_form
+  title: 'Add K8s Role'
+  appears_on:
+    - view.k8s_role.list
+
+entity.k8s_role.refresh:
+  route_name: entity.k8s_role.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_role.list
+
+entity.k8s_role.collection:
+  route_name: view.k8s_role.list
+  title: 'List K8s Roles'
+  appears_on:
+    - entity.k8s_role.add_form
+    - entity.k8s_role.edit_form
+    - entity.k8s_role.delete_form
+    - entity.k8s_role.canonical
+
+entity.k8s_role.edit:
+  route_name: entity.k8s_role.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_role.canonical
+
+entity.k8s_role.delete:
+  route_name: entity.k8s_role.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_role.canonical
+
+
+####################
+# K8s Cluster Role
+####################
+
+entity.k8s_cluster_role.add_form:
+  route_name: entity.k8s_cluster_role.add_form
+  title: 'Add K8s Cluster Role'
+  appears_on:
+    - view.k8s_cluster_role.list
+
+entity.k8s_cluster_role.refresh:
+  route_name: entity.k8s_cluster_role.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_cluster_role.list
+
+entity.k8s_cluster_role.collection:
+  route_name: view.k8s_cluster_role.list
+  title: 'List K8s Cluster Roles'
+  appears_on:
+    - entity.k8s_cluster_role.add_form
+    - entity.k8s_cluster_role.edit_form
+    - entity.k8s_cluster_role.delete_form
+    - entity.k8s_cluster_role.canonical
+
+entity.k8s_cluster_role.edit:
+  route_name: entity.k8s_cluster_role.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_cluster_role.canonical
+
+entity.k8s_cluster_role.delete:
+  route_name: entity.k8s_cluster_role.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_cluster_role.canonical
+
+
+####################
+# K8s Persistent Volume
+####################
+
+entity.k8s_persistent_volume.add_form:
+  route_name: entity.k8s_persistent_volume.add_form
+  title: 'Add K8s Persistent Volume'
+  appears_on:
+    - view.k8s_persistent_volume.list
+
+entity.k8s_persistent_volume.refresh:
+  route_name: entity.k8s_persistent_volume.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_persistent_volume.list
+
+entity.k8s_persistent_volume.collection:
+  route_name: view.k8s_persistent_volume.list
+  title: 'List K8s Persistent Volume'
+  appears_on:
+    - entity.k8s_persistent_volume.add_form
+    - entity.k8s_persistent_volume.edit_form
+    - entity.k8s_persistent_volume.delete_form
+    - entity.k8s_persistent_volume.canonical
+
+entity.k8s_persistent_volume.edit:
+  route_name: entity.k8s_persistent_volume.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_persistent_volume.canonical
+
+entity.k8s_persistent_volume.delete:
+  route_name: entity.k8s_persistent_volume.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_persistent_volume.canonical
+
+
+####################
+# K8s Storage Class
+####################
+
+entity.k8s_storage_class.add_form:
+  route_name: entity.k8s_storage_class.add_form
+  title: 'Add K8s Storage Class'
+  appears_on:
+    - view.k8s_storage_class.list
+
+entity.k8s_storage_class.refresh:
+  route_name: entity.k8s_storage_class.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_storage_class.list
+
+entity.k8s_storage_class.collection:
+  route_name: view.k8s_storage_class.list
+  title: 'List K8s Storage Classes'
+  appears_on:
+    - entity.k8s_storage_class.add_form
+    - entity.k8s_storage_class.edit_form
+    - entity.k8s_storage_class.delete_form
+    - entity.k8s_storage_class.canonical
+
+entity.k8s_storage_class.edit:
+  route_name: entity.k8s_storage_class.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_storage_class.canonical
+
+entity.k8s_storage_class.delete:
+  route_name: entity.k8s_storage_class.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_storage_class.canonical
+
+
+####################
+# K8s Stateful Set
+####################
+
+entity.k8s_stateful_set.add_form:
+  route_name: entity.k8s_stateful_set.add_form
+  title: 'Add K8s Stateful Set'
+  appears_on:
+    - view.k8s_stateful_set.list
+
+entity.k8s_stateful_set.refresh:
+  route_name: entity.k8s_stateful_set.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_stateful_set.list
+
+entity.k8s_stateful_set.collection:
+  route_name: view.k8s_stateful_set.list
+  title: 'List K8s Stateful Sets'
+  appears_on:
+    - entity.k8s_stateful_set.add_form
+    - entity.k8s_stateful_set.edit_form
+    - entity.k8s_stateful_set.delete_form
+    - entity.k8s_stateful_set.canonical
+
+entity.k8s_stateful_set.edit:
+  route_name: entity.k8s_stateful_set.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_stateful_set.canonical
+
+entity.k8s_stateful_set.delete:
+  route_name: entity.k8s_stateful_set.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_stateful_set.canonical
+
+####################
+# K8s Ingress
+####################
+
+entity.k8s_ingress.add_form:
+  route_name: entity.k8s_ingress.add_form
+  title: 'Add K8s Ingress'
+  appears_on:
+    - view.k8s_ingress.list
+
+entity.k8s_ingress.refresh:
+  route_name: entity.k8s_ingress.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_ingress.list
+
+entity.k8s_ingress.collection:
+  route_name: view.k8s_ingress.list
+  title: 'List K8s Ingresses'
+  appears_on:
+    - entity.k8s_ingress.add_form
+    - entity.k8s_ingress.edit_form
+    - entity.k8s_ingress.delete_form
+    - entity.k8s_ingress.canonical
+
+entity.k8s_ingress.edit:
+  route_name: entity.k8s_ingress.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_ingress.canonical
+
+entity.k8s_ingress.delete:
+  route_name: entity.k8s_ingress.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_ingress.canonical
+
+####################
+# K8s Daemon Set
+####################
+
+entity.k8s_daemon_set.add_form:
+  route_name: entity.k8s_daemon_set.add_form
+  title: 'Add K8s Daemon Set'
+  appears_on:
+    - view.k8s_daemon_set.list
+
+entity.k8s_daemon_set.refresh:
+  route_name: entity.k8s_daemon_set.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_daemon_set.list
+
+entity.k8s_daemon_set.collection:
+  route_name: view.k8s_daemon_set.list
+  title: 'List K8s Daemon Sets'
+  appears_on:
+    - entity.k8s_daemon_set.add_form
+    - entity.k8s_daemon_set.edit_form
+    - entity.k8s_daemon_set.delete_form
+    - entity.k8s_daemon_set.canonical
+
+entity.k8s_daemon_set.edit:
+  route_name: entity.k8s_daemon_set.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_daemon_set.canonical
+
+entity.k8s_daemon_set.delete:
+  route_name: entity.k8s_daemon_set.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_daemon_set.canonical
+
+####################
+# K8s Endpoint
+####################
+
+entity.k8s_endpoint.add_form:
+  route_name: entity.k8s_endpoint.add_form
+  title: 'Add K8s Endpoint'
+  appears_on:
+    - view.k8s_endpoint.list
+
+entity.k8s_endpoint.refresh:
+  route_name: entity.k8s_endpoint.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_endpoint.list
+
+entity.k8s_endpoint.collection:
+  route_name: view.k8s_endpoint.list
+  title: 'List K8s Endpoints'
+  appears_on:
+    - entity.k8s_endpoint.add_form
+    - entity.k8s_endpoint.edit_form
+    - entity.k8s_endpoint.delete_form
+    - entity.k8s_endpoint.canonical
+
+entity.k8s_endpoint.edit:
+  route_name: entity.k8s_endpoint.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_endpoint.canonical
+
+entity.k8s_endpoint.delete:
+  route_name: entity.k8s_endpoint.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_endpoint.canonical
+
+###########
+# K8s Event.
+###########
+
+entity.k8s_event.refresh:
+  route_name: entity.k8s_event.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_event.list
+
+entity.k8s_event.collection:
+  route_name: view.k8s_event.list
+  title: 'List K8s Events'
+  appears_on:
+    - entity.k8s_event.canonical
+
+###############################
+# K8s Persistent Volume Claim
+###############################
+
+entity.k8s_persistent_volume_claim.add_form:
+  route_name: entity.k8s_persistent_volume_claim.add_form
+  title: 'Add K8s Persistent Volume Claim'
+  appears_on:
+    - view.k8s_persistent_volume_claim.list
+
+entity.k8s_persistent_volume_claim.refresh:
+  route_name: entity.k8s_persistent_volume_claim.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_persistent_volume_claim.list
+
+entity.k8s_persistent_volume_claim.collection:
+  route_name: view.k8s_persistent_volume_claim.list
+  title: 'List K8s Persistent Volume Claims'
+  appears_on:
+    - entity.k8s_persistent_volume_claim.add_form
+    - entity.k8s_persistent_volume_claim.edit_form
+    - entity.k8s_persistent_volume_claim.delete_form
+    - entity.k8s_persistent_volume_claim.canonical
+
+entity.k8s_persistent_volume_claim.edit:
+  route_name: entity.k8s_persistent_volume_claim.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_persistent_volume_claim.canonical
+
+entity.k8s_persistent_volume_claim.delete:
+  route_name: entity.k8s_persistent_volume_claim.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_persistent_volume_claim.canonical
+
+
+############################
+# K8s Cluster Role Binding
+############################
+
+entity.k8s_cluster_role_binding.add_form:
+  route_name: entity.k8s_cluster_role_binding.add_form
+  title: 'Add K8s Cluster Role Binding'
+  appears_on:
+    - view.k8s_cluster_role_binding.list
+
+entity.k8s_cluster_role_binding.refresh:
+  route_name: entity.k8s_cluster_role_binding.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_cluster_role_binding.list
+
+entity.k8s_cluster_role_binding.collection:
+  route_name: view.k8s_cluster_role_binding.list
+  title: 'List K8s Cluster Roles Binding'
+  appears_on:
+    - entity.k8s_cluster_role_binding.add_form
+    - entity.k8s_cluster_role_binding.edit_form
+    - entity.k8s_cluster_role_binding.delete_form
+    - entity.k8s_cluster_role_binding.canonical
+
+entity.k8s_cluster_role_binding.edit:
+  route_name: entity.k8s_cluster_role_binding.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_cluster_role_binding.canonical
+
+entity.k8s_cluster_role_binding.delete:
+  route_name: entity.k8s_cluster_role_binding.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_cluster_role_binding.canonical
+
+####################
+# K8s API Service
+####################
+
+entity.k8s_api_service.add_form:
+  route_name: entity.k8s_api_service.add_form
+  title: 'Add K8s API Service'
+  appears_on:
+    - view.k8s_api_service.list
+
+entity.k8s_api_service.refresh:
+  route_name: entity.k8s_api_service.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_api_service.list
+
+entity.k8s_api_service.collection:
+  route_name: view.k8s_api_service.list
+  title: 'List K8s API Service'
+  appears_on:
+    - entity.k8s_api_service.add_form
+    - entity.k8s_api_service.edit_form
+    - entity.k8s_api_service.delete_form
+    - entity.k8s_api_service.canonical
+
+entity.k8s_api_service.edit:
+  route_name: entity.k8s_api_service.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_api_service.canonical
+
+entity.k8s_api_service.delete:
+  route_name: entity.k8s_api_service.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_api_service.canonical
+
+############################
+# K8s Role Binding
+############################
+
+entity.k8s_role_binding.add_form:
+  route_name: entity.k8s_role_binding.add_form
+  title: 'Add K8s Role Binding'
+  appears_on:
+    - view.k8s_role_binding.list
+
+entity.k8s_role_binding.refresh:
+  route_name: entity.k8s_role_binding.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_role_binding.list
+
+entity.k8s_role_binding.collection:
+  route_name: view.k8s_role_binding.list
+  title: 'List K8s Roles Binding'
+  appears_on:
+    - entity.k8s_role_binding.add_form
+    - entity.k8s_role_binding.edit_form
+    - entity.k8s_role_binding.delete_form
+    - entity.k8s_role_binding.canonical
+
+entity.k8s_role_binding.edit:
+  route_name: entity.k8s_role_binding.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_role_binding.canonical
+
+entity.k8s_role_binding.delete:
+  route_name: entity.k8s_role_binding.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_role_binding.canonical
+
+####################
+# K8s Service Account
+####################
+
+entity.k8s_service_account.add_form:
+  route_name: entity.k8s_service_account.add_form
+  title: 'Add K8s Service Account'
+  appears_on:
+    - view.k8s_service_account.list
+
+entity.k8s_service_account.refresh:
+  route_name: entity.k8s_service_account.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_service_account.list
+
+entity.k8s_service_account.collection:
+  route_name: view.k8s_service_account.list
+  title: 'List K8s Service Accounts'
+  appears_on:
+    - entity.k8s_service_account.add_form
+    - entity.k8s_service_account.edit_form
+    - entity.k8s_service_account.delete_form
+    - entity.k8s_service_account.canonical
+
+entity.k8s_service_account.edit:
+  route_name: entity.k8s_service_account.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_service_account.canonical
+
+entity.k8s_service_account.delete:
+  route_name: entity.k8s_service_account.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_service_account.canonical
+
+####################
+# K8s Priority Class
+####################
+
+entity.k8s_priority_class.add_form:
+  route_name: entity.k8s_priority_class.add_form
+  title: 'Add K8s Priority Class'
+  appears_on:
+    - view.k8s_priority_class.list
+
+entity.k8s_priority_class.refresh:
+  route_name: entity.k8s_priority_class.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.k8s_priority_class.list
+
+entity.k8s_priority_class.collection:
+  route_name: view.k8s_priority_class.list
+  title: 'List K8s Priority Classes'
+  appears_on:
+    - entity.k8s_priority_class.add_form
+    - entity.k8s_priority_class.edit_form
+    - entity.k8s_priority_class.delete_form
+    - entity.k8s_priority_class.canonical
+
+entity.k8s_priority_class.edit:
+  route_name: entity.k8s_priority_class.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.k8s_priority_class.canonical
+
+entity.k8s_priority_class.delete:
+  route_name: entity.k8s_priority_class.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.k8s_priority_class.canonical

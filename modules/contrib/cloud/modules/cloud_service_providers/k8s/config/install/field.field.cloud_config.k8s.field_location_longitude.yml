@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.k8s
+    - field.storage.cloud_config.field_location_longitude
+id: cloud_config.k8s.field_location_longitude
+field_name: field_location_longitude
+entity_type: cloud_config
+bundle: k8s
+label: Longitude
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: !!float -180
+  max: !!float 180
+  prefix: ''
+  suffix: ''
+field_type: decimal

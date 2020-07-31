@@ -1,0 +1,10 @@
+# K8s to S3 Routing Definition.
+
+# K8s to S3 Admin Settings.
+k8s.settings.k8s_to_s3:
+  path: '/admin/config/services/cloud/k8s_to_s3/settings'
+  defaults:
+    _title: K8s to S3
+    _form: '\Drupal\k8s_to_s3\Form\Config\K8sToS3AdminSettings'
+  requirements:
+    _permission: 'administer k8s_to_s3'

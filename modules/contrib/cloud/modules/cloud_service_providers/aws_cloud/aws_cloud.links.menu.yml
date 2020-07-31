@@ -1,0 +1,9 @@
+aws_cloud.settings:
+  title: AWS Cloud settings
+  description: 'List AWS profiles and configure views, scheduling, notifications, and costs.'
+  parent: system.admin_config_services
+  route_name: 'aws_cloud.settings'
+
+aws_cloud.menu.cloud_context:
+  deriver: 'Drupal\aws_cloud\Plugin\Derivative\AwsCloudMenuLinks'
+  weight: 100

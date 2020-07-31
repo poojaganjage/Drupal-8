@@ -1,0 +1,3 @@
+DescribeRegions:
+  Regions:
+    - RegionName: RegionOne

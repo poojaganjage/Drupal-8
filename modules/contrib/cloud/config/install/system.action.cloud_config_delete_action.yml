@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+id: cloud_config_delete_action
+label: 'Delete cloud service provider(s)'
+type: cloud_config
+plugin: entity:delete_action:cloud_config
+configuration: {  }

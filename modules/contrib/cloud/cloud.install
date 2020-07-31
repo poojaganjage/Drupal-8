@@ -1,0 +1,741 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for aws_cloud.
+ */
+
+use Drupal\cloud\Controller\CloudServerTemplateAccessControlHandler;
+use Drupal\cloud\Controller\CloudServerTemplateListBuilder;
+use Drupal\cloud\Entity\CloudServerTemplate;
+use Drupal\cloud\Entity\CloudServerTemplateStorage;
+use Drupal\cloud\Entity\CloudServerTemplateTranslationHandler;
+use Drupal\cloud\Entity\CloudServerTemplateType;
+use Drupal\cloud\Entity\CloudServerTemplateTypeListBuilder;
+use Drupal\cloud\Entity\CloudServerTemplateViewsData;
+use Drupal\cloud\Form\CloudServerTemplateDeleteForm;
+use Drupal\cloud\Form\CloudServerTemplateForm;
+use Drupal\cloud\Form\CloudServerTemplateTypeDeleteForm;
+use Drupal\cloud\Form\CloudServerTemplateTypeForm;
+use Drupal\cloud\Routing\CloudServerTemplateTypeHtmlRouteProvider;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Field\BaseFieldDefinition;
+
+/**
+ * Removed obsolete cloud_pricing interrupts update from beta1 to beta2.
+ *
+ * See also: https://www.drupal.org/node/2487215.
+ */
+function cloud_update_8101() {
+  \Drupal::database()->delete('key_value')
+    ->condition('collection', 'system.schema')
+    ->condition('name', 'cloud_pricing')
+    ->execute();
+}
+
+/**
+ * Update cloud_list and server_template_listing view's yml files.
+ */
+function cloud_update_8102() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_listing.yml',
+    'views.view.server_template_listing.yml',
+  ]);
+}
+
+/**
+ * Change the field name of user_id to uid.
+ */
+function cloud_update_8103() {
+  $db = \Drupal::database();
+
+  $tables = [
+    'cloud_config_field_data',
+    'cloud_server_template_field_data',
+  ];
+  $old_data = [];
+  foreach ($tables ?: [] as $table) {
+    $old_data[$table] = [];
+    try {
+      if ($db->schema()->fieldExists($table, 'user_id')) {
+        $result = $db->select($table, 't')
+          ->fields('t', ['id', 'user_id'])
+          ->execute()
+          ->fetchAll();
+        foreach ($result ?: [] as $row) {
+          $old_data[$table][] = $row;
+        }
+
+        $db->update($table)
+          ->fields(['user_id' => NULL])
+          ->execute();
+      }
+    }
+    catch (\Exception $e) {
+      \Drupal::service('cloud')->handleException($e);
+    }
+  }
+
+  aws_cloud_update_entity_definitions();
+
+  foreach ($tables ?: [] as $table) {
+    foreach ($old_data[$table] ?: [] as $row) {
+      $db->update($table)
+        ->fields(['uid' => $row->user_id])
+        ->condition('id', $row->id)
+        ->execute();
+    }
+  }
+}
+
+/**
+ * Update cloud_listing view.
+ */
+function cloud_update_8104() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_listing.yml',
+  ]);
+}
+
+/**
+ * Migrate cloud server template entity to Cloud module.
+ *
+ * Backup database before performing this update!
+ */
+function cloud_update_8110() {
+  // Flush the cache first.
+  drupal_flush_all_caches();
+
+  // Clear the definition cache.
+  \Drupal::service('config.typed')->clearCachedDefinitions();
+  $update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  // Update the cloud server template configuration entity.
+  $server_template_type = $update_manager->getEntityType('cloud_server_template_type');
+  $server_template_type->set('class', CloudServerTemplateType::class);
+  $server_template_type->set('originalClass', CloudServerTemplateType::class);
+  $handlers = [
+    'list_builder' => CloudServerTemplateTypeListBuilder::class,
+    'form' => [
+      'add' => CloudServerTemplateTypeForm::class,
+      'edit' => CloudServerTemplateTypeForm::class,
+      'delete' => CloudServerTemplateTypeDeleteForm::class,
+    ],
+  ];
+  $server_template_type->set('handlers', $handlers);
+  $route_provider = [
+    'html' => CloudServerTemplateTypeHtmlRouteProvider::class,
+  ];
+  $server_template_type->set('route_provider', $route_provider);
+  $server_template_type->set('provider', 'cloud');
+  $update_manager->updateEntityType($server_template_type);
+
+  // Update the cloud server template definition.
+  $server_template = $update_manager->getEntityType('cloud_server_template');
+  $server_template->set('class', CloudServerTemplate::class);
+  $server_template->set('originalClass', CloudServerTemplate::class);
+
+  $handlers = [
+    'storage' => CloudServerTemplateStorage::class,
+    'list_builder' => CloudServerTemplateListBuilder::class,
+    'views_data' => CloudServerTemplateViewsData::class,
+    'translation' => CloudServerTemplateTranslationHandler::class,
+    'form' => [
+      'default' => CloudServerTemplateForm::class,
+      'add' => CloudServerTemplateForm::class,
+      'edit' => CloudServerTemplateForm::class,
+      'delete' => CloudServerTemplateDeleteForm::class,
+      'launch' => 'Drupal\cloud_server_template\Form\CloudServerTemplateLaunchConfirm',
+    ],
+    'access' => CloudServerTemplateAccessControlHandler::class,
+    'route_provider' => [
+      'html' => 'Drupal\cloud_server_template\Routing\CloudServerTemplateHtmlRouteProvider',
+    ],
+  ];
+  $server_template->set('handlers', $handlers);
+  $server_template->set('provider', 'cloud');
+  $update_manager->updateEntityType($server_template);
+
+  // Update the configurations.
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('cloud_server_template.cloud_server_template_type.aws_cloud');
+  $config->setName('cloud.cloud_server_template_type.aws_cloud');
+  $config->save();
+
+  \Drupal::service('config.typed')->clearCachedDefinitions();
+  drupal_flush_all_caches();
+
+  // Update the yml files.
+  \Drupal::service('cloud')->updateYmlDefinitions(cloud_get_server_template_yml_to_update(), 'aws_cloud');
+
+}
+
+/**
+ * Remove the old cloud_server_template definition.
+ */
+function cloud_update_8111() {
+  // Delete the old cloud_server_template.cloud_server_template_type.aws_cloud.
+  \Drupal::configFactory()
+    ->getEditable('cloud_server_template.cloud_server_template_type.aws_cloud')
+    ->delete();
+  // Uninstall the cloud_server_template module.
+  \Drupal::service('module_installer')->uninstall(['cloud_server_template']);
+}
+
+/**
+ * Update the cloud server template and cloud listing views.
+ */
+function cloud_update_8112() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_listing.yml',
+    'views.view.server_template_listing.yml',
+  ]);
+}
+
+/**
+ * Yml files to update for cloud server template move.
+ *
+ * @return array
+ *   An array of YAML files
+ */
+function cloud_get_server_template_yml_to_update() {
+  return [
+    'cloud.cloud_server_template_type.aws_cloud.yml',
+    'core.entity_form_display.cloud_server_template.aws_cloud.default.yml',
+    'core.entity_view_display.cloud_server_template.aws_cloud.default.yml',
+    'field.field.cloud_server_template.aws_cloud.field_availability_zone.yml',
+    'field.storage.cloud_server_template.field_availability_zone.yml',
+    'field.field.cloud_server_template.aws_cloud.field_description.yml',
+    'field.storage.cloud_server_template.field_description.yml',
+    'field.field.cloud_server_template.aws_cloud.field_iam_role.yml',
+    'field.storage.cloud_server_template.field_iam_role.yml',
+    'field.field.cloud_server_template.aws_cloud.field_image_id.yml',
+    'field.storage.cloud_server_template.field_image_id.yml',
+    'field.field.cloud_server_template.aws_cloud.field_instance_shutdown_behavior.yml',
+    'field.storage.cloud_server_template.field_instance_shutdown_behavior.yml',
+    'field.field.cloud_server_template.aws_cloud.field_instance_type.yml',
+    'field.storage.cloud_server_template.field_instance_type.yml',
+    'field.field.cloud_server_template.aws_cloud.field_kernel_id.yml',
+    'field.storage.cloud_server_template.field_kernel_id.yml',
+    'field.field.cloud_server_template.aws_cloud.field_max_count.yml',
+    'field.storage.cloud_server_template.field_max_count.yml',
+    'field.field.cloud_server_template.aws_cloud.field_min_count.yml',
+    'field.storage.cloud_server_template.field_min_count.yml',
+    'field.field.cloud_server_template.aws_cloud.field_monitoring.yml',
+    'field.storage.cloud_server_template.field_monitoring.yml',
+    'field.field.cloud_server_template.aws_cloud.field_network.yml',
+    'field.storage.cloud_server_template.field_network.yml',
+    'field.field.cloud_server_template.aws_cloud.field_ram.yml',
+    'field.storage.cloud_server_template.field_ram.yml',
+    'field.field.cloud_server_template.aws_cloud.field_schedule.yml',
+    'field.storage.cloud_server_template.field_schedule.yml',
+    'field.field.cloud_server_template.aws_cloud.field_security_group.yml',
+    'field.storage.cloud_server_template.field_security_group.yml',
+    'field.field.cloud_server_template.aws_cloud.field_ssh_key.yml',
+    'field.storage.cloud_server_template.field_ssh_key.yml',
+    'field.field.cloud_server_template.aws_cloud.field_subnet.yml',
+    'field.storage.cloud_server_template.field_subnet.yml',
+    'field.field.cloud_server_template.aws_cloud.field_tags.yml',
+    'field.storage.cloud_server_template.field_tags.yml',
+    'field.field.cloud_server_template.aws_cloud.field_termination_protection.yml',
+    'field.storage.cloud_server_template.field_termination_protection.yml',
+    'field.field.cloud_server_template.aws_cloud.field_test_only.yml',
+    'field.storage.cloud_server_template.field_test_only.yml',
+    'field.field.cloud_server_template.aws_cloud.field_user_data.yml',
+    'field.storage.cloud_server_template.field_user_data.yml',
+    'field.field.cloud_server_template.aws_cloud.field_vpc.yml',
+    'field.storage.cloud_server_template.field_vpc.yml',
+  ];
+}
+
+/**
+ * Update cloud_list and server_template_listing view's yml files.
+ */
+function cloud_update_8113() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_listing.yml',
+    'views.view.server_template_listing.yml',
+  ]);
+}
+
+/**
+ * Change cloud_list and server_template_listing view's IDs and yml file names.
+ */
+function cloud_update_8114() {
+  $view_ids = [
+    'cloud_listing',
+    'server_template_listing',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_service_providers.yml',
+    'views.view.cloud_server_templates.yml',
+  ]);
+}
+
+/**
+ * Change view's IDs and yml file names.
+ */
+function cloud_update_8115() {
+  $view_ids = [
+    'cloud_service_providers',
+    'cloud_server_templates',
+  ];
+
+  \Drupal::service('cloud')->deleteViews($view_ids);
+
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+    'views.view.cloud_server_template.yml',
+  ]);
+}
+
+/**
+ * Add multiple cloud service provider (CloudConfig) delete action.
+ *
+ * Update view cloud_config, add cloud_config_delete_action.
+ */
+function cloud_update_8116() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+    'system.action.cloud_config_delete_action.yml',
+  ]);
+
+}
+
+/**
+ * Update cloud service providers (CloudConfig) view.
+ */
+function cloud_update_8117() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+  ]);
+
+}
+
+/**
+ * Update cloud service providers (CloudConfig) view permissions.
+ */
+function cloud_update_8118() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+  ]);
+
+}
+
+/**
+ * Update server_template_listing view's yml files.
+ */
+function cloud_update_8119() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_server_template.yml',
+  ]);
+
+}
+
+/**
+ * Migrate cloud service provider and cloud server template permissions.
+ *
+ * Backup database before performing this update!
+ */
+function cloud_update_8120() {
+
+  $permission_map = [
+    'view all cloud config entities' => 'view all cloud service providers',
+    'view cloud config admin list' => 'view cloud service provider admin list',
+    'add cloud config entities' => 'add cloud service providers',
+    'administer cloud config entities' => 'administer cloud service providers',
+    'delete cloud config entities' => 'delete cloud service providers',
+    'delete own cloud config entities' => 'delete own cloud service providers',
+    'edit cloud config entities' => 'edit cloud service providers',
+    'edit own cloud config entities' => 'edit own cloud service providers',
+    'view published cloud config entities' => 'view published cloud service providers',
+    'view own published cloud config entities' => 'view own published cloud service providers',
+    'view unpublished cloud config entities' => 'view unpublished cloud service providers',
+    'view own unpublished cloud config entities' => 'view own unpublished cloud service providers',
+    'view all cloud config revisions' => 'view all cloud service provider revisions',
+    'revert all cloud config revisions' => 'revert all cloud service provider revisions',
+    'delete all cloud config revisions' => 'delete all cloud service provider revisions',
+    'add cloud server template entities' => 'add cloud server templates',
+    'administer cloud server template entities' => 'administer cloud server templates',
+    'delete any cloud server template entities' => 'delete any cloud server templates',
+    'delete own cloud server template entities' => 'delete own cloud server templates',
+    'edit any cloud server template entities' => 'edit any cloud server templates',
+    'edit own cloud server template entities' => 'edit own cloud server templates',
+    'view any published cloud server template entities' => 'view any published cloud server templates',
+    'view own published cloud server template entities' => 'view own published cloud server templates',
+    'view any unpublished cloud server template entities' => 'view any unpublished cloud server templates',
+    'view own unpublished cloud server template entities' => 'view own unpublished cloud server templates',
+    'launch server template' => 'launch cloud server template',
+  ];
+
+  \Drupal::service('cloud')->updatePermissions($permission_map);
+}
+
+/**
+ * Add multiple cloud server template delete action.
+ */
+function cloud_update_8121() {
+  \Drupal::service('cloud')->updateYmlDefinitions(['system.action.cloud_server_template_delete_action.yml'], 'cloud');
+}
+
+/**
+ * Add fields about Locaion to cloud_config.
+ */
+function cloud_update_8122() {
+  // Add new fields.
+  $fields = [
+    'field_location_country',
+    'field_location_city',
+    'field_location_latitude',
+    'field_location_longitude',
+  ];
+
+  $config_path = realpath(drupal_get_path('module', 'cloud')) . '/config/install';
+  $source      = new FileStorage($config_path);
+
+  foreach ($fields ?: [] as $field) {
+    // Obtain the storage manager for field_storage_config entity type, then
+    // create a new field from the yaml configuration and save.
+    \Drupal::entityTypeManager()->getStorage('field_storage_config')
+      ->create($source->read("field.storage.cloud_config.$field"))
+      ->save();
+  }
+
+  $filename = $config_path . '/cloud.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values)) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('cloud.settings');
+      foreach ($values ?: [] as $key => $value) {
+        $config->set($key, $value);
+      }
+      $config->save();
+    }
+  }
+
+}
+
+/**
+ * Update cloud service providers (CloudConfig) list view column name.
+ */
+function cloud_update_8123() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+  ]);
+}
+
+/**
+ * Add icon field to cloud_config.
+ */
+function cloud_update_8124() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  $field = BaseFieldDefinition::create('image')
+    ->setLabel(t('Icon'))
+    ->setDescription(t('Icon representing the cloud service provider.'))
+    ->setSettings([
+      'file_directory' => 'IMAGE_FOLDER',
+      'alt_field_required' => FALSE,
+      'file_extensions' => 'png jpg jpeg',
+    ])
+    ->setDisplayOptions('view', [
+      'label' => 'hidden',
+      'type' => 'image',
+      'settings' => [
+        'image_style' => 'icon',
+      ],
+      'weight' => 0,
+    ])
+    ->setDisplayOptions('form', [
+      'type' => 'image_image',
+      'weight' => -3,
+    ])
+    ->setDisplayConfigurable('form', TRUE)
+    ->setDisplayConfigurable('view', TRUE);
+
+  $definition_update_manager->installFieldStorageDefinition(
+    'image',
+    'cloud_config',
+    'cloud',
+    $field
+  );
+
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'image.style.icon.yml',
+    'views.view.cloud_config.yml',
+  ]);
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Set default geocoder plugin of cloud.settings.
+ */
+function cloud_update_8125() {
+
+  $config_path = realpath(drupal_get_path('module', 'cloud')) . '/config/install';
+
+  $filename = $config_path . '/cloud.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values) && isset($values['cloud_location_geocoder_plugin'])) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('cloud.settings');
+      $config->set('cloud_location_geocoder_plugin', $values['cloud_location_geocoder_plugin']);
+      $config->save();
+    }
+  }
+
+}
+
+/**
+ * Update cloud config view.
+ */
+function cloud_update_8126() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'views.view.cloud_config.yml',
+    'image.style.icon_16x16.yml',
+    'image.style.icon_32x32.yml',
+  ]);
+}
+
+/**
+ * Flush all caches to rebuild menus.
+ */
+function cloud_update_8127() {
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add launch resources field to cloud_server_template.
+ */
+function cloud_update_8128() {
+  // Moved the field.storage.cloud_server_template.field_launch_resources.yml
+  // to k8s module.
+  // See also cloud_update_8131.
+}
+
+/**
+ * Update cloud config icons.
+ */
+function cloud_update_8129() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'image.style.icon.yml',
+    'image.style.icon_16x16.yml',
+    'image.style.icon_32x32.yml',
+  ]);
+}
+
+/**
+ * Set cloud_config field values.
+ */
+function cloud_update_8130() {
+  $config_path = realpath(drupal_get_path('module', 'cloud')) . '/config/install';
+
+  $filename = $config_path . '/cloud.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values)) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('cloud.settings');
+      foreach ($values as $key => $value) {
+        $config->set($key, $value);
+      }
+      $config->save();
+    }
+  }
+}
+
+/**
+ * Remove launch resources field to cloud_server_template.
+ */
+function cloud_update_8131() {
+  \Drupal::configFactory()
+    ->getEditable('field.storage.cloud_server_template.field_launch_resources')
+    ->delete();
+}
+
+/**
+ * Change the label of cloud server template to launch template.
+ */
+function cloud_update_8132() {
+  \Drupal::service('cloud')->updateYmlDefinitions([
+    'system.action.cloud_server_template_delete_action.yml',
+    'views.view.cloud_server_template.yml',
+  ], 'cloud');
+}
+
+/**
+ * Add cloud_project and cloud_project_delete_action's view yml files.
+ */
+function cloud_update_8133() {
+  // Add entity type cloud_project.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('cloud_project');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add cloud_project and delete_action.
+  $files = [
+    'views.view.cloud_project.yml',
+    'system.action.cloud_project_delete_action.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'cloud');
+}
+
+/**
+ * Fix Storage classes location for cloud_config and cloud_server_template.
+ *
+ * Add missing cloud_project_type entity definition.
+ *
+ * Update singular and plural label annotation.
+ */
+function cloud_update_8134() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+
+  // Add cloud_project_type to entity definition.
+  $project_type = \Drupal::entityTypeManager()->getDefinition('cloud_project_type');
+  if (!empty($project_type)) {
+    $definition_update_manager->uninstallEntityType($project_type);
+    $definition_update_manager->installEntityType($project_type);
+  }
+
+  // Fix storage handler location for cloud_config.
+  $cloud_config = $definition_update_manager->getEntityType('cloud_config');
+  $cloud_config->setHandlerClass('storage', 'Drupal\cloud\Entity\CloudConfigStorage');
+  $cloud_config->setHandlerClass('translation', 'Drupal\cloud\Entity\CloudConfigStorage');
+  $definition_update_manager->updateEntityType($cloud_config);
+
+  // Fix storage handler class location for cloud_server_template.
+  $server_template = $definition_update_manager->getEntityType('cloud_server_template');
+  $server_template->setHandlerClass('storage', 'Drupal\cloud\Entity\CloudServerTemplateStorage');
+  $server_template->setHandlerClass('translation', 'Drupal\cloud\Entity\CloudServerTemplateTranslationHandler');
+  $definition_update_manager->updateEntityType($server_template);
+
+  $entities = [
+    'cloud_config',
+    'cloud_config_type',
+    'cloud_project',
+    'cloud_project_type',
+    'cloud_server_template',
+    'cloud_server_template_type',
+  ];
+
+  foreach ($entities ?: [] as $entity) {
+    $type = $definition_update_manager->getEntityType($entity);
+    $label = $type->getLabel();
+    $id = $type->id();
+    $id_plural = "${id}s";
+    $label_plural = "${label}s";
+    $type->set('id_plural', $id_plural);
+    $type->set('label_singular', $label);
+    $type->set('label_plural', $label_plural);
+    $definition_update_manager->updateEntityType($type);
+  }
+
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function cloud_update_8135() {
+
+  $annotations = [
+    'cloud_project' => [
+      'id_plural' => 'cloud_projects',
+      'label' => 'Cloud Project',
+      'label_collection' => 'Cloud Projects',
+      'label_singular' => 'cloud project',
+      'label_plural' => 'cloud projects',
+    ],
+    'cloud_server_template_type' => [
+      'id_plural' => 'cloud_server_template_types',
+      'label' => 'Launch Template Type',
+      'label_collection' => 'Launch Template Types',
+      'label_singular' => 'launch template type',
+      'label_plural' => 'launch template types',
+    ],
+    'cloud_project_type' => [
+      'id_plural' => 'cloud_project_types',
+      'label' => 'Cloud Project Type',
+      'label_collection' => 'Cloud Project Types',
+      'label_singular' => 'cloud project type',
+      'label_plural' => 'cloud project types',
+    ],
+    'cloud_config_type' => [
+      'id_plural' => 'cloud_config_types',
+      'label' => 'Cloud Service Provider Type',
+      'label_collection' => 'Cloud Service Provider Types',
+      'label_singular' => 'cloud service provider type',
+      'label_plural' => 'cloud service provider types',
+    ],
+    'cloud_config' => [
+      'id_plural' => 'cloud_configs',
+      'label' => 'Cloud Service Provider',
+      'label_collection' => 'Cloud Service Providers',
+      'label_singular' => 'cloud service provider',
+      'label_plural' => 'cloud service providers',
+    ],
+    'cloud_server_template' => [
+      'id_plural' => 'cloud_server_templates',
+      'label' => 'Launch Template',
+      'label_collection' => 'Launch Templates',
+      'label_singular' => 'launch template',
+      'label_plural' => 'launch templates',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Clear all caches for the Service and Plugin class changes.
+ */
+function cloud_update_8136() {
+  drupal_flush_all_caches();
+}
+
+/**
+ * Clear all caches for the Service and Plugin class changes.
+ */
+function cloud_update_8137() {
+  drupal_flush_all_caches();
+}
+
+/**
+ * Add configuration items for C3 library.
+ */
+function cloud_update_8138() {
+  $config_factory = \Drupal::configFactory();
+  $config = $config_factory->getEditable('cloud.settings');
+  $config->set('cloud_custom_c3_js_url', 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.js');
+  $config->set('cloud_custom_c3_css_url', 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.css');
+  $config->save();
+}
+
+/**
+ * Create an entity of the default provider to use geocoder.
+ */
+function cloud_update_8139() {
+  // Initialize the geocoder provider.
+  $cloud_service = Drupal::getContainer()->get('cloud');
+  $cloud_service->initGeocoder();
+}

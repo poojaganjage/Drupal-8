@@ -1,0 +1,9 @@
+# cloud_server_template_plugin plugin definitions.
+# Plugin property $defaults are defined in CloudServerTemplatePluginManager.
+openstack.cloud_server_template:
+  id: openstack
+  entity_type: cloud_server_template
+  entity_bundle: openstack
+  cloud_config_bundle: openstack
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudServerTemplateCloudContextBundleDeriver'
+  class: 'Drupal\openstack\Plugin\cloud\server_template\OpenStackServerTemplatePlugin'

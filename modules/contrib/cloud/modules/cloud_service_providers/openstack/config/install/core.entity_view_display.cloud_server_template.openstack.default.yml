@@ -1,0 +1,212 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.openstack
+    - field.field.cloud_server_template.openstack.field_os_availability_zone
+    - field.field.cloud_server_template.openstack.field_description
+    - field.field.cloud_server_template.openstack.field_openstack_image_id
+    - field.field.cloud_server_template.openstack.field_instance_shutdown_behavior
+    - field.field.cloud_server_template.openstack.field_instance_type
+    - field.field.cloud_server_template.openstack.field_kernel_id
+    - field.field.cloud_server_template.openstack.field_max_count
+    - field.field.cloud_server_template.openstack.field_min_count
+    - field.field.cloud_server_template.openstack.field_monitoring
+    - field.field.cloud_server_template.openstack.field_openstack_network
+    - field.field.cloud_server_template.openstack.field_ram
+    - field.field.cloud_server_template.openstack.field_openstack_security_group
+    - field.field.cloud_server_template.openstack.field_openstack_ssh_key
+    - field.field.cloud_server_template.openstack.field_openstack_subnet
+    - field.field.cloud_server_template.openstack.field_test_only
+    - field.field.cloud_server_template.openstack.field_user_data
+    - field.field.cloud_server_template.openstack.field_openstack_vpc
+    - field.field.cloud_server_template.openstack.field_termination_protection
+    - field.field.cloud_server_template.openstack.field_tags
+    - field.field.cloud_server_template.openstack.field_version
+  module:
+    - cloud
+    - options
+    - user
+  enforced:
+    module:
+      - openstack
+id: cloud_server_template.openstack.default
+targetEntityType: cloud_server_template
+bundle: openstack
+mode: default
+content:
+  field_os_availability_zone:
+    weight: 15
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_description:
+    weight: 3
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: basic_string
+    region: content
+  field_openstack_image_id:
+    weight: 4
+    label: inline
+    settings:
+      target_type: openstack_image
+      field_name: image_id
+      html_generator_class: Drupal\cloud\Service\Util\EntityLinkWithNameHtmlGenerator
+      comma_separated: false
+    third_party_settings: {  }
+    type: entity_link
+    region: content
+  field_instance_shutdown_behavior:
+    weight: 13
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_instance_type:
+    weight: 14
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: instance_type_link_formatter
+    region: content
+  field_kernel_id:
+    weight: 7
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_max_count:
+    weight: 6
+    label: inline
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_min_count:
+    weight: 5
+    label: inline
+    settings:
+      thousand_separator: ''
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_integer
+    region: content
+  field_monitoring:
+    weight: 12
+    label: inline
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  field_openstack_network:
+    weight: 16
+    label: inline
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_ram:
+    weight: 8
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_openstack_security_group:
+    weight: 11
+    label: inline
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_openstack_ssh_key:
+    weight: 9
+    label: inline
+    settings:
+      link: true
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_openstack_subnet:
+    weight: 17
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_test_only:
+    weight: 2
+    label: inline
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  field_user_data:
+    weight: 10
+    label: above
+    settings: {  }
+    third_party_settings: {  }
+    type: pre_string_formatter
+    region: content
+  field_openstack_vpc:
+    weight: 18
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_termination_protection:
+    weight: 19
+    label: inline
+    settings:
+      format: default
+      format_custom_false: ''
+      format_custom_true: ''
+    third_party_settings: {  }
+    type: boolean
+    region: content
+  name:
+    label: hidden
+    type: string
+    weight: 0
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  uid:
+    label: inline
+    type: author
+    weight: 1
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_tags:
+    label: hidden
+    type: key_value_formatter
+    weight: 0
+    region: content
+    settings:
+      value_converter_class: Drupal\aws_cloud\Plugin\Field\Util\AwsCloudValueConverter
+    third_party_settings: {  }
+hidden:
+  field_version: true

@@ -1,0 +1,13 @@
+name: 'Cloud Budget'
+type: module
+description: 'Allows users to manage Cloud Budget.'
+package: Cloud
+core_version_requirement: ^8.8 || ^9
+configure: cloud_budget.settings
+dependencies:
+  - cloud:cloud
+
+# Information added by Drupal.org packaging script on 2020-07-30
+version: '3.x-dev'
+project: 'cloud'
+datestamp: 1596085889

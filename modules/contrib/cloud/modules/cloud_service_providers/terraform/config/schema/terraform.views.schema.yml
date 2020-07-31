@@ -1,0 +1,7 @@
+views.field.workspace_bulk_form:
+  type: views_field_bulk_form
+  label: 'Workspace bulk form'
+
+views.field.variable_bulk_form:
+  type: views_field_bulk_form
+  label: 'Variable bulk form'

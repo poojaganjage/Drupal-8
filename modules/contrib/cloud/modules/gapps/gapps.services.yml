@@ -1,0 +1,10 @@
+services:
+  gapps.google_spreadsheet:
+    class: Drupal\gapps\Service\GoogleSpreadsheetService
+    arguments: ['@config.factory']
+
+  plugin.manager.google_spreadsheet_updater:
+    class: Drupal\gapps\Plugin\gapps\GoogleSpreadsheetUpdaterManager
+    parent: default_plugin_manager
+    tags:
+      - { name: plugin_manager_cache_clear }

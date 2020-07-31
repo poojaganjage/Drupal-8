@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_use_switch_role
+id: cloud_config.aws_cloud.field_use_switch_role
+field_name: field_use_switch_role
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Use Switch Role'
+description: 'Switch to another IAM roles after assuming role.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

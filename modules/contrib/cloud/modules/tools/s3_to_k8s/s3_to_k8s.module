@@ -1,0 +1,355 @@
+<?php
+
+/**
+ * @file
+ * S3 to K8s module.
+ *
+ * This module import definitions of K8s resources from Amazon S3 bucket.
+ */
+
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Messenger\Messenger;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function s3_to_k8s_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.s3_to_k8s':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The S3 to K8s module allows users to support the migration from K8s to the other K8s via S3 bucket.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the S3 to K8s module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+      return $output;
+
+    default:
+      return '';
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function s3_to_k8s_cron() {
+  $logger = \Drupal::logger('s3_to_k8s');
+  $config = \Drupal::config('s3_to_k8s.settings');
+
+  $aws_cloud_context = $config->get('aws_cloud');
+  if (empty($aws_cloud_context)) {
+    $logger->error('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.');
+    return;
+  }
+
+  $s3_bucket = $config->get('s3_bucket');
+  if (empty($s3_bucket)) {
+    $logger->error('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.');
+    return;
+  }
+
+  $s3_path = $config->get('s3_path');
+  if (empty($s3_path)) {
+    $logger->error('The configuration s3_path is empty. Please input a S3 Path in admin setting page.');
+    return;
+  }
+
+  $k8s_cloud_context = $k8s_cloud_context = $config->get('k8s_cluster') === 'Automatic'
+    ? s3_to_k8s_select_minimum_resource_cluster()
+    : $config->get('k8s_cluster');
+  if (empty($k8s_cloud_context)) {
+    $logger->error('The configuration k8s_cluster is empty. Please select K8s Cluster in admin setting page.');
+    return;
+  }
+
+  $s3_service = \Drupal::service('aws_cloud.s3');
+  $s3_service->setCloudContext($aws_cloud_context);
+  $result = $s3_service->listObjects([
+    'Bucket' => $s3_bucket,
+    'Prefix' => $s3_path,
+  ]);
+
+  if (empty($result['Contents'])) {
+    return;
+  }
+
+  // Update resources.
+  k8s_update_resources($k8s_cloud_context);
+
+  $entity_types = k8s_get_exportable_entity_types();
+
+  foreach ($entity_types ?: [] as $entity_type) {
+    s3_to_k8s_import_entities($entity_type, $aws_cloud_context, $s3_bucket, $s3_path, $k8s_cloud_context, $result['Contents']);
+  }
+
+  // Delete entities.
+  $s3_path = $s3_path . '.delete';
+  $s3_service->setCloudContext($aws_cloud_context);
+  $result = $s3_service->listObjects([
+    'Bucket' => $s3_bucket,
+    'Prefix' => $s3_path,
+  ]);
+
+  if (empty($result['Contents'])) {
+    return;
+  }
+
+  foreach ($entity_types ?: [] as $entity_type) {
+    s3_to_k8s_delete_entities($entity_type, $aws_cloud_context, $s3_bucket, $s3_path, $k8s_cloud_context, $result['Contents']);
+  }
+
+  // Update resources.
+  k8s_update_resources($k8s_cloud_context);
+}
+
+/**
+ * Import entities.
+ *
+ * @param string $entity_type
+ *   The entity type.
+ * @param string $aws_cloud_context
+ *   The cloud context of aws cloud.
+ * @param string $s3_bucket
+ *   The S3 bucket.
+ * @param string $s3_path
+ *   The path of S3 bucket.
+ * @param string $k8s_cloud_context
+ *   The cloud context of K8s cluster.
+ * @param array $objects
+ *   The S3 objects.
+ */
+function s3_to_k8s_import_entities($entity_type, $aws_cloud_context, $s3_bucket, $s3_path, $k8s_cloud_context, array $objects) {
+  $entity_map = [];
+  $entities = \Drupal::entityTypeManager()
+    ->getStorage($entity_type)
+    ->loadByProperties(['cloud_context' => $k8s_cloud_context]);
+  foreach ($entities ?: [] as $entity) {
+    $key = $entity->getName();
+    if ($entity_type !== 'k8s_namespace') {
+      $key = "{$entity->getNamespace()}:{$entity->getName()}";
+    }
+    $entity_map[$key] = $entity;
+  }
+
+  $entity_objects = [];
+  foreach ($objects ?: [] as $object) {
+    if ($entity_type === 'k8s_namespace') {
+      if (preg_match("@^{$s3_path}/k8s_namespace/(.*).yaml$@", $object['Key'], $matches)) {
+        $entity_objects[$matches[1]] = $object;
+      }
+    }
+    else {
+      if (preg_match("@^{$s3_path}/{$entity_type}/(.*)/(.*).yaml$@", $object['Key'], $matches)) {
+        $entity_objects["{$matches[1]}:{$matches[2]}"] = $object;
+      }
+    }
+  }
+
+  $s3_service = \Drupal::service('aws_cloud.s3');
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($entity_objects ?: [] as $key => $object) {
+    if (!empty($entity_map[$key])) {
+      continue;
+    }
+
+    $s3_service->setCloudContext($aws_cloud_context);
+    $result = $s3_service->getObject([
+      'Bucket' => $s3_bucket,
+      'Key' => $object['Key'],
+    ]);
+    $length = $result['ContentLength'];
+    $result['Body']->rewind();
+    $data = $result['Body']->read($length);
+
+    $k8s_service->setCloudContext($k8s_cloud_context);
+    $params = Yaml::decode($data);
+
+    if ($entity_type === 'k8s_namespace') {
+      $result = $k8s_service->createNamespace($params);
+    }
+    else {
+      $parts = explode(':', $key);
+      $namespace = $parts[0];
+
+      // Get create method name.
+      $underscore = substr($entity_type, strlen('k8s_'));
+      $camel_case = str_replace(' ', '', ucwords(str_replace('_', ' ', $underscore)));
+      $create_method = "create{$camel_case}";
+      $result = $k8s_service->$create_method($namespace, $params);
+    }
+
+    $object_key = $object['Key'];
+    if (empty($result)) {
+      // Output error messages in messenger to the logger.
+      $messages = \Drupal::messenger()->messagesByType(Messenger::TYPE_ERROR);
+      foreach ($messages ?: [] as $message) {
+        \Drupal::logger('s3_to_k8s')->error($message);
+      }
+      \Drupal::logger('s3_to_k8s')->error("Failed to import an entity from s3://$s3_bucket/$object_key.");
+    }
+    else {
+      \Drupal::logger('s3_to_k8s')->info("Succeeded to import an entity from s3://$s3_bucket/$object_key.");
+    }
+  }
+}
+
+/**
+ * Delete entities.
+ *
+ * @param string $entity_type
+ *   The entity type.
+ * @param string $aws_cloud_context
+ *   The cloud context of aws cloud.
+ * @param string $s3_bucket
+ *   The S3 bucket.
+ * @param string $s3_path
+ *   The path of S3 bucket.
+ * @param string $k8s_cloud_context
+ *   The cloud context of K8s cluster.
+ * @param array $objects
+ *   The S3 objects.
+ */
+function s3_to_k8s_delete_entities($entity_type, $aws_cloud_context, $s3_bucket, $s3_path, $k8s_cloud_context, array $objects) {
+  $entity_map = [];
+  $entities = \Drupal::entityTypeManager()
+    ->getStorage($entity_type)
+    ->loadByProperties(['cloud_context' => $k8s_cloud_context]);
+  foreach ($entities ?: [] as $entity) {
+    $key = $entity->getName();
+    if ($entity_type !== 'k8s_namespace') {
+      $key = "{$entity->getNamespace()}:{$entity->getName()}";
+    }
+    $entity_map[$key] = $entity;
+  }
+
+  $entity_objects = [];
+  foreach ($objects ?: [] as $object) {
+    if ($entity_type === 'k8s_namespace') {
+      if (preg_match("@^{$s3_path}/k8s_namespace/(.*).yaml$@", $object['Key'], $matches)) {
+        $entity_objects[$matches[1]] = $object;
+      }
+    }
+    else {
+      if (preg_match("@^{$s3_path}/{$entity_type}/(.*)/(.*).yaml$@", $object['Key'], $matches)) {
+        $entity_objects["{$matches[1]}:{$matches[2]}"] = $object;
+      }
+    }
+  }
+
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($k8s_cloud_context);
+  foreach ($entity_objects ?: [] as $key => $object) {
+    if (empty($entity_map[$key])) {
+      continue;
+    }
+
+    $entity = $entity_map[$key];
+    $params = [
+      'metadata' => [
+        'name' => $entity->getName(),
+      ],
+    ];
+    if ($entity_type === 'k8s_namespace') {
+      $result = $k8s_service->deleteNamespace($params);
+    }
+    else {
+      $parts = explode(':', $key);
+      $namespace = $parts[0];
+
+      // Get delete method name.
+      $underscore = substr($entity_type, strlen('k8s_'));
+      $camel_case = str_replace(' ', '', ucwords(str_replace('_', ' ', $underscore)));
+      $delete_method = "delete{$camel_case}";
+      $result = $k8s_service->$delete_method($namespace, $params);
+    }
+
+    $object_key = $object['Key'];
+    if (empty($result)) {
+      // Output error messages in messenger to the logger.
+      $messages = \Drupal::messenger()->messagesByType(Messenger::TYPE_ERROR);
+      foreach ($messages ?: [] as $message) {
+        \Drupal::logger('s3_to_k8s')->error($message);
+      }
+      \Drupal::logger('s3_to_k8s')->error("Failed to delete an entity corresponding to s3://$s3_bucket/$object_key.");
+    }
+    else {
+      \Drupal::logger('s3_to_k8s')->info("Succeeded to delete an entity corresponding to s3://$s3_bucket/$object_key.");
+    }
+  }
+}
+
+/**
+ * Select a K8s cluser of the minium resource usage.
+ */
+function s3_to_k8s_select_minimum_resource_cluster() {
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('k8s');
+
+  $cloud_contexts = array_map(static function ($entity) {
+    return $entity->getCloudContext();
+  }, $entities);
+  if (empty($cloud_contexts)) {
+    return;
+  }
+
+  $weight_pods = 0.5;
+  $weight_memory = 0.25;
+  $weight_cpu = 0.25;
+
+  $response = [];
+  foreach ($cloud_contexts ?: [] as $cloud_context) {
+    // Confirm whether a current user has the permissions or not.
+    $account = \Drupal::currentUser();
+    if (!$account->hasPermission('view all cloud service providers')
+      && !$account->hasPermission('view ' . $cloud_context)) {
+      continue;
+    }
+
+    // Confirm whether the metrics API can be used or not.
+    $k8s_service = \Drupal::service('k8s');
+    if (!empty($cloud_context)) {
+      $k8s_service->setCloudContext($cloud_context);
+      try {
+        $k8s_service->getMetricsNodes();
+      }
+      catch (K8sServiceException $e) {
+        continue;
+      }
+    }
+
+    $nodes = \Drupal::entityTypeManager()
+      ->getStorage('k8s_node')
+      ->loadByProperties([
+        'cloud_context' => $cloud_context,
+      ]);
+
+    $cpu_capacity = array_sum(array_map(static function ($node) {
+      return $node->getCpuCapacity();
+    }, $nodes));
+
+    $cpu_request = array_sum(array_map(static function ($node) {
+      return $node->getCpuRequest();
+    }, $nodes));
+
+    $memory_capacity = array_sum(array_map(static function ($node) {
+      return $node->getMemoryCapacity();
+    }, $nodes));
+
+    $memory_request = array_sum(array_map(static function ($node) {
+      return $node->getMemoryRequest();
+    }, $nodes));
+
+    $pods_capacity = array_sum(array_map(static function ($node) {
+      return $node->getPodsCapacity();
+    }, $nodes));
+
+    $pods_allocation = array_sum(array_map(static function ($node) {
+      return $node->getPodsAllocation();
+    }, $nodes));
+
+    $response[$cloud_context] = [
+      'sort_key' => round($cpu_request / $cpu_capacity * $weight_cpu + $memory_request / $memory_capacity * $weight_memory + $pods_allocation / $pods_capacity * $weight_pods, 3),
+    ];
+  }
+
+  $sort_key = array_column($response, 'sort_key');
+  array_multisort($sort_key, SORT_ASC, $response);
+  return array_keys($response)[0];
+}

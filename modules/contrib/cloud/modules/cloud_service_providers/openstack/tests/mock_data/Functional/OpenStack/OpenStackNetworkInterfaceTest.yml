@@ -1,0 +1,5 @@
+CreateNetworkInterface:
+  NetworkInterface:
+    NetworkInterfaceId: {{network_interface_id}}
+    Status: pending
+    VpcId: {{vpc_id}}

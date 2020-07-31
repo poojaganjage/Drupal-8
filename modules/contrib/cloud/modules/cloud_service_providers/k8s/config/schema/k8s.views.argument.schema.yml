@@ -1,0 +1,10 @@
+views.argument.k8s_node_id:
+  type: views_argument
+  label: 'Node'
+  mapping:
+    break_phrase:
+      type: boolean
+      label: 'Allow multiple values'
+    not:
+      type: boolean
+      label: 'Exclude'

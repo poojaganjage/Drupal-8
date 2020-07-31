@@ -1,0 +1,6 @@
+CreateVpcPeeringConnection:
+  VpcPeeringConnection:
+    VpcPeeringConnectionId: {{vpc_peering_connection_id}}
+AcceptVpcPeeringConnection:
+  VpcPeeringConnection:
+    VpcPeeringConnectionId: {{vpc_peering_connection_id}}

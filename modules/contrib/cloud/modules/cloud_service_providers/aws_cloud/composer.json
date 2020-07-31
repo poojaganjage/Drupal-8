@@ -1,0 +1,13 @@
+{
+  "name": "drupal/aws_cloud",
+  "require": {
+    "aws/aws-sdk-php": "3.*.*@dev"
+  },
+  "extra": {
+    "drush": {
+      "services": {
+        "drush.services.yml": "^9"
+      }
+    }
+  }
+}

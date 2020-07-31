@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies: 
+  module:
+    - image
+  enforced:
+    module:
+      - cloud
+name: icon_16x16
+label: 'Icon (16x16)'
+effects:
+  e87d68b3-7ca1-4b98-958d-7f9e1bcb1d22:
+    uuid: e87d68b3-7ca1-4b98-958d-7f9e1bcb1d22
+    id: image_resize
+    weight: 1
+    data:
+      width: 16
+      height: 16

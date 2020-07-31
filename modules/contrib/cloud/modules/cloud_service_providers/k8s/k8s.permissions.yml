@@ -1,0 +1,569 @@
+###########
+# Kubernetes
+###########
+administer k8s:
+  title: 'Administer Kubernetes settings'
+  description: 'Perform administration tasks for Kubernetes.'
+
+create k8s project:
+  title: 'Create Kubernetes project'
+  description: 'Create a project for Kubernetes.'
+
+############################
+# K8s Node
+############################
+list k8s node:
+  title: 'List k8s node'
+  description: 'Allow users to list K8s node.'
+view k8s node:
+  title: 'View k8s node'
+  description: 'Allow users to view K8s node.'
+
+############################
+# K8s Namespace
+############################
+
+# Setup permissions based on namespace
+permission_callbacks:
+  - Drupal\k8s\K8sNamespacePermissions::configPermissions
+
+add k8s namespace:
+  title: 'Add K8s namespace'
+  description: 'Allow users to add K8s namespace.'
+list k8s namespace:
+  title: 'List K8s namespace'
+  description: 'Allow users to list K8s namespace.'
+view k8s namespace:
+  title: 'View K8s namespace'
+  description: 'Allow users to view K8s namespace.'
+edit k8s namespace:
+  title: 'Edit K8s namespace'
+  description: 'Allow users to edit K8s namespace.'
+delete k8s namespace:
+  title: 'Delete K8s namespace'
+  description: 'Allow users to delete K8s namespace.'
+
+
+############################
+# K8s Pod
+############################
+add k8s pod:
+  title: 'Add K8s pod'
+  description: 'Allow users to add K8s pod.'
+list k8s pod:
+  title: 'List K8s pod'
+  description: 'Allow users to list K8s pod.'
+view any k8s pod:
+  title: 'View any K8s pod'
+  description: 'Allow users to view any K8s pod.'
+edit any k8s pod:
+  title: 'Edit any K8s pod'
+  description: 'Allow users to edit any K8s pod.'
+delete any k8s pod:
+  title: 'Delete any K8s pod'
+  description: 'Allow users to delete any K8s pod.'
+view own k8s pod:
+  title: 'View own K8s pod'
+  description: 'Allow users to view own K8s pod.'
+edit own k8s pod:
+  title: 'Edit own K8s pod'
+  description: 'Allow users to edit own K8s pod.'
+delete own k8s pod:
+  title: 'Delete own K8s pod'
+  description: 'Allow users to delete own K8s pod.'
+
+
+############################
+# K8s Deployment
+############################
+add k8s deployment:
+  title: 'Add K8s deployment'
+  description: 'Allow users to add K8s deployment.'
+list k8s deployment:
+  title: 'List K8s deployment'
+  description: 'Allow users to list K8s deployment.'
+view any k8s deployment:
+  title: 'View any K8s deployment'
+  description: 'Allow users to view any K8s deployment.'
+edit any k8s deployment:
+  title: 'Edit any K8s deployment'
+  description: 'Allow users to edit any K8s deployment.'
+delete any k8s deployment:
+  title: 'Delete any K8s deployment'
+  description: 'Allow users to delete any K8s deployment.'
+view own k8s deployment:
+  title: 'View own K8s deployment'
+  description: 'Allow users to view own K8s deployment.'
+edit own k8s deployment:
+  title: 'Edit own K8s deployment'
+  description: 'Allow users to edit own K8s deployment.'
+delete own k8s deployment:
+  title: 'Delete own K8s deployment'
+  description: 'Allow users to delete own K8s deployment.'
+
+############################
+# K8s Replica Set
+############################
+add k8s replica set:
+  title: 'Add K8s replica set'
+  description: 'Allow users to add K8s replica set.'
+list k8s replica set:
+  title: 'List K8s replica set'
+  description: 'Allow users to list K8s replica set.'
+view k8s replica set:
+  title: 'View K8s replica set'
+  description: 'Allow users to view K8s replica set.'
+edit k8s replica set:
+  title: 'Edit K8s replica set'
+  description: 'Allow users to edit K8s replica set.'
+delete k8s replica set:
+  title: 'Delete K8s replica set'
+  description: 'Allow users to delete K8s replica set.'
+
+
+############################
+# K8s Service
+############################
+add k8s service:
+  title: 'Add K8s service'
+  description: 'Allow users to add K8s service.'
+list k8s service:
+  title: 'List K8s service'
+  description: 'Allow users to list K8s service.'
+view k8s service:
+  title: 'View K8s service'
+  description: 'Allow users to view K8s service.'
+edit k8s service:
+  title: 'Edit K8s service'
+  description: 'Allow users to edit K8s service.'
+delete k8s service:
+  title: 'Delete K8s service'
+  description: 'Allow users to delete K8s service.'
+
+
+############################
+# K8s Cron Job
+############################
+add k8s cron job:
+  title: 'Add k8s cron job'
+  description: 'Allow users to add k8s cron job.'
+list k8s cron job:
+  title: 'List k8s cron job'
+  description: 'Allow users to list k8s cron job.'
+view k8s cron job:
+  title: 'View k8s cron job'
+  description: 'Allow users to view k8s cron job.'
+edit k8s cron job:
+  title: 'Edit k8s cron job'
+  description: 'Allow users to edit k8s cron job.'
+delete k8s cron job:
+  title: 'Delete k8s cron job'
+  description: 'Allow users to delete k8s cron job.'
+
+
+############################
+# K8s Job
+############################
+add k8s job:
+  title: 'Add k8s job'
+  description: 'Allow users to add k8s job.'
+list k8s job:
+  title: 'List k8s job'
+  description: 'Allow users to list k8s job.'
+view k8s job:
+  title: 'View k8s job'
+  description: 'Allow users to view k8s cron job.'
+edit k8s job:
+  title: 'Edit k8s job'
+  description: 'Allow users to edit k8s job.'
+delete k8s job:
+  title: 'Delete k8s job'
+  description: 'Allow users to delete k8s job.'
+
+
+############################
+# K8s Resource Quota
+############################
+add k8s resource quota:
+  title: 'Add k8s resource quota'
+  description: 'Allow users to add k8s resource quota.'
+list k8s resource quota:
+  title: 'List k8s resource quota'
+  description: 'Allow users to list k8s resource quota.'
+view k8s resource quota:
+  title: 'View k8s resource quota'
+  description: 'Allow users to view k8s resource quota.'
+edit k8s resource quota:
+  title: 'Edit k8s resource quota'
+  description: 'Allow users to edit k8s resource quota.'
+delete k8s resource quota:
+  title: 'Delete k8s resource quota'
+  description: 'Allow users to delete k8s resource quota.'
+
+
+############################
+# K8s Limit Range
+############################
+add k8s limit range:
+  title: 'Add k8s limit range'
+  description: 'Allow users to add k8s limit range.'
+list k8s limit range:
+  title: 'List k8s limit range'
+  description: 'Allow users to list k8s limit range.'
+view k8s limit range:
+  title: 'View k8s limit range'
+  description: 'Allow users to view k8s limit range.'
+edit k8s limit range:
+  title: 'Edit k8s limit range'
+  description: 'Allow users to edit k8s limit range.'
+delete k8s limit range:
+  title: 'Delete k8s limit range'
+  description: 'Allow users to delete k8s limit range.'
+
+
+############################
+# K8s Secret
+############################
+add k8s secret:
+  title: 'Add k8s secret'
+  description: 'Allow users to add k8s secret.'
+list k8s secret:
+  title: 'List k8s secret'
+  description: 'Allow users to list k8s secret.'
+view k8s secret:
+  title: 'View k8s secret'
+  description: 'Allow users to view k8s secret.'
+edit k8s secret:
+  title: 'Edit k8s secret'
+  description: 'Allow users to edit k8s secret.'
+delete k8s secret:
+  title: 'Delete k8s secret'
+  description: 'Allow users to delete k8s secret.'
+
+
+############################
+# K8s ConfigMap
+############################
+add k8s configmap:
+  title: 'Add k8s ConfigMap'
+  description: 'Allow users to add k8s ConfigMap.'
+list k8s configmap:
+  title: 'List k8s ConfigMap'
+  description: 'Allow users to list k8s ConfigMap.'
+view k8s configmap:
+  title: 'View k8s ConfigMap'
+  description: 'Allow users to view k8s ConfigMap.'
+edit k8s configmap:
+  title: 'Edit k8s ConfigMap'
+  description: 'Allow users to edit k8s ConfigMap.'
+delete k8s configmap:
+  title: 'Delete k8s ConfigMap'
+  description: 'Allow users to delete k8s ConfigMap.'
+
+
+############################
+# K8s Network Policy
+############################
+add k8s network policy:
+  title: 'Add k8s network policy'
+  description: 'Allow users to add k8s network policy.'
+list k8s network policy:
+  title: 'List k8s network policy'
+  description: 'Allow users to list k8s network policy.'
+view k8s network policy:
+  title: 'View k8s network policy'
+  description: 'Allow users to view k8s network policy.'
+edit k8s network policy:
+  title: 'Edit k8s network policy'
+  description: 'Allow users to edit k8s network policy.'
+delete k8s network policy:
+  title: 'Delete k8s network policy'
+  description: 'Allow users to delete k8s network policy.'
+
+
+############################
+# K8s Role
+############################
+add k8s role:
+  title: 'Add k8s role'
+  description: 'Allow users to add k8s role.'
+list k8s role:
+  title: 'List k8s role'
+  description: 'Allow users to list k8s role.'
+view k8s role:
+  title: 'View k8s role'
+  description: 'Allow users to view k8s role.'
+edit k8s role:
+  title: 'Edit k8s role'
+  description: 'Allow users to edit k8s role.'
+delete k8s role:
+  title: 'Delete k8s role'
+  description: 'Allow users to delete k8s role.'
+
+
+############################
+# K8s Cluster Role
+############################
+add k8s cluster role:
+  title: 'Add k8s cluster role'
+  description: 'Allow users to add k8s cluster role.'
+list k8s cluster role:
+  title: 'List k8s cluster role'
+  description: 'Allow users to list k8s cluster role.'
+view k8s cluster role:
+  title: 'View k8s cluster role'
+  description: 'Allow users to view k8s cluster role.'
+edit k8s cluster role:
+  title: 'Edit k8s cluster role'
+  description: 'Allow users to edit k8s cluster role.'
+delete k8s cluster role:
+  title: 'Delete k8s cluster role'
+  description: 'Allow users to delete k8s cluster role.'
+
+
+############################
+# K8s Persistent Volume
+############################
+add k8s persistent volume:
+  title: 'Add k8s persistent volume'
+  description: 'Allow users to add k8s persistent volume.'
+list k8s persistent volume:
+  title: 'List k8s persistent volume'
+  description: 'Allow users to list k8s persistent volume.'
+view k8s persistent volume:
+  title: 'View k8s persistent volume'
+  description: 'Allow users to view k8s persistent volume.'
+edit k8s persistent volume:
+  title: 'Edit k8s persistent volume'
+  description: 'Allow users to edit k8s persistent volume.'
+delete k8s persistent volume:
+  title: 'Delete k8s persistent volume'
+  description: 'Allow users to delete k8s persistent volume.'
+
+
+############################
+# K8s Storage Class
+############################
+add k8s storage class:
+  title: 'Add k8s storage class'
+  description: 'Allow users to add k8s storage class.'
+list k8s storage class:
+  title: 'List k8s storage class'
+  description: 'Allow users to list k8s storage class.'
+view k8s storage class:
+  title: 'View k8s storage class'
+  description: 'Allow users to view k8s storage class.'
+edit k8s storage class:
+  title: 'Edit k8s storage class'
+  description: 'Allow users to edit k8s storage class.'
+delete k8s storage class:
+  title: 'Delete k8s storage class'
+  description: 'Allow users to delete k8s storage class.'
+
+
+############################
+# K8s Stateful Set
+############################
+add k8s stateful set:
+  title: 'Add k8s stateful set'
+  description: 'Allow users to add k8s stateful set.'
+list k8s stateful set:
+  title: 'List k8s stateful set'
+  description: 'Allow users to list stateful set.'
+view k8s stateful set:
+  title: 'View k8s stateful set'
+  description: 'Allow users to view k8s stateful set.'
+edit k8s stateful set:
+  title: 'Edit k8s stateful set'
+  description: 'Allow users to edit k8s stateful set.'
+delete k8s stateful set:
+  title: 'Delete k8s stateful set'
+  description: 'Allow users to delete k8s stateful set.'
+
+
+############################
+# K8s Ingress
+############################
+add k8s ingress:
+  title: 'Add k8s ingress'
+  description: 'Allow users to add k8s ingress.'
+list k8s ingress:
+  title: 'List k8s ingress'
+  description: 'Allow users to list k8s ingress.'
+view k8s ingress:
+  title: 'View k8s ingress'
+  description: 'Allow users to view k8s ingress.'
+edit k8s ingress:
+  title: 'Edit k8s ingress'
+  description: 'Allow users to edit k8s ingress.'
+delete k8s ingress:
+  title: 'Delete k8s ingress'
+  description: 'Allow users to delete k8s ingress.'
+
+
+############################
+# K8s Daemon Set
+############################
+add k8s daemon set:
+  title: 'Add k8s daemon set'
+  description: 'Allow users to add k8s daemon set.'
+list k8s daemon set:
+  title: 'List k8s daemon set'
+  description: 'Allow users to list daemon set.'
+view k8s daemon set:
+  title: 'View k8s daemon set'
+  description: 'Allow users to view k8s daemon set.'
+edit k8s daemon set:
+  title: 'Edit k8s daemon set'
+  description: 'Allow users to edit k8s daemon set.'
+delete k8s daemon set:
+  title: 'Delete k8s daemon set'
+  description: 'Allow users to delete k8s daemon set.'
+
+
+############################
+# K8s Endpoint
+############################
+add k8s endpoint:
+  title: 'Add k8s endpoint'
+  description: 'Allow users to add k8s endpoint.'
+list k8s endpoint:
+  title: 'List k8s endpoint'
+  description: 'Allow users to list k8s endpoint.'
+view k8s endpoint:
+  title: 'View k8s endpoint'
+  description: 'Allow users to view k8s endpoint.'
+edit k8s endpoint:
+  title: 'Edit k8s endpoint'
+  description: 'Allow users to edit k8s endpoint.'
+delete k8s endpoint:
+  title: 'Delete k8s endpoint'
+  description: 'Allow users to delete k8s endpoint.'
+
+
+############################
+# K8s Event
+############################
+list k8s event:
+  title: 'List k8s event'
+  description: 'Allow users to list k8s event.'
+view k8s event:
+  title: 'View k8s event'
+  description: 'Allow users to view k8s event.'
+
+
+###############################
+# K8s Persistent Volume Claim
+###############################
+add k8s persistent volume claim:
+  title: 'Add k8s persistent volume claim'
+  description: 'Allow users to add k8s persistent volume claim.'
+list k8s persistent volume claim:
+  title: 'List k8s persistent volume claim'
+  description: 'Allow users to list persistent volume claim.'
+view k8s persistent volume claim:
+  title: 'View k8s persistent volume claim'
+  description: 'Allow users to view k8s persistent volume claim.'
+edit k8s persistent volume claim:
+  title: 'Edit k8s persistent volume claim'
+  description: 'Allow users to edit k8s persistent volume claim.'
+delete k8s persistent volume claim:
+  title: 'Delete k8s persistent volume claim'
+  description: 'Allow users to delete k8s persistent volume claim.'
+
+
+############################
+# K8s Cluster Role Binding
+############################
+add k8s cluster role binding:
+  title: 'Add k8s cluster role binding'
+  description: 'Allow users to add k8s cluster role binding.'
+list k8s cluster role binding:
+  title: 'List k8s cluster role binding'
+  description: 'Allow users to list k8s cluster role binding.'
+view k8s cluster role binding:
+  title: 'View k8s cluster role binding'
+  description: 'Allow users to view k8s cluster role binding.'
+edit k8s cluster role binding:
+  title: 'Edit k8s cluster role binding'
+  description: 'Allow users to edit k8s cluster role binding.'
+delete k8s cluster role binding:
+  title: 'Delete k8s cluster role binding'
+  description: 'Allow users to delete k8s cluster role binding.'
+
+
+############################
+# K8s API Service
+############################
+add k8s api service:
+  title: 'Add k8s API service'
+  description: 'Allow users to add k8s API service.'
+list k8s api service:
+  title: 'List k8s API service'
+  description: 'Allow users to list API service.'
+view k8s api service:
+  title: 'View k8s API service'
+  description: 'Allow users to view k8s API service.'
+edit k8s api service:
+  title: 'Edit k8s API service'
+  description: 'Allow users to edit k8s API service.'
+delete k8s api service:
+  title: 'Delete k8s API service'
+  description: 'Allow users to delete k8s API service.'
+
+############################
+# K8s Role Binding
+############################
+add k8s role binding:
+  title: 'Add k8s role binding'
+  description: 'Allow users to add k8s role binding.'
+list k8s role binding:
+  title: 'List k8s role binding'
+  description: 'Allow users to list k8s role binding.'
+view k8s role binding:
+  title: 'View k8s role binding'
+  description: 'Allow users to view k8s role binding.'
+edit k8s role binding:
+  title: 'Edit k8s role binding'
+  description: 'Allow users to edit k8s role binding.'
+delete k8s role binding:
+  title: 'Delete k8s role binding'
+  description: 'Allow users to delete k8s role binding.'
+
+############################
+# K8s Service Account
+############################
+add k8s service account:
+  title: 'Add k8s service account'
+  description: 'Allow users to add k8s service account.'
+list k8s service account:
+  title: 'List k8s service account'
+  description: 'Allow users to list service account.'
+view k8s service account:
+  title: 'View k8s service account'
+  description: 'Allow users to view k8s service account.'
+edit k8s service account:
+  title: 'Edit k8s service account'
+  description: 'Allow users to edit k8s service account.'
+delete k8s service account:
+  title: 'Delete k8s service account'
+  description: 'Allow users to delete k8s service account.'
+
+############################
+# K8s Priority Class
+############################
+add k8s priority class:
+  title: 'Add k8s priority class'
+  description: 'Allow users to add k8s priority class.'
+list k8s priority class:
+  title: 'List k8s priority class'
+  description: 'Allow users to list priority class.'
+view k8s priority class:
+  title: 'View k8s priority class'
+  description: 'Allow users to view k8s priority class.'
+edit k8s priority class:
+  title: 'Edit k8s priority class'
+  description: 'Allow users to edit k8s priority class.'
+delete k8s priority class:
+  title: 'Delete k8s priority class'
+  description: 'Allow users to delete k8s priority class.'

@@ -1,0 +1,53 @@
+services:
+  aws_cloud.ec2:
+    class: Drupal\aws_cloud\Service\Ec2\Ec2Service
+    arguments: ['@entity_type.manager', '@config.factory', '@current_user', '@plugin.manager.cloud_config_plugin', '@plugin.manager.field.field_type', '@entity_field.manager', '@lock', '@queue']
+
+  aws_cloud.s3:
+    class: Drupal\aws_cloud\Service\S3\S3Service
+    arguments: ['@config.factory', '@plugin.manager.cloud_config_plugin']
+
+  aws_cloud.iam:
+    class: Drupal\aws_cloud\Service\Iam\IamService
+    arguments: ['@config.factory', '@plugin.manager.cloud_config_plugin']
+
+  aws_cloud.ecr:
+    class: Drupal\aws_cloud\Service\Ecr\EcrService
+    arguments: ['@config.factory', '@plugin.manager.cloud_config_plugin']
+
+  aws_cloud.pricing:
+    class: Drupal\aws_cloud\Service\Pricing\PricingService
+    arguments: ['@config.factory', '@plugin.manager.cloud_config_plugin', '@http_client', '@aws_cloud.s3']
+
+  aws_cloud.cloud_watch:
+    class: Drupal\aws_cloud\Service\CloudWatch\CloudWatchService
+    arguments: ['@config.factory', '@plugin.manager.cloud_config_plugin']
+
+  aws_cloud.instance_type_price_data_provider:
+    class: Drupal\aws_cloud\Service\Pricing\InstanceTypePriceDataProvider
+    arguments: ['@aws_cloud.pricing']
+
+  aws_cloud.instance_type_price_table_renderer:
+    class: Drupal\aws_cloud\Service\Pricing\InstanceTypePriceTableRenderer
+    arguments: ['@request_stack', '@aws_cloud.instance_type_price_data_provider']
+
+  aws_cloud.subscriber:
+    class: Drupal\aws_cloud\EventSubscriber\AwsCloudSubscriber
+    arguments: ['@entity_type.manager', '@current_route_match', '@aws_cloud.ec2', '@cache.default', '@plugin.manager.cloud_config_plugin']
+    tags:
+      - { name: event_subscriber }
+
+  aws_cloud.route_subscriber:
+    class: Drupal\aws_cloud\Routing\AwsCloudRouteSubscriber
+    tags:
+      - { name: event_subscriber }
+
+  aws_cloud.access_check.entity_operate_multiple:
+    class: Drupal\aws_cloud\Entity\EntityOperateMultipleAccessCheck
+    arguments: ['@entity_type.manager', '@tempstore.private', '@request_stack']
+    tags:
+      - { name: access_check, applies_to: _entity_operate_multiple_access }
+
+  aws_cloud.low_utilization_instances_checker:
+    class: Drupal\aws_cloud\Service\CloudWatch\LowUtilizationInstanceChecker
+    arguments: ['@aws_cloud.cloud_watch', '@config.factory']

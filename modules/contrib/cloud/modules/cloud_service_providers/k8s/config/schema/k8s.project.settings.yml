@@ -1,0 +1,7 @@
+k8s_startup_time_hour: '00'
+k8s_startup_time_minute: '00'
+k8s_stop_time_hour: '06'
+k8s_stop_time_minute: '00'
+k8s_request_cpu: '500'
+k8s_request_memory: '100'
+k8s_pod_count: '10'

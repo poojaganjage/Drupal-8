@@ -1,0 +1,5 @@
+CreateVpc:
+  Vpc:
+    VpcId: {{vpc_id}}
+# DescribeVpcs:
+#   Vpcs: []

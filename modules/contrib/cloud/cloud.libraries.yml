@@ -1,0 +1,88 @@
+cloud:
+  version: 8.x-1.x
+  js:
+    js/cloud.js: {}
+  dependencies:
+    - core/jquery
+
+cloud_view_builder:
+  version: 8.x-1.x
+  css:
+    theme:
+      css/cloud_view_builder.css: {}
+
+d3:
+  remote: https://github.com/d3/d3
+  license:
+    name: BSD 3-Clause "New" or "Revised" License
+    url: https://github.com/d3/d3/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    https://d3js.org/d3.v5.min.js: { type: external, minified: true }
+    # js/d3.min.js: {}
+
+c3:
+  remote: https://github.com/c3js/c3
+  version: 0.7.15
+  license:
+    name: The MIT License (MIT)
+    url: https://github.com/c3js/c3/blob/master/LICENSE
+    gpl-compatible: true
+  js:
+    https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.js: { type: external, minified: true }
+  css:
+    theme:
+      https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.css: { type: external, minified: true }
+
+select2:
+  remote: https://github.com/select2/select2
+  version: 4.0.5
+  license:
+    name: The MIT License (MIT)
+    url: https://raw.githubusercontent.com/select2/select2/master/LICENSE.md
+    gpl-compatible: true
+  js:
+    https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js: { type: external, minified: true }
+  css:
+    theme:
+      https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css: { type: external, minified: true }
+
+# K8s Node Metrics Charts
+chartjs:
+  remote: https://github.com/chartjs/Chart.js
+  version: 2.8.0
+  license:
+    name: The MIT License (MIT)
+    url: https://raw.githubusercontent.com/chartjs/Chart.js/master/LICENSE.md
+  js:
+    https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js: { type: external, minified: true }
+
+cloud_config_location:
+  version: 8.x-2.x
+  js:
+    js/cloud_config_location.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/d3
+  css:
+    theme:
+      css/cloud_config_location.css: {}
+
+cloud_geocoder:
+  version: 8.x-2.x
+  js:
+    js/cloud_geocoder.js: {}
+  dependencies:
+    - core/jquery
+
+cloud_icon:
+  version: 8.x-2.x
+  css:
+    theme:
+      css/cloud_icon.css: {}
+
+cloud_ansi_color:
+  version: 8.x-2.x
+  css:
+    theme:
+      css/cloud_ansi_color.css: {}

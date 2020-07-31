@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Install file for docker module.
+ */
+
+/**
+ * Set the default unix socket and api version.
+ */
+function docker_update_8201() {
+  $config = \Drupal::configFactory()->getEditable('docker.settings');
+  $config->set('docker_api_version', '1.39');
+  $config->set('docker_unix_socket', '/var/run/docker.sock');
+  $config->save();
+}

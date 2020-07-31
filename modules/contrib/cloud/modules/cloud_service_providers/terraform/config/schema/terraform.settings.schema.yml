@@ -1,0 +1,13 @@
+terraform.settings:
+  type: config_object
+  mapping:
+    terraform_test_mode:
+      type: boolean
+    terraform_mock_data:
+      type: string
+    terraform_cloud_config_icon:
+      type: integer
+    terraform_js_refresh_interval:
+      type: integer
+    terraform_update_resources_queue_cron_time:
+      type: integer

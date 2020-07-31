@@ -1,0 +1,7 @@
+openstack_form:
+  version: 8.x-1.x
+  js:
+    js/openstack_form.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/select2

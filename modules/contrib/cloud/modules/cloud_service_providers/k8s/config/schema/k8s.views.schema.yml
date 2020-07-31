@@ -1,0 +1,103 @@
+views.field.namespace_bulk_form:
+  type: views_field_bulk_form
+  label: 'namespace bulk form'
+
+views.field.pod_bulk_form:
+  type: views_field_bulk_form
+  label: 'pod bulk form'
+
+views.field.deployment_bulk_form:
+  type: views_field_bulk_form
+  label: 'deployment bulk form'
+
+views.field.replica_set_bulk_form:
+  type: views_field_bulk_form
+  label: 'replica set bulk form'
+
+views.field.service_bulk_form:
+  type: views_field_bulk_form
+  label: 'service bulk form'
+
+views.field.cron_job_bulk_form:
+  type: views_field_bulk_form
+  label: 'cron job bulk form'
+
+views.field.job_bulk_form:
+  type: views_field_bulk_form
+  label: 'job bulk form'
+
+views.field.resource_quota_bulk_form:
+  type: views_field_bulk_form
+  label: 'resource quota bulk form'
+
+views.field.limit_range_bulk_form:
+  type: views_field_bulk_form
+  label: 'limit range bulk form'
+
+views.field.secret_bulk_form:
+  type: views_field_bulk_form
+  label: 'secret bulk form'
+
+views.field.config_map_bulk_form:
+  type: views_field_bulk_form
+  label: 'configmap bulk form'
+
+views.field.network_policy_bulk_form:
+  type: views_field_bulk_form
+  label: 'network policy bulk form'
+
+views.field.role_bulk_form:
+  type: views_field_bulk_form
+  label: 'role bulk form'
+
+views.field.cluster_role_bulk_form:
+  type: views_field_bulk_form
+  label: 'cluster role bulk form'
+
+views.field.persistent_volume_bulk_form:
+  type: views_field_bulk_form
+  label: 'persistent volume bulk form'
+
+views.field.storage_class_bulk_form:
+  type: views_field_bulk_form
+  label: 'storage class bulk form'
+
+views.field.stateful_set_bulk_form:
+  type: views_field_bulk_form
+  label: 'stateful set bulk form'
+
+views.field.ingress_bulk_form:
+  type: views_field_bulk_form
+  label: 'ingress bulk form'
+
+views.field.daemon_set_bulk_form:
+  type: views_field_bulk_form
+  label: 'daemon set bulk form'
+
+views.field.endpoint_bulk_form:
+  type: views_field_bulk_form
+  label: 'endpoint bulk form'
+
+views.field.persistent_volume_claim_bulk_form:
+  type: views_field_bulk_form
+  label: 'persistent volume claim bulk form'
+
+views.field.cluster_role_binding_bulk_form:
+  type: views_field_bulk_form
+  label: 'cluster role binding bulk form'
+
+views.field.api_service_bulk_form:
+  type: views_field_bulk_form
+  label: 'api service bulk form'
+
+views.field.role_binding_bulk_form:
+  type: views_field_bulk_form
+  label: 'role binding bulk form'
+
+views.field.service_account_bulk_form:
+  type: views_field_bulk_form
+  label: 'service account bulk form'
+
+views.field.priority_class_bulk_form:
+  type: views_field_bulk_form
+  label: 'priority class bulk form'

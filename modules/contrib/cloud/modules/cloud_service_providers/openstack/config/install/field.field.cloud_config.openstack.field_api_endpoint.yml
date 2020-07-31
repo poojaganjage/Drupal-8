@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.openstack
+    - field.storage.cloud_config.field_api_endpoint
+id: cloud_config.openstack.field_api_endpoint
+field_name: field_api_endpoint
+entity_type: cloud_config
+bundle: openstack
+label: 'API Endpoint'
+description: 'Fully qualified endpoint including scheme and port.  For example http://openstack.endpoint:8788'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

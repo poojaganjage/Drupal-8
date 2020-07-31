@@ -1,0 +1,181 @@
+##
+# IAM Group, Role, Instance Profile and Policy template
+# for Cloud Orchestrator.  This template should be run from a
+# root AWS account.  Once completed, assign the group, role and
+# profiles to users that are setting up Cloud Orchestrator.
+##
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator - Group, Role, InstanceProfile and Policy'
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: >-
+      A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier.
+      Must be between 1 and 20 characters and only contain alphanumeric characters
+      and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+Resources:
+  CloudOrchestratorGroup:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: !Sub
+        - "${AWS::Region}-${StackPrefix}-Group"
+        - StackPrefix: !Ref StackPrefix
+  CloudOrchestratorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Description: Cloud Orchestrator Role
+      RoleName: !Sub
+        - "${AWS::Region}-${StackPrefix}-Role"
+        - StackPrefix: !Ref StackPrefix
+  CloudOrchestratorInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub
+        - "${StackPrefix}-InstanceProfile"
+        - StackPrefix: !Ref StackPrefix
+      Path: /
+      Roles:
+        - !Ref CloudOrchestratorRole
+  CloudOrchestratorPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub
+        - "${StackPrefix}-Policy"
+        - StackPrefix: !Ref StackPrefix
+      Groups:
+        - !Ref CloudOrchestratorGroup
+      Roles:
+        - !Ref CloudOrchestratorRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - ec2:AcceptVpcPeeringConnection
+              - ec2:AllocateAddress
+              - ec2:AssociateAddress
+              - ec2:AssociateSubnetCidrBlock
+              - ec2:AssociateIamInstanceProfile
+              - ec2:AssociateVpcCidrBlock
+              - ec2:AttachInternetGateway
+              - ec2:AuthorizeSecurityGroup*
+              - ec2:AttachVolume
+              - ec2:CreateDefaultSubnet
+              - ec2:CreateDefaultVpc
+              - ec2:CreateEgressOnlyInternetGateway
+              - ec2:CreateFlowLogs
+              - ec2:CreateImage
+              - ec2:CreateInternetGateway
+              - ec2:CreateKeyPair
+              - ec2:CreateLaunchTemplate
+              - ec2:CreateLaunchTemplateVersion
+              - ec2:CreateNetworkInterface
+              - ec2:CreateNetworkInterfacePermission
+              - ec2:CreateSecurityGroup
+              - ec2:CreateSnapshot
+              - ec2:CreateSnapshots
+              - ec2:CreateSubnet
+              - ec2:CreateTags
+              - ec2:CreateVolume
+              - ec2:CreateVpc
+              - ec2:CreateVpcPeeringConnection
+              - ec2:DisassociateAddress
+              - ec2:DisassociateIamInstanceProfile
+              - ec2:DisassociateVpcCidrBlock
+              - ec2:Describe*
+              - ec2:DeleteEgressOnlyInternetGateway
+              - ec2:DeleteFlowLogs
+              - ec2:DeleteInternetGateway
+              - ec2:DeleteKeyPair
+              - ec2:DeleteLaunchTemplate
+              - ec2:DeleteLaunchTemplateVersions
+              - ec2:DeleteNetworkInterface
+              - ec2:DeleteNetworkInterfacePermission
+              - ec2:DeleteSecurityGroup
+              - ec2:DeleteSnapshot
+              - ec2:DeleteSubnet
+              - ec2:DeleteTags
+              - ec2:DeleteVpcPeeringConnection
+              - ec2:DeleteVolume
+              - ec2:DeleteVpc
+              - ec2:DeregisterImage
+              - ec2:DetachInternetGateway
+              - ec2:DetachNetworkInterface
+              - ec2:DetachVolume
+              - ec2:ImportKeyPair
+              - ec2:ModifyInstanceAttribute
+              - ec2:ModifyImageAttribute
+              - ec2:ModifyLaunchTemplate
+              - ec2:ModifyVolume
+              - ec2:RebootInstances
+              - ec2:RegisterImage
+              - ec2:ReleaseAddress
+              - ec2:ReplaceIamInstanceProfileAssociation
+              - ec2:RevokeSecurityGroup*
+              - ec2:RunInstances
+              - ec2:StartInstances
+              - ec2:StopInstances
+              - ec2:TerminateInstances
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - ecr:BatchCheckLayerAvailability
+              - ecr:BatchGetImage
+              - ecr:CompleteLayerUpload
+              - ecr:CreateRepository
+              - ecr:DeleteRepository
+              - ecr:DescribeImages
+              - ecr:DescribeRepositories
+              - ecr:GetAuthorizationToken
+              - ecr:GetDownloadUrlForLayer
+              - ecr:ListImages
+              - ecr:PutImage
+              - ecr:StartImageScan
+              - ecr:TagResource
+              - ecr:UploadLayerPart
+              - ecr:UntagResource
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - s3:DeleteObject
+              - s3:DeleteObjectVersion
+              - s3:GetObject
+              - s3:ListAllMyBuckets
+              - s3:ListBucket
+              - s3:PutObject
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - iam:ListInstanceProfiles
+              - iam:PassRole
+            Resource: '*'
+Outputs:
+  PolicyName:
+    Value: !Ref CloudOrchestratorPolicy
+    Description: >-
+      The policy containing permissions to run Cloud Orchestrator.
+  GroupName:
+    Value: !Ref CloudOrchestratorGroup
+    Description: >-
+      Assign IAM users to this group.
+  InstanceProfileName:
+    Value: !Ref CloudOrchestratorInstanceProfile
+    Description: >-
+      Assign this instance profile to an EC2 instance that is running Cloud Orchestrator.
+      By assigning this role, you do not need to specify Access key ID and Access key Secret
+      when adding an AWS Cloud Region.
+  RoleName:
+    Value: !Ref CloudOrchestratorRole

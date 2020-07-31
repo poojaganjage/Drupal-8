@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_log_destination
+id: cloud_config.aws_cloud.field_log_destination
+field_name: field_log_destination
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'S3 Bucket ARN'
+description: 'Specifies the destination to which the flow log data is to be published. The action logs:CreateLogDelivery need to be permitted.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

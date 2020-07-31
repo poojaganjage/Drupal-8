@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_instance_start_action
+label: 'Start instance(s)'
+type: aws_cloud_instance
+plugin: aws_cloud_instance_start_action
+configuration: {  }

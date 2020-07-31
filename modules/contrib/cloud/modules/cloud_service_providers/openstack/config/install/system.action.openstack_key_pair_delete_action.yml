@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_key_pair_delete_action
+label: 'Delete key pair(s)'
+type: openstack_key_pair
+plugin: entity:delete_action:openstack_key_pair
+configuration: {  }

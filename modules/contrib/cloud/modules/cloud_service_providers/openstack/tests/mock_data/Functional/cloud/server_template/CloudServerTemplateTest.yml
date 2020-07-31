@@ -1,0 +1,15 @@
+CreateLaunchTemplate:
+  LaunchTemplate:
+    LatestVersionNumber: 1
+
+DeleteLaunchTemplate:
+  LaunchTemplate: []
+
+CreateLaunchTemplateVersion:
+  LaunchTemplateVersion:
+    VersionNumber: 2
+
+DeleteLaunchTemplateVersions:
+  SuccessfullyDeletedLaunchTemplateVersions:
+    - LaunchTemplateName: template1
+      VersionNumber: 1

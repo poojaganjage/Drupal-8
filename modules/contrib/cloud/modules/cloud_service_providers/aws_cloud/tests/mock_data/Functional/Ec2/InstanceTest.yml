@@ -1,0 +1,58 @@
+DescribeInstances:
+  Reservations:
+    # The rest of Instances[] format is going to be 'InstanceTest_instance.yml'.
+    - Instances: []
+      OwnerId: {{account_id}}
+      ReservationId: {{reservation_id}}
+DescribeInstanceAttribute:
+  DisableApiTermination:
+    Value: 0
+TerminateInstances:
+  TerminatingInstances:
+    - InstanceId: {{instance_id}}
+
+DescribeSecurityGroups:
+  SecurityGroups: []
+DescribeKeyPairs:
+  KeyPairs: []
+DescribeAddresses:
+  Addresses: []
+DescribeNetworkInterfaces:
+  NetworkInterfaces: []
+DescribeSnapshots:
+  Snapshots: []
+DescribeVolumes:
+  Volumes: []
+DescribeVpcs:
+  Vpcs: []
+DescribeSubnets:
+  Subnets: []
+
+CreateLaunchTemplate:
+  LaunchTemplate: []
+DeleteLaunchTemplate:
+  LaunchTemplate: []
+DescribeLaunchTemplates:
+  LaunchTemplates: []
+
+DescribeImages:
+  Images:
+    - BlockDeviceMappings: []
+      ImageId: {{image_id}}
+      OwnerId: {{account_id}}
+      Architecture: {{architecture}}
+      VirtualizationType: hvm
+      Hypervisor: {{hypervisor}}
+      RootDeviceType: ebs
+      RootDeviceName: /dev/sda1
+      Name: {{name}}
+      ImageType: machine
+      ProductCodes:
+        - ProductCode: {{product_code1}}
+          Type: marketplace
+        - ProductCode: {{product_code2}}
+          Type: marketplace
+      ImageLocation: {{image_location}}
+      Public: {{public}}
+      State: {{state}}
+      CreationDate: '{{creation_date}}'

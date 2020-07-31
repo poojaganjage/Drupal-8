@@ -1,0 +1,9 @@
+k8s.menu.cloud_context:
+  deriver: 'Drupal\k8s\Plugin\Derivative\K8sMenuLinks'
+  weight: 100
+
+k8s.settings:
+  title: K8s settings
+  description: 'List K8s profiles and configure K8s view settings.'
+  parent: system.admin_config_services
+  route_name: 'k8s.settings'

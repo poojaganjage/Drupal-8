@@ -1,0 +1,72 @@
+<?php
+
+/**
+ * @file
+ * Cloud Budget module.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function cloud_budget_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.cloud_budget':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The cloud budget module allows users to manage Cloud Budget.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the Cloud Budget module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+      return $output;
+
+    default:
+      return '';
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function cloud_budget_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if (strpos($form_id, 'views_form_cloud_credit_') === 0) {
+    $form['#submit'][] = 'cloud_views_bulk_form_submit';
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function cloud_budget_cron() {
+  // Update credits.
+  cloud_budget_update_credits();
+}
+
+/**
+ * Update credits.
+ */
+function cloud_budget_update_credits() {
+  $cloud_credits = \Drupal::entityTypeManager()
+    ->getStorage('cloud_credit')
+    ->loadByProperties([]);
+
+  $now = time();
+  foreach ($cloud_credits ?: [] as $cloud_credit) {
+    $results = \Drupal::service('plugin.manager.cloud_cost_calculator')->calculateAll(
+      $cloud_credit->getUser()->id(),
+      $cloud_credit->getCloudContext(),
+      $cloud_credit->getRefreshed(),
+      $now
+    );
+
+    $cost = array_sum($results);
+    $cloud_credit->setAmount(max($cloud_credit->getAmount() - $cost, 0));
+    $cloud_credit->setRefreshed($now);
+    $cloud_credit->save();
+
+    \Drupal::logger('cloud_budget')->notice('@type: updated %label.', [
+      '@type' => $cloud_credit->bundle(),
+      '%label' => $cloud_credit->label(),
+      'link' => $cloud_credit->toLink(t('View'))->toString(),
+    ]);
+  }
+}

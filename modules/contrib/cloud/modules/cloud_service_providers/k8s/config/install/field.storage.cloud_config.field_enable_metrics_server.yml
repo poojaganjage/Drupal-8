@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+  enforced:
+    module:
+     - k8s
+id: cloud_config.field_enable_metrics_server
+field_name: field_enable_metrics_server
+entity_type: cloud_config
+type: boolean
+settings: {  }
+module: core
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,6 @@
+terraform_run:
+  version: 8.x-2.x
+  js:
+    js/terraform_run.js: {}
+  dependencies:
+    - core/jquery

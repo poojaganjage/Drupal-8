@@ -1,0 +1,88 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for cloud_budget.
+ */
+
+use Drupal\Component\Serialization\Yaml;
+
+/**
+ * Add Cloud Budget test mode configuration item.
+ */
+function cloud_budget_update_8201() {
+
+  $config_path = realpath(drupal_get_path('module', 'cloud_budget')) . '/config/install';
+
+  $filename = $config_path . '/cloud_budget.settings.yml';
+  $file = file_get_contents($filename);
+  if ($file) {
+    $values = Yaml::decode($file);
+    if (!empty($values) && is_array($values) && isset($values['cloud_budget_test_mode'])) {
+      $config_factory = \Drupal::configFactory();
+      $config = $config_factory->getEditable('cloud_budget.settings');
+      $config->set('cloud_budget_test_mode', $values['cloud_budget_test_mode']);
+      $config->save();
+    }
+  }
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function cloud_budget_update_8202() {
+
+  $annotations = [
+    'cloud_credit' => [
+      'id_plural' => 'cloud_credits',
+      'label' => 'Cloud Credit',
+      'label_collection' => 'Cloud Credits',
+      'label_singular' => 'Cloud Credit',
+      'label_plural' => 'Cloud Credits',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}
+
+/**
+ * Update label (normal) and collection label annotation.
+ */
+function cloud_budget_update_8203() {
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('cloud_cost_storage');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+
+  $annotations = [
+    'cloud_cost_storage' => [
+      'id_plural' => 'cloud_cost_storages',
+      'label' => 'Cloud Cost Storage',
+      'label_collection' => 'Cloud Cost Storages',
+      'label_singular' => 'Cloud Cost Storage',
+      'label_plural' => 'Cloud Cost Storages',
+    ],
+  ];
+
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  foreach ($annotations ?: [] as $annotation => $items) {
+
+    $type = $definition_update_manager->getEntityType($annotation);
+    foreach ($items as $key => $value) {
+      $type->set($key, $value);
+    }
+
+    $definition_update_manager->updateEntityType($type);
+  }
+}

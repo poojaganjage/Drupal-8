@@ -1,0 +1,340 @@
+############
+# AWS Cloud.
+############
+administer aws_cloud:
+  title: 'Administer AWS Cloud settings'
+  description: 'Perform administration tasks for AWS Cloud.'
+
+#############################
+# AWS Cloud Service Provider.
+#############################
+add aws cloud service provider:
+  title: 'Add AWS Cloud service provider'
+  description: 'Allow users to add cloud service provider.'
+list aws cloud service provider:
+  title: 'List AWS Cloud service provider'
+  description: 'Allow users to list cloud service provider.'
+view aws cloud service provider:
+  title: 'View AWS Cloud service provider'
+  description: 'Allow users to view cloud service provider.'
+edit aws cloud service provider:
+  title: 'Edit AWS Cloud service provider'
+  description: 'Allow users to edit cloud service provider.'
+delete aws cloud service provider:
+  title: 'Delete AWS Cloud service provider'
+  description: 'Allow users to delete cloud service provider.'
+
+######################
+# Amazon EC2 Instance.
+######################
+add aws cloud instance:
+  title: 'Launch AWS Cloud instance'
+  description: 'Allow users to launch Amazon EC2 instance.'
+list aws cloud instance:
+  title: 'List AWS Cloud instance'
+  description: 'Allow users to list Amazon EC2 instance.'
+view any aws cloud instance:
+  title: 'View any AWS Cloud instance'
+  description: 'Allow users to view instance.'
+edit any aws cloud instance:
+  title: 'Edit any AWS Cloud instance'
+  description: 'Allow users to view any Amazon EC2 instance.'
+delete any aws cloud instance:
+  title: 'Terminate any AWS Cloud instance'
+  description: 'Allow users to terminate any Amazon EC2 instance.'
+view own aws cloud instance:
+  title: 'View own AWS Cloud instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+edit own aws cloud instance:
+  title: 'Edit own AWS Cloud instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+delete own aws cloud instance:
+  title: 'Terminate own AWS Cloud instance'
+  description: 'Allow users to edit own Amazon EC2 instance.'
+
+#############################
+# Amazon Machine Image (AMI).
+#############################
+add aws cloud image:
+  title: 'Add AWS Cloud image'
+  description: 'Allow users to add Amazon machine image (AMI)'
+list aws cloud image:
+  title: 'List AWS Cloud image'
+  description: 'Allow users to list Amazon machine image (AMI)'
+view any aws cloud image:
+  title: 'View any AWS Cloud image'
+  description: 'Allow users to view any Amazon machine image (AMI)'
+edit any aws cloud image:
+  title: 'Edit any AWS Cloud image'
+  description: 'Allow users to edit any Amazon machine image (AMI)'
+delete any aws cloud image:
+  title: 'Delete any AWS Cloud image'
+  description: 'Allow users to delete any Amazon machine image (AMI)'
+view own aws cloud image:
+  title: 'View own AWS Cloud image'
+  description: 'Allow users to view own Amazon machine image (AMI)'
+edit own aws cloud image:
+  title: 'Edit own AWS Cloud image'
+  description: 'Allow users to edit own Amazon machine image (AMI)'
+delete own aws cloud image:
+  title: 'Delete own AWS Cloud image'
+  description: 'Allow users to delete own Amazon machine image (AMI)'
+
+##################################
+# Elastic Network Interface (ENI).
+##################################
+add aws cloud network interface:
+  title: 'Add AWS Cloud network interface'
+  description: 'Allow users to add elastic network interface (ENI)'
+list aws cloud network interface:
+  title: 'List AWS Cloud network interface'
+  description: 'Allow users to list elastic network interface (ENI)'
+view any aws cloud network interface:
+  title: 'View any AWS Cloud network interface'
+  description: 'Allow users to view any elastic network interface (ENI)'
+edit any aws cloud network interface:
+  title: 'Edit any AWS Cloud network interface'
+  description: 'Allow users to edit any elastic network interface (ENI)'
+delete any aws cloud network interface:
+  title: 'Delete any AWS Cloud network interface'
+  description: 'Allow users to delete any elastic network interface (ENI)'
+view own aws cloud network interface:
+  title: 'View own AWS Cloud network interface'
+  description: 'Allow users to view own elastic network interface (ENI)'
+edit own aws cloud network interface:
+  title: 'Edit own AWS Cloud network interface'
+  description: 'Allow users to edit own elastic network interface (ENI)'
+delete own aws cloud network interface:
+  title: 'Delete own AWS Cloud network interface'
+  description: 'Allow users to delete own elastic network interface (ENI)'
+
+###################
+# Elastic IP (EIP).
+###################
+add aws cloud elastic ip:
+  title: 'Add AWS Cloud Elastic IP'
+  description: 'Allow users to add Elastic IP (EIP)'
+list aws cloud elastic ip:
+  title: 'List AWS Cloud Elastic IP'
+  description: 'Allow users to list Elastic IP (EIP)'
+view any aws cloud elastic ip:
+  title: 'View any AWS Cloud Elastic IP'
+  description: 'Allow users to view any Elastic IP (EIP)'
+edit any aws cloud elastic ip:
+  title: 'Edit any AWS Cloud Elastic IP'
+  description: 'Allow users to any edit Elastic IP (EIP)'
+delete any aws cloud elastic ip:
+  title: 'Delete any AWS Cloud Elastic IP'
+  description: 'Allow users to any delete Elastic IP (EIP)'
+view own aws cloud elastic ip:
+  title: 'View own AWS Cloud Elastic IP'
+  description: 'Allow users to view own Elastic IP (EIP)'
+edit own aws cloud elastic ip:
+  title: 'Edit own AWS Cloud Elastic IP'
+  description: 'Allow users to own edit Elastic IP (EIP)'
+delete own aws cloud elastic ip:
+  title: 'Delete own AWS Cloud Elastic IP'
+  description: 'Allow users to own delete Elastic IP (EIP)'
+
+######################
+# Amazon EC2 Key Pair.
+######################
+add aws cloud key pair:
+  title: 'Add AWS Cloud key pair'
+  description: 'Allow users to add key pair.'
+list aws cloud key pair:
+  title: 'List AWS Cloud key pair'
+  description: 'Allow users to list key pair.'
+view any aws cloud key pair:
+  title: 'View any AWS Cloud key pair'
+  description: 'Allow users to view any key pair.'
+edit any aws cloud key pair:
+  title: 'Edit any AWS Cloud key pair'
+  description: 'Allow users to edit any key pair.'
+delete any aws cloud key pair:
+  title: 'Delete any AWS Cloud key pair'
+  description: 'Allow users to delete any key pair.'
+view own aws cloud key pair:
+  title: 'View own AWS Cloud key pair'
+  description: 'Allow users to view own key pair.'
+edit own aws cloud key pair:
+  title: 'Edit own AWS Cloud key pair'
+  description: 'Allow users to edit own key pair.'
+delete own aws cloud key pair:
+  title: 'Delete own AWS Cloud key pair'
+  description: 'Allow users to delete own key pair.'
+
+#####################
+# AWS Security Group.
+#####################
+add aws cloud security group:
+  title: 'Add AWS Cloud security group'
+  description: 'Allow users to add security group.'
+list aws cloud security group:
+  title: 'List AWS Cloud security group'
+  description: 'Allow users to list security group.'
+view any aws cloud security group:
+  title: 'View any AWS Cloud security group'
+  description: 'Allow users to view any security group.'
+edit any aws cloud security group:
+  title: 'Edit any AWS Cloud security group'
+  description: 'Allow users to edit any security group.'
+delete any aws cloud security group:
+  title: 'Delete any AWS Cloud security group'
+  description: 'Allow users to delete any security group.'
+view own aws cloud security group:
+  title: 'View own AWS Cloud security group'
+  description: 'Allow users to view own security group.'
+edit own aws cloud security group:
+  title: 'Edit own AWS Cloud security group'
+  description: 'Allow users to edit own security group.'
+delete own aws cloud security group:
+  title: 'Delete own AWS Cloud security group'
+  description: 'Allow users to delete own security group.'
+
+####################
+# Amazon EBS Volume.
+####################
+add aws cloud volume:
+  title: 'Add AWS Cloud EBS volume'
+  description: 'Allow users to add Amazon EBS volume.'
+list aws cloud volume:
+  title: 'List AWS Cloud EBS volume'
+  description: 'Allow users to list Amazon EBS volume.'
+view any aws cloud volume:
+  title: 'View any AWS Cloud EBS volume'
+  description: 'Allow users to view any Amazon EBS volume.'
+edit any aws cloud volume:
+  title: 'Edit any AWS Cloud EBS volume'
+  description: 'Allow users to edit any Amazon EBS volume.'
+delete any aws cloud volume:
+  title: 'Delete any AWS Cloud EBS volume'
+  description: 'Allow users to delete any Amazon EBS volume.'
+view own aws cloud volume:
+  title: 'View own AWS Cloud EBS volume'
+  description: 'Allow users to view own Amazon EBS volume.'
+edit own aws cloud volume:
+  title: 'Edit own AWS Cloud EBS volume'
+  description: 'Allow users to edit own Amazon EBS volume.'
+delete own aws cloud volume:
+  title: 'Delete own AWS Cloud EBS volume'
+  description: 'Allow users to delete own Amazon EBS volume.'
+
+######################
+# Amazon EBS Snapshot.
+######################
+add aws cloud snapshot:
+  title: 'Add AWS Cloud EBS snapshot'
+  description: 'Allow users to add Amazon EBS snapshot.'
+list aws cloud snapshot:
+  title: 'List AWS Cloud EBS snapshot'
+  description: 'Allow users to list Amazon EBS snapshot.'
+view any aws cloud snapshot:
+  title: 'View any AWS Cloud EBS snapshot'
+  description: 'Allow users to view any Amazon EBS snapshot.'
+edit any aws cloud snapshot:
+  title: 'Edit any AWS Cloud EBS snapshot'
+  description: 'Allow users to edit any Amazon EBS snapshot.'
+delete any aws cloud snapshot:
+  title: 'Delete any AWS Cloud EBS snapshot'
+  description: 'Allow users to delete any Amazon EBS snapshot.'
+view own aws cloud snapshot:
+  title: 'View own AWS Cloud EBS snapshot'
+  description: 'Allow users to view own Amazon EBS snapshot.'
+edit own aws cloud snapshot:
+  title: 'Edit own AWS Cloud EBS snapshot'
+  description: 'Allow users to edit own Amazon EBS snapshot.'
+delete own aws cloud snapshot:
+  title: 'Delete own AWS Cloud EBS snapshot'
+  description: 'Allow users to delete own Amazon EBS snapshot.'
+
+#############
+# Amazon VPC.
+#############
+add aws cloud vpc:
+  title: 'Add AWS Cloud vpc'
+  description: 'Allow users to add Amazon vpc.'
+list aws cloud vpc:
+  title: 'List AWS Cloud vpc'
+  description: 'Allow users to list Amazon vpc.'
+view any aws cloud vpc:
+  title: 'View any AWS Cloud vpc'
+  description: 'Allow users to view any Amazon vpc.'
+edit any aws cloud vpc:
+  title: 'Edit any AWS Cloud vpc'
+  description: 'Allow users to edit any Amazon vpc.'
+delete any aws cloud vpc:
+  title: 'Delete any AWS Cloud vpc'
+  description: 'Allow users to delete any Amazon vpc.'
+view own aws cloud vpc:
+  title: 'View own AWS Cloud vpc'
+  description: 'Allow users to view own Amazon vpc.'
+edit own aws cloud vpc:
+  title: 'Edit own AWS Cloud vpc'
+  description: 'Allow users to edit own Amazon vpc.'
+delete own aws cloud vpc:
+  title: 'Delete own AWS Cloud vpc'
+  description: 'Allow users to delete own Amazon vpc.'
+
+#############
+# Amazon VPC Peering Connection.
+#############
+add aws cloud vpc peering connection:
+  title: 'Add AWS Cloud vpc peering connection'
+  description: 'Allow users to add Amazon vpc peering connection.'
+list aws cloud vpc peering connection:
+  title: 'List AWS Cloud vpc peering connection'
+  description: 'Allow users to list Amazon vpc peering connection.'
+view any aws cloud vpc peering connection:
+  title: 'View any AWS Cloud vpc peering connection'
+  description: 'Allow users to view any Amazon vpc peering connection.'
+edit any aws cloud vpc peering connection:
+  title: 'Edit any AWS Cloud vpc peering connection'
+  description: 'Allow users to edit any Amazon vpc peering connection.'
+delete any aws cloud vpc peering connection:
+  title: 'Delete any AWS Cloud vpc peering connection'
+  description: 'Allow users to delete any Amazon vpc peering connection.'
+view own aws cloud vpc peering connection:
+  title: 'View own AWS Cloud vpc peering connection'
+  description: 'Allow users to view own Amazon vpc peering connection.'
+edit own aws cloud vpc peering connection:
+  title: 'Edit own AWS Cloud vpc peering connection'
+  description: 'Allow users to edit own Amazon vpc peering connection.'
+delete own aws cloud vpc peering connection:
+  title: 'Delete own AWS Cloud vpc peering connection'
+  description: 'Allow users to delete own Amazon vpc peering connection.'
+
+####################
+# Amazon VPC Subnet.
+####################
+add aws cloud subnet:
+  title: 'Add AWS Cloud subnet'
+  description: 'Allow users to add Amazon subnet.'
+list aws cloud subnet:
+  title: 'List AWS Cloud subnet'
+  description: 'Allow users to list Amazon subnet.'
+view any aws cloud subnet:
+  title: 'View any AWS Cloud subnet'
+  description: 'Allow users to view any Amazon subnet.'
+edit any aws cloud subnet:
+  title: 'Edit any AWS Cloud subnet'
+  description: 'Allow users to edit any Amazon subnet.'
+delete any aws cloud subnet:
+  title: 'Delete any AWS Cloud subnet'
+  description: 'Allow users to delete any Amazon subnet.'
+view own aws cloud subnet:
+  title: 'View own AWS Cloud subnet'
+  description: 'Allow users to view own Amazon subnet.'
+edit own aws cloud subnet:
+  title: 'Edit own AWS Cloud subnet'
+  description: 'Allow users to edit own Amazon subnet.'
+delete own aws cloud subnet:
+  title: 'Delete own AWS Cloud subnet'
+  description: 'Allow users to delete own Amazon subnet.'
+
+##############################
+# Amazon EC2 Instance Pricing.
+##############################
+view aws cloud instance type prices:
+  title: 'View AWS Cloud Instance Type Prices'
+  description: 'Allow users to view instance type price.'

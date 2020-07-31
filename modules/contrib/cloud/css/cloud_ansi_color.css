@@ -1,0 +1,112 @@
+.ansi-block {
+  background-color: black;
+  color: white;
+}
+
+span.ansi.t0.f30 {
+  color: #000;
+}
+
+span.ansi.t0.f31 {
+  color: #900;
+}
+
+span.ansi.t0.f32 {
+  color: #090;
+}
+
+span.ansi.t0.f33 {
+  color: #990;
+}
+
+span.ansi.t0.f34 {
+  color: #009;
+}
+
+span.ansi.t0.f35 {
+  color: #909;
+}
+
+span.ansi.t0.f36 {
+  color: #099;
+}
+
+span.ansi.t0.f37,
+span.ansi.t0.f39 {
+  color: #bbb;
+}
+
+span.ansi.t1.f30,
+.f50 {
+  color: #666;
+}
+
+span.ansi.t1.f31,
+.f51 {
+  color: #f00;
+}
+
+span.ansi.t1.f32,
+.f52 {
+  color: #0f0;
+}
+
+span.ansi.t1.f33,
+.f53 {
+  color: #ff0;
+}
+
+span.ansi.t1.f34,
+.f54 {
+  color: #00f;
+}
+
+span.ansi.t1.f35,
+.f55 {
+  color: #f0f;
+}
+
+span.ansi.t1.f36,
+.f56 {
+  color: #0ff;
+}
+
+span.ansi.t1.f37,
+.f57,
+span.ansi.t1.f39,
+.f59 {
+  color: #fff;
+}
+
+.b40,
+.b49 {
+  background-color: #000;
+}
+
+.b41 {
+  background-color: #600;
+}
+
+.b42 {
+  background-color: #060;
+}
+
+.b43 {
+  background-color: #660;
+}
+
+.b44 {
+  background-color: #006;
+}
+
+.b45 {
+  background-color: #606;
+}
+
+.b46 {
+  background-color: #066;
+}
+
+.b47 {
+  background-color: #666;
+}

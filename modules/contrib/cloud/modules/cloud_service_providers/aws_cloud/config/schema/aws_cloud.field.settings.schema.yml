@@ -1,0 +1,13 @@
+field.formatter.settings.unused_volume_date_formatter:
+  type: mapping
+  label: 'Unused volume date formatter'
+  mapping:
+    date_format:
+      type: string
+      label: 'Date format'
+    custom_date_format:
+      type: string
+      label: 'Custom date format'
+    timezone:
+      type: string
+      label: 'Timezone'

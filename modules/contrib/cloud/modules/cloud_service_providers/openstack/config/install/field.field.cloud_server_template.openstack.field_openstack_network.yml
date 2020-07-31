@@ -1,0 +1,24 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.openstack
+    - field.storage.cloud_server_template.field_openstack_network
+id: cloud_server_template.openstack.field_openstack_network
+field_name: field_openstack_network
+entity_type: cloud_server_template
+bundle: openstack
+label: Network Interface
+description: 'Network Interface to attach to this instance.  This is required if launching a t2.* instance.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: views
+  handler_settings:
+    view:
+      view_name: openstack_network_interface
+      display_name: entity_reference_1
+      arguments: {  }
+field_type: entity_reference

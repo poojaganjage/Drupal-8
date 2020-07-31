@@ -1,0 +1,83 @@
+entity.cloud_context.add_form:
+  route_name: 'entity.cloud_context.add_form'
+  title: 'Add cloud service provider'
+  appears_on:
+    - entity.cloud_context.collection
+
+entity.cloud_config.add_form:
+  route_name: entity.cloud_config.add_page
+  title: 'Add cloud service provider'
+  appears_on:
+    - entity.cloud_config.collection
+
+entity.cloud_config_type.add_form:
+  route_name: entity.cloud_config_type.add_form
+  title: 'Add cloud service provider type'
+  appears_on:
+    - entity.cloud_config_type.collection
+
+entity.cloud_server_template.add_form:
+  route_name: entity.cloud_server_template.add_form
+  title: 'Add launch template'
+  class: 'Drupal\cloud\Plugin\Derivative\CloudServerTemplateLocalAction'
+  appears_on:
+    - entity.cloud_server_template.collection
+
+entity.cloud_server_template.collection:
+  route_name: entity.cloud_server_template.collection
+  title: 'List launch template'
+  appears_on:
+    - entity.cloud_server_template.add_form
+    - entity.cloud_server_template.edit_form
+    - entity.cloud_server_template.delete_form
+
+entity.cloud_server_template_type.add_form:
+  route_name: entity.cloud_server_template_type.add_form
+  title: 'Add launch template type'
+  appears_on:
+    - entity.cloud_server_template_type.collection
+
+entity.cloud_server_template.refresh_edit:
+  route_name: entity.cloud_server_template.list_update
+  title: 'Refresh'
+  appears_on:
+    - entity.cloud_server_template.edit_form
+
+entity.cloud_server_template.refresh_view:
+  route_name: entity.cloud_server_template.list_update
+  title: 'Refresh'
+  appears_on:
+    - entity.cloud_server_template.canonical
+
+entity.cloud_project.add_form:
+  route_name: entity.cloud_project.add_form
+  title: 'Add cloud project'
+  class: 'Drupal\cloud\Plugin\Derivative\CloudProjectLocalAction'
+  appears_on:
+    - entity.cloud_project.collection
+
+entity.cloud_project.collection:
+  route_name: entity.cloud_project.collection
+  title: 'List cloud project'
+  appears_on:
+    - entity.cloud_project.add_form
+    - entity.cloud_project.edit_form
+    - entity.cloud_project.delete_form
+
+entity.cloud_project_type.add_form:
+  route_name: entity.cloud_project_type.add_form
+  title: 'Add cloud project type'
+  appears_on:
+    - entity.cloud_project_type.collection
+
+entity.cloud_project.refresh_edit:
+  route_name: entity.cloud_project.list_update
+  title: 'Refresh'
+  appears_on:
+    - entity.cloud_project.edit_form
+
+entity.cloud_project.refresh_view:
+  route_name: entity.cloud_project.list_update
+  title: 'Refresh'
+  appears_on:
+    - entity.cloud_project.canonical

@@ -1,0 +1,45 @@
+# VMware Routing Definition
+
+# VMware Admin Settings
+vmware.settings:
+  path: '/admin/config/services/cloud/vmware'
+  defaults:
+    _entity_list: 'cloud_config'
+    _title: VMware
+  requirements:
+    _permission: 'administer vmware'
+
+vmware.settings.options:
+  path: '/admin/config/services/cloud/vmware/settings'
+  defaults:
+    _title: VMware
+    _form: '\Drupal\vmware\Form\Config\VmwareAdminSettings'
+  requirements:
+    _permission: 'administer vmware'
+
+entity.vmware_vm.list_update:
+  path: '/clouds/vmware/{cloud_context}/vm/update'
+  defaults:
+    _controller: '\Drupal\vmware\Controller\ApiController::updateVmList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view vmware vm'
+
+entity.vmware_vm.start_form:
+  path: '/clouds/vmware/{cloud_context}/vm/{vmware_vm}/start'
+  defaults:
+    _entity_form: 'vmware_vm.start'
+    _title: 'Start VM'
+  requirements:
+    _entity_access: 'vmware_vm.start'
+
+entity.vmware_vm.stop_form:
+  path: '/clouds/vmware/{cloud_context}/vm/{vmware_vm}/stop'
+  defaults:
+    _entity_form: 'vmware_vm.stop'
+    _title: 'Stop VM'
+  requirements:
+    _entity_access: 'vmware_vm.stop'

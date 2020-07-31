@@ -1,0 +1,43 @@
+# Schema for the views plugins.
+
+views.field.cloud_config_bulk_form:
+  type: views_field_bulk_form
+  label: 'Cloud service provider bulk form'
+
+views.field.cloud_list_instances:
+  type: views_field
+  label: 'Link to an instance list'
+  mapping:
+    text:
+      type: label
+      label: 'Text to display'
+
+views.field.cloud_pricing_internal:
+  type: views_field
+  label: 'Link to an internal pricing'
+  mapping:
+    text:
+      type: label
+      label: 'Text to display'
+
+views.field.cloud_pricing_external:
+  type: views_field
+  label: 'Link to an external pricing'
+  mapping:
+    text:
+      type: label
+      label: 'Text to display'
+
+views.field.cloud_list_templates:
+  type: views_field
+  label: 'Link to launch template list'
+  mapping:
+    text:
+      type: label
+      label: 'Text to display'
+
+views.access.ViewsCloudContextAccess:
+  type: mapping
+  mapping:
+    perm:
+      type: string

@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_use_instance_profile
+id: cloud_config.aws_cloud.field_use_instance_profile
+field_name: field_use_instance_profile
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Use Instance Profile'
+description: 'Use <em>IAM role</em> attached to an instance. This option is only available if Cloud module is on an Amazon EC2 instance.  If checked, there is no need to supply access key ID or secret access key.  The credentials are delivered through the Amazon EC2 metadata service.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

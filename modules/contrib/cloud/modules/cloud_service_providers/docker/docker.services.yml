@@ -1,0 +1,4 @@
+services:
+  docker:
+    class: Drupal\docker\Service\DockerService
+    arguments: ['@config.factory', '@http_client_factory']

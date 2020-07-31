@@ -1,0 +1,164 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator - RDS'
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: >-
+      A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier.
+      Must be between 1 and 20 characters and only contain alphanumeric characters
+      and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+  MySQLUserName:
+    Description: >-
+      Username for the RDS. Must be between 5 and 16 characters and only contain
+      alphanumeric characters and underscores.
+    Default: administrator
+    Type: String
+    NoEcho: 'false'
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: "[a-zA-Z0-9_]*"
+    ConstraintDescription: >-
+      Must contain only alphanumeric characters, underscores
+      and must be between 5 and 16 characters long.
+  MySQLPassword:
+    Description: >-
+      Password for the RDS Username.  Must be between 6 and 32 characters and
+      only contain alphanumeric characters and these special
+      characters '_'`~!#$%^&*()_+,-
+    Type: String
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: '^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$'
+    ConstraintDescription: >-
+      Your MySQLPassword must be letters (upper or lower),
+      numbers, and these special characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+  DatabaseName:
+    Description: >-
+      The name of the database. Must be between 4 and 32 characters and
+      only contain alphanumeric characters and underscores.
+    Type: String
+    Default: cloud_orchestrator
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    MinLength: '4'
+    MaxLength: '32'
+    ConstraintDescription: >-
+      Your database name must be between 4 and 32 characters and
+      contain alphanumeric characters and underscores.
+  RDSInstanceType:
+    Description: RDS Instance Type.
+    Default: db.t2.micro
+    Type: String
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+      - db.t2.xlarge
+      - db.t2.2xlarge
+      - db.m4.large
+      - db.m4.xlarge
+      - db.m4.2xlarge
+      - db.m4.4xlarge
+      - db.m4.10xlarge
+      - db.m4.16xlarge
+      - db.m5.large
+      - db.m5.xlarge
+      - db.m5.4xlarge
+      - db.m5.12xlarge
+      - db.m5.24xlarge
+      - db.r4.large
+      - db.r4.xlarge
+      - db.r4.2xlarge
+      - db.r4.4xlarge
+      - db.r4.8xlarge
+      - db.r4.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.12xlarge
+      - db.r5.24xlarge
+    ConstraintDescription: Must be a valid RDS Instance Type.
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb).  Must be between 5 and 16384.
+    Type: Number
+    MinValue: '5'
+    MaxValue: '16384'
+    ConstraintDescription: Must be between 20 and 16384Gb.
+  SubnetSecurityGroup:
+    Description: Database Subnet Security Group
+    Type: String
+  PrivateSubnet1:
+    Description: Private Subnet 1
+    Type: String
+  PrivateSubnet2:
+    Description: Private Subnet 2
+    Type: String
+  PubliclyAccessible:
+    Description: Indicates whether the DB instance is an internet-facing instance.
+    Type: String
+    Default: false
+    AllowedValues:
+      - false
+      - true
+Resources:
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: !Sub
+        - 'RDS Subnet Group for ${StackPrefix}'
+        - StackPrefix: !Ref StackPrefix
+      SubnetIds:
+        - Ref: PrivateSubnet1
+        - Ref: PrivateSubnet2
+  RDS:
+    Type: 'AWS::RDS::DBInstance'
+    DeletionPolicy: Snapshot
+    Properties:
+      AllocatedStorage: !Ref DBAllocatedStorage
+      StorageType: gp2
+      PubliclyAccessible: !Ref PubliclyAccessible
+      AllowMajorVersionUpgrade: true
+      AutoMinorVersionUpgrade: true
+      BackupRetentionPeriod: 2
+      DBInstanceIdentifier: !Sub
+        - "${StackPrefix}-Drupal-RDS"
+        - StackPrefix: !Ref StackPrefix
+      DBInstanceClass: !Ref RDSInstanceType
+      DBName: !Ref DatabaseName
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      Engine: MySQL
+      EngineVersion: 5.7.22
+      MasterUsername: !Ref MySQLUserName
+      MasterUserPassword: !Ref MySQLPassword
+      Port: '3306'
+      PreferredBackupWindow: '00:00-00:30'
+      PreferredMaintenanceWindow: 'sun:16:00-sun:17:30'
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+      VPCSecurityGroups:
+        - !Ref SubnetSecurityGroup
+Outputs:
+  RDSInstanceName:
+    Value: !Sub
+      - "${StackPrefix}-Drupal-RDS"
+      - StackPrefix: !Ref StackPrefix
+  DbSubnetGroup:
+    Value: !Ref DbSubnetGroup
+  DatabaseName:
+    Value: !Ref DatabaseName
+  MySQLUserName:
+    Value: !Ref MySQLUserName
+  MySQLPassword:
+    Value: !Ref MySQLPassword
+  DatabaseEndpointAddress:
+    Value: !GetAtt RDS.Endpoint.Address
+  DatabasePort:
+    Value: !GetAtt RDS.Endpoint.Port

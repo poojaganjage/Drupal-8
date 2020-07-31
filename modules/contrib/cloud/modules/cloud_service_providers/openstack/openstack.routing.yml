@@ -1,0 +1,390 @@
+# AWS SDK API Callback
+entity.openstack_instance.list_update:
+  path: '/clouds/openstack/{cloud_context}/instance/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateInstanceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack instance+edit own openstack instance'
+
+entity.openstack_image.list_update:
+  path: '/clouds/openstack/{cloud_context}/image/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateImageList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack image+edit own openstack image'
+
+entity.openstack_key_pair.list_update:
+  path: '/clouds/openstack/{cloud_context}/key_pair/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateKeyPairList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack key pair+edit own openstack key pair'
+
+entity.openstack_security_group.list_update:
+  path: '/clouds/openstack/{cloud_context}/security_group/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateSecurityGroupList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack security group+edit own openstack security group'
+
+entity.openstack_volume.list_update:
+  path: '/clouds/openstack/{cloud_context}/volume/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateVolumeList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack volume+edit own openstack volume'
+
+entity.openstack_snapshot.list_update:
+  path: '/clouds/openstack/{cloud_context}/snapshot/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateSnapshotList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack snapshot+edit own openstack snapshot'
+
+# OpenStack Instances Routes.
+entity.openstack_instance.start_form:
+  path: '/clouds/openstack/{cloud_context}/instance/{openstack_instance}/start'
+  defaults:
+    _entity_form: 'openstack_instance.start'
+    _title: 'Start Instance'
+  requirements:
+    _entity_access: 'openstack_instance.start'
+
+entity.openstack_instance.stop_form:
+  path: '/clouds/openstack/{cloud_context}/instance/{openstack_instance}/stop'
+  defaults:
+    _entity_form: 'openstack_instance.stop'
+    _title: 'Stop Instance'
+  requirements:
+    _entity_access: 'openstack_instance.stop'
+
+entity.openstack_instance.reboot_form:
+  path: '/clouds/openstack/{cloud_context}/instance/{openstack_instance}/reboot'
+  defaults:
+    _entity_form: 'openstack_instance.reboot'
+    _title: 'Reboot Instance'
+  requirements:
+    _entity_access: 'openstack_instance.reboot'
+
+# Bulk operations
+entity.openstack_instance.start_multiple_form:
+  path: '/clouds/openstack/{cloud_context}/instance/start_multiple'
+  defaults:
+    entity_type_id: 'openstack_instance'
+    operation: start
+    _form: 'Drupal\openstack\Form\OpenStackInstanceStartMultipleForm'
+    _title: 'Start OpenStack Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: openstack_instance
+  options:
+    _access_checks: 'openstack.access_check.entity_operate_multiple'
+
+entity.openstack_instance.stop_multiple_form:
+  path: '/clouds/openstack/{cloud_context}/instance/stop_multiple'
+  defaults:
+    entity_type_id: 'openstack_instance'
+    operation: stop
+    _form: 'Drupal\openstack\Form\OpenStackInstanceStopMultipleForm'
+    _title: 'Stop OpenStack Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: openstack_instance
+  options:
+    _access_checks: 'openstack.access_check.entity_operate_multiple'
+
+entity.openstack_instance.reboot_multiple_form:
+  path: '/clouds/openstack/{cloud_context}/instance/reboot_multiple'
+  defaults:
+    entity_type_id: 'openstack_instance'
+    operation: reboot
+    _form: 'Drupal\openstack\Form\OpenStackInstanceRebootMultipleForm'
+    _title: 'Reboot OpenStack Instances(s)'
+  requirements:
+    _entity_operate_multiple_access: openstack_instance
+  options:
+    _access_checks: 'openstack.access_check.entity_operate_multiple'
+
+# OpenStack Snapshots Routes.
+entity.openstack_snapshot.add_form:
+  path: '/clouds/openstack/{cloud_context}/snapshot/add'
+  defaults:
+    _entity_form: 'openstack_snapshot.add'
+    _title: 'Add OpenStack Snapshot'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack snapshot'
+
+entity.openstack_network_interface.list_update:
+  path: '/clouds/openstack/{cloud_context}/network_interface/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateNetworkInterfaceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack network interface+edit own openstack network interface'
+
+# OpenStack Network Interfaces Routes.
+entity.openstack_network_interface.add_form:
+  path: '/clouds/openstack/{cloud_context}/network_interface/add'
+  defaults:
+    _entity_form: 'openstack_network_interface.add'
+    _title: 'Add OpenStack Network Interface'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack network interface'
+
+entity.openstack.update_all:
+  path: '/clouds/openstack/update_all'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateAll'
+  requirements:
+    _permission: 'add cloud service providers'
+
+entity.openstack_key_pair.add_form:
+  path: '/clouds/openstack/{cloud_context}/key_pair/add'
+  defaults:
+    _entity_form: 'openstack_key_pair.add'
+    _title: 'Add OpenStack Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack key pair'
+
+# Openstack Key Pairs Routes.
+entity.openstack_key_pair.download:
+  path: '/clouds/openstack/{cloud_context}/key_pair/{key_pair}/download'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\OpenStackKeyPairController::downloadKey'
+    _title: 'Download Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack key pair'
+
+entity.openstack_key_pair.import_form:
+  path: '/clouds/openstack/{cloud_context}/key_pair/import'
+  defaults:
+    _entity_form: 'openstack_key_pair.import'
+    _title: 'Import OpenStack Key Pair'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack cloud key pair'
+
+# OpenStack Admin Settings
+openstack_instance.settings:
+  path: '/admin/config/services/cloud/openstack/instance_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\InstanceSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack instances'
+
+openstack_image.settings:
+  path: '/admin/config/services/cloud/openstack/image_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\OpenStackImageSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack image'
+
+openstack_key_pair.settings:
+  path: '/admin/config/services/cloud/openstack/key_pair_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\KeyPairSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack key pairs'
+
+openstack_security_group.settings:
+  path: '/admin/config/services/cloud/openstack/security_group_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\OpenStackSecurityGroupSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack security groups'
+
+openstack_snapshot.settings:
+  path: '/admin/config/services/cloud/openstack/snapshot_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\SnapshotSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack snapshots'
+
+openstack_network_interface.settings:
+  path: '/admin/config/services/cloud/openstack/network_interface_settings'
+  defaults:
+    _form: 'Drupal\openstack\Form\NetworkInterfaceSettingsForm'
+    _title: OpenStack
+  requirements:
+    _permission: 'administer openstack network interfaces'
+
+openstack.settings.options:
+  path: '/admin/config/services/cloud/openstack/settings'
+  defaults:
+    _title: OpenStack
+    _form: '\Drupal\openstack\Form\Config\OpenStackAdminSettings'
+  requirements:
+    _permission: 'administer openstack'
+
+# OpenStack Images Routes.
+entity.openstack_image.add_form:
+  path: '/clouds/openstack/{cloud_context}/image/add'
+  defaults:
+    _entity_form: 'openstack_image.add'
+    _title: 'Add OpenStack Image'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack image'
+
+entity.openstack_image.list_callback:
+  path: '/clouds/openstack/{cloud_context}/image/callback'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::listImageCallback'
+  requirements:
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'list openstack image'
+
+# OpenStack Security Groups Routes.
+entity.openstack_security_group.add_form:
+  path: '/clouds/openstack/{cloud_context}/security_group/add'
+  defaults:
+    _entity_form: 'openstack_security_group.add'
+    _title: 'Add OpenStack Security Group'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack security group'
+
+entity.openstack_security_group.revoke_form:
+  path: '/clouds/openstack/{cloud_context}/security_group/{openstack_security_group}/revoke'
+  defaults:
+    _entity_form: 'openstack_security_group.revoke'
+    _title: 'Revoke OpenStack Security Group Permission'
+  requirements:
+    _entity_access: 'openstack_security_group.delete'
+
+# OpenStack Volume Routes.
+entity.openstack_volume.add_form:
+  path: '/clouds/openstack/{cloud_context}/volume/add'
+  defaults:
+    _entity_form: 'openstack_volume.add'
+    _title: 'Add Openstack Volume'
+  requirements:
+    # Use custom access that will check Form cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack volume'
+
+entity.openstack_volume.attach_form:
+  path: '/clouds/openstack/{cloud_context}/volume/{openstack_volume}/attach'
+  defaults:
+    _entity_form: 'openstack_volume.attach'
+    _title: 'Attach Volume'
+  requirements:
+    _entity_access: 'openstack_volume.attach'
+
+entity.openstack_volume.detach_form:
+  path: '/clouds/openstack/{cloud_context}/volume/{openstack_volume}/detach'
+  defaults:
+    _entity_form: 'openstack_volume.detach'
+    _title: 'Detach Volume'
+  requirements:
+    _entity_access: 'openstack_volume.detach'
+
+entity.openstack_volume.detach_multiple_form:
+  path: '/clouds/openstack/{cloud_context}/volume/detach_multiple'
+  defaults:
+    entity_type_id: 'openstack_volume'
+    operation: detach
+    _form: 'Drupal\openstack\Form\OpenStackVolumeDetachMultipleForm'
+    _title: 'Detach OpenStack Volume(s)'
+  requirements:
+    _entity_operate_multiple_access: openstack_volume
+  options:
+    _access_checks: 'openstack.access_check.entity_operate_multiple'
+
+# OpenStack Floating IP Routes.
+entity.openstack_floating_ip.list_update:
+  path: '/clouds/openstack/{cloud_context}/floating_ip/update'
+  defaults:
+    _controller: '\Drupal\openstack\Controller\ApiController::updateFloatingIpList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+    perm: 'edit any openstack floating ip+edit own openstack floating ip'
+ 
+entity.openstack_floating_ip.add_form:
+  path: '/clouds/openstack/{cloud_context}/floating_ip/add'
+  defaults:
+    _entity_form: 'openstack_floating_ip.add'
+    _title: 'Add OpenStack Floating IP'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'add openstack floating ip'
+ 
+entity.openstack_floating_ip.associate_form:
+  path: '/clouds/openstack/{cloud_context}/floating_ip/{openstack_floating_ip}/associate'
+  defaults:
+    _entity_form: 'openstack_floating_ip.associate'
+    _title: 'Associate OpenStack Floating IP'
+  requirements:
+    _entity_access: 'openstack_floating_ip.associate'
+ 
+entity.openstack_floating_ip.disassociate_form:
+  path: '/clouds/openstack/{cloud_context}/floating_ip/{openstack_floating_ip}/disassociate'
+  defaults:
+    _entity_form: 'openstack_floating_ip.disassociate'
+    _title: 'Disassociate OpenStack Floating IP'
+  requirements:
+    _entity_access: 'openstack_floating_ip.disassociate'

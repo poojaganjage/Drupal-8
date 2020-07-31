@@ -1,0 +1,398 @@
+##
+# Cloud Orchestrator cloud formation template.
+# This template will create an EC2 instance, RDS
+# VPC, Subnets, Security groups, Mysql database
+# and ElastiCache memcache cluster.
+##
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator EC2 - Full Stack'
+Mappings:
+  # The AMIs are base Ubuntu 20.04 LTS
+  CloudOrchestrator:
+    us-east-1:
+      AMI: ami-068663a3c619dd892
+    us-east-2:
+      AMI: ami-0e84e211558a022c0
+    us-west-1:
+      AMI: ami-075fd582acf0c0128
+    us-west-2:
+      AMI: ami-09dd2e08d601bff67
+    ap-east-1:
+      AMI: ami-9ccc8aed
+    ap-south-1:
+      AMI: ami-0c5b1a88222ac79cb
+    ap-northeast-1:
+      AMI: ami-0c1ac8728ef7f87a4
+    ap-northeast-2:
+      AMI: ami-0de407404c33d1671
+    ap-northeast-3:
+      AMI: ami-0e319adbbd61f8b6f
+    ap-southeast-1:
+      AMI: ami-0b8cf0f359b1335e1
+    ap-southeast-2:
+      AMI: ami-0a1a4d97d4af3009b
+    ca-central-1:
+      AMI: ami-08a6203f59f9df866
+    eu-central-1:
+      AMI: ami-05c26ae4789875080
+    eu-west-1:
+      AMI: ami-0dad359ff462124ca
+    eu-west-2:
+      AMI: ami-0917237b4e71c5759
+    eu-west-3:
+      AMI: ami-0e60c6afa19d896ee
+    eu-north-1:
+      AMI: ami-0d4e2b57f569e9daa
+    eu-south-1:
+      AMI: ami-0b74d52f736d963d1
+    sa-east-1:
+      AMI: ami-001c16a3a4f5d85f1
+    me-south-1:
+      AMI: ami-09cbb7fde4a0edad0
+    af-south-1:
+      AMI: ami-033b88f80930a0f7a
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: >-
+      A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier.
+      Must be between 1 and 20 characters and only contain alphanumeric characters
+      and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+  IAMInstanceProfile:
+    Description: IAM Instance Profile Name
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 key pair to SSH access into the EC2 instance.
+    Type: String
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: The EC2 instance type.
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - c5.large
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - r5.large
+      - r5.xlarge
+      - r5.2xlarge
+      - r5.4xlarge
+      - r5.8xlarge
+      - r5.12xlarge
+      - r5.16xlarge
+      - r5.24xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3.16xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+  DrupalUserName:
+    Default: cloud_admin
+    Description: >-
+      The Drupal admin account username. Must be between 5 and 16 characters and
+      only contain alphanumeric characters and underscores.
+    Type: String
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: "[a-zA-Z][a-zA-Z0-9_]*"
+    NoEcho: 'false'
+    ConstraintDescription: >-
+      Must only contain alphanumeric characters, underscores
+      and must be between 5 and 16 characters long.
+  DrupalPassword:
+    Type: String
+    Description: >-
+      The Drupal admin account password. Must be between 6 and 32 characters and
+      only contain alphanumeric characters and these special
+      characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: '^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$'
+    ConstraintDescription: >-
+      Your Drupal password must be between 6 and 32 characters and be
+      letters (upper or lower), numbers, and these special characters '_'`~!#$%^&*()_+,- .
+  DrupalEmail:
+    Description: Drupal site administrator email.
+    Type: String
+    AllowedPattern: "^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$"
+    ConstraintDescription: Must be a valid email address.
+  PublicSubnet1:
+    Description: Public Subnet 1
+    Type: String
+  EC2SecurityGroup:
+    Description: EC2 Security Group
+    Type: String
+  MySQLUserName:
+    Description: >-
+      Username for the RDS. Must be between 5 and 16 characters and only contain
+      alphanumeric characters and underscores.
+    Default: administrator
+    Type: String
+    NoEcho: 'false'
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: "[a-zA-Z0-9_]*"
+    ConstraintDescription: >-
+      Must contain only alphanumeric characters, underscores
+      and must be between 5 and 16 characters long.
+  MySQLPassword:
+    Description: >-
+      Password for the RDS Username.  Must be between 6 and 32 characters and
+      only contain alphanumeric characters and these special
+      characters '_'`~!#$%^&*()_+,-.
+    Type: String
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: '^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$'
+    ConstraintDescription: >-
+      Your MySQLPassword must be letters (upper or lower),
+      numbers, and these special characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+  DatabaseName:
+    Description: >-
+      The name of the database. Must be between 4 and 32 characters and
+      only contain alphanumeric characters and underscores.
+    Type: String
+    Default: cloud_orchestrator
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    MinLength: '4'
+    MaxLength: '32'
+    ConstraintDescription: >-
+      Your database name must be between 4 and 32 characters and
+      contain alphanumeric characters and underscores.
+  DatabaseEndpointAddress:
+    Description: Database Endpoint
+    Type: String
+  DatabasePort:
+    Description: Database Port
+    Type: String
+    Default: '3306'
+  ElastiCacheAddress:
+    Description: ElastiCache endpoint address
+    Type: String
+  CloudOrchestratorVersion:
+    Description: Version of the Cloud Orchestrator to install.
+    Default: 8.2.0
+    Type: String
+    AllowedValues:
+      - 8.2.0
+      - 3.x-dev
+Resources:
+  EC2:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      DisableApiTermination: false
+      EbsOptimized: false
+      IamInstanceProfile: !Ref IAMInstanceProfile
+      ImageId: !FindInMap
+        - CloudOrchestrator
+        - !Ref 'AWS::Region'
+        - AMI
+      InstanceInitiatedShutdownBehavior: stop
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      Monitoring: false
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeviceIndex: "0"
+          SubnetId: !Ref PublicSubnet1
+          GroupSet:
+            - !Ref EC2SecurityGroup
+      Tenancy: default
+      UserData:
+        Fn::Base64:
+          Fn::Sub:
+            - |
+              #!/bin/bash -xe
+
+              # Basic package installation
+              export DEBIAN_FRONTEND=noninteractive
+              apt-get update -yq
+              apt-get upgrade -yq
+
+              apt-get install -y python3-pip python3-setuptools apache2 \
+              zip unzip sendmail memcached libmemcached-tools mariadb-client mariadb-server
+
+              apt-get install -y php php-mysql php-gd php-curl php-xml \
+              php-cli php-json php-mbstring php-opcache php-readline \
+              php-xml php-zip libapache2-mod-php php-memcache php-apcu
+
+              # Install Composer
+              php -r "copy('https://getcomposer.org/installer', '/tmp/composer-setup.php');"
+              sudo php /tmp/composer-setup.php  --install-dir /usr/local/bin --filename composer
+
+              # Install Drush
+              git clone https://github.com/drush-ops/drush.git /usr/local/src/drush
+              cd /usr/local/src/drush
+              git checkout 9.7.1
+              ln -s /usr/local/src/drush/drush /usr/local/bin/drush
+              cd /usr/local/src/drush && sudo composer install
+
+              # Setup DocRoot
+              vhost_file=/etc/apache2/sites-available/cloud_orchestrator.conf
+
+              sudo tee $vhost_file > /dev/null <<EOF
+              <VirtualHost *:80>
+                      DocumentRoot /var/www/cloud_orchestrator/docroot
+
+                      <Directory />
+                        Options FollowSymLinks
+                        AllowOverride None
+                      </Directory>
+                      <Directory /var/www/cloud_orchestrator/docroot>
+                        Options FollowSymLinks MultiViews
+                        AllowOverride All
+                        Order allow,deny
+                        allow from all
+                      </Directory>
+
+                      ErrorLog /var/log/apache2/cloud_orchestrator.error.log
+
+                      # Possible values include: debug, info, notice, warn, error, crit,
+                      # alert, emerg.
+                      LogLevel warn
+
+                      CustomLog /var/log/apache2/cloud_orchestrator.access.log combined
+
+              </VirtualHost>
+              EOF
+
+              php_extras=/etc/php/7.4/apache2/conf.d/extras.ini
+              sudo tee $php_extras > /dev/null <<EOF
+              memory_limit = 256M
+              max_execution_time = 600
+              EOF
+
+              # Use composer to create Cloud Orchestrator project
+              sudo chown -R ubuntu:ubuntu /var/www
+              sudo rm -rf /var/www/html
+
+              cd /var/www && sudo -u ubuntu composer create-project docomoinnovations/cloud_orchestrator:${CloudOrchestratorVersion} cloud_orchestrator
+
+              # Unlink default apache configurations
+              sudo a2dissite 000-default
+              sudo a2enmod rewrite
+              sudo a2ensite cloud_orchestrator
+              sudo service apache2 restart
+
+              sudo mkdir -p /var/files/drupal
+              sudo chown -R ubuntu /var/files
+              sudo chgrp -R www-data /var/files
+              sudo chmod g+rw -R /var/files
+
+              settings_file=/var/www/cloud_orchestrator/docroot/sites/default/settings.php
+
+              sudo tee -a $settings_file > /dev/null <<EOF
+              \$settings['file_private_path'] = '/var/files/drupal';
+              EOF
+
+              sudo mkdir -p /var/www/cloud_orchestrator/config/sync
+              sudo chown -R ubuntu:www-data /var/www/cloud_orchestrator/config/sync
+              sudo chmod -R g+w /var/www/cloud_orchestrator/config/sync
+              sudo chown -R ubuntu:www-data /var/www/cloud_orchestrator/docroot/sites/default/files
+              sudo chmod -R g+w /var/www/cloud_orchestrator/docroot/sites/default/files
+
+              # Install Cloud Orchestrator using Drush
+              cd /var/www/cloud_orchestrator
+              sudo -u ubuntu drush si -y \
+              --db-url=mysql://${MySQLUserName}:${MySQLPassword}@${DatabaseEndpointAddress}:${DatabasePort}/${DatabaseName} \
+              --account-name=${DrupalUserName} \
+              --account-pass=${DrupalPassword} \
+              --site-name="Cloud Orchestrator" \
+              --account-mail=${DrupalEmail} \
+              cloud_orchestrator \
+              cloud_orchestrator_module_configure_form.cloud_service_providers.aws_cloud=aws_cloud \
+              cloud_orchestrator_module_configure_form.cloud_service_providers.k8s=k8s
+
+              # After install setup cron
+              { echo "*/5 * * * * cd /var/www/cloud_orchestrator && drush cron /dev/null 2>&1"; } | crontab -
+
+              # Switch to Claro Admin
+              cd /var/www/cloud_orchestrator
+              sudo -u ubuntu drush en -y claro
+              sudo -u ubuntu drush cset -y system.theme admin claro
+
+              # Setup Memcache module
+              cd /var/www/cloud_orchestrator
+              sudo -u ubuntu composer require drupal/memcache
+              sudo -u ubuntu drush en -y memcache memcache_admin
+              sudo -u ubuntu drush cr
+
+              sudo tee -a $settings_file > /dev/null <<EOF
+              \$settings['memcache']['servers'] = ['${ElastiCacheAddress}:11211' => 'default'];
+              \$settings['memcache']['bins'] = ['default' => 'default'];
+              \$settings['memcache']['key_prefix'] = '';
+              \$settings['cache']['default'] = 'cache.backend.memcache';
+              EOF
+
+              cd /var/www/cloud_orchestrator
+              sudo -u ubuntu drush cr
+
+            - {
+                MySQLUserName: !Ref MySQLUserName,
+                MySQLPassword: !Ref MySQLPassword,
+                DatabaseEndpointAddress: !Ref DatabaseEndpointAddress,
+                DatabasePort: !Ref DatabasePort,
+                DrupalUserName: !Ref DrupalUserName,
+                DrupalPassword: !Ref DrupalPassword,
+                DatabaseName: !Ref DatabaseName,
+                DrupalEmail: !Ref DrupalEmail,
+                ElastiCacheAddress: !Ref ElastiCacheAddress,
+                CloudOrchestratorVersion: !Ref CloudOrchestratorVersion
+              }
+      Tags:
+        - Key: Application
+          Value: !Ref 'AWS::StackName'
+        - Key: Name
+          Value: !Sub
+            - '${StackPrefix} Drupal Instance'
+            - StackPrefix: !Ref StackPrefix
+Outputs:
+  EC2InstanceName:
+    Value: !Sub
+      - '${StackPrefix} Drupal Instance'
+      - StackPrefix: !Ref StackPrefix
+  DrupalUrl:
+    Value:
+      !Sub
+        - 'http://${PublicIp}'
+        - { PublicIp: !GetAtt EC2.PublicIp }
+  DrupalUserName:
+    Value: !Ref DrupalUserName
+  DrupalPassword:
+    Value: !Ref DrupalPassword
+  DrupalEmail:
+    Value: !Ref DrupalEmail
+  SSHAccess:
+    Value:
+      !Sub
+        - 'ssh ubuntu@${PublicIp}'
+        - { PublicIp: !GetAtt EC2.PublicIp }

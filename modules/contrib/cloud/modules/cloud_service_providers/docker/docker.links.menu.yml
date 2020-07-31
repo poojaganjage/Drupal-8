@@ -1,0 +1,5 @@
+docker.settings:
+  title: Docker Settings
+  description: 'Configure the local docker daemon.'
+  parent: system.admin_config_services
+  route_name: 'docker.settings'

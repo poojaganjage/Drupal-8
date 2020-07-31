@@ -1,0 +1,5 @@
+gapps.settings:
+  title: GApps settings
+  description: 'Configure the GApps.'
+  parent: system.admin_config_services
+  route_name: 'gapps.settings'

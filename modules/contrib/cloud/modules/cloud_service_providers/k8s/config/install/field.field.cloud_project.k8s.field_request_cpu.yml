@@ -1,0 +1,24 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.storage.cloud_project.field_request_cpu
+id: cloud_project.k8s.field_request_cpu
+field_name: field_request_cpu
+entity_type: cloud_project
+bundle: k8s
+label: 'Request CPU'
+description: 'CPU to be requested in resource quota.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  min: 0
+  max: null
+  prefix: ''
+  suffix: m
+field_type: integer

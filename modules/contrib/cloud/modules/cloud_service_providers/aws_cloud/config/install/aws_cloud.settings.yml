@@ -1,0 +1,154 @@
+aws_cloud_test_mode: false
+aws_cloud_notification_frequency: 86400
+aws_cloud_long_running_instance_notification: 0
+aws_cloud_long_running_instance_notify_owner: 0
+aws_cloud_long_running_instance_notification_criteria: 30
+aws_cloud_long_running_instance_notification_emails: ""
+aws_cloud_long_running_instance_notification_subject: 'Long running EC2 instances'
+aws_cloud_long_running_instance_notification_msg: "The following EC2 instance have been running for a long time. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]"
+aws_cloud_long_running_instance_notification_instance_info: "--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------"
+aws_cloud_low_utilization_instance_notification: 0
+aws_cloud_low_utilization_instance_notify_owner: 0
+aws_cloud_low_utilization_instance_cpu_utilization_threshold: 10
+aws_cloud_low_utilization_instance_network_io_threshold: 5
+aws_cloud_low_utilization_instance_period: 14
+aws_cloud_low_utilization_instance_notification_emails: ""
+aws_cloud_low_utilization_instance_notification_subject: 'Low utilization EC2 instances'
+aws_cloud_low_utilization_instance_notification_msg: "The following EC2 instance have been running in low utilization status for serveral days. Please review them. \n\n[aws_cloud_instance_email:instances] \n\nSent from [site:url]"
+aws_cloud_low_utilization_instance_notification_instance_info: "--------------------------------\nInstance name: [aws_cloud_instance:name]\nInstance url: [aws_cloud_instance:instance_link]\nRunning since: [aws_cloud_instance:launch_time].\n--------------------------------"
+aws_cloud_scheduler_tag: "Schedule"
+aws_cloud_scheduler_periods: ""
+aws_cloud_instance_terminate: false
+aws_cloud_instance_notification_time: '09:00:00'
+aws_cloud_instance_notification_hour: '09'
+aws_cloud_instance_notification_minutes: '00'
+aws_cloud_view_refresh_interval: 10
+aws_cloud_monitor_refresh_interval: 60
+aws_cloud_unused_volume_criteria: 60
+aws_cloud_volume_notification_subject: 'Unused EBS volumes'
+aws_cloud_volume_notification_msg: 'The following EBS volumes are not in use. Please review them. \n\n[aws_cloud_volume_email:volumes] \n\nSent from [site:url]'
+aws_cloud_volume_notification_volume_info: "--------------------------------\nVolume name: [aws_cloud_volume:name]\nVolume url: [aws_cloud_volume:volume_link]\nUnused since: [aws_cloud_volume:created]\n--------------------------------"
+aws_cloud_volume_notification_frequency: 604800
+aws_cloud_volume_notification_time: '09:00:00'
+aws_cloud_volume_notification_hour: '09'
+aws_cloud_volume_notification_minutes: '00'
+aws_cloud_snapshot_notify_owner: 0
+aws_cloud_snapshot_notification_subject: 'Unused EBS snapshots'
+aws_cloud_snapshot_notification_msg: "The following EBS snapshots are unused and not associated with an EBS volume. Please review them. \n\n[aws_cloud_snapshot_email:snapshots] \n\nSent from [site:url]"
+aws_cloud_snapshot_notification_snapshot_info: "--------------------------------\nSnapshot name: [aws_cloud_snapshot:name]\nSnapshot url: [aws_cloud_snapshot:snapshot_link]\nSnapshot created: [aws_cloud_snapshot:created]\n--------------------------------"
+aws_cloud_snapshot_notification_frequency: 604800
+aws_cloud_stale_snapshot_criteria: 60
+aws_cloud_snapshot_notification_time: '09:00:00'
+aws_cloud_snapshot_notification_hour: '09'
+aws_cloud_snapshot_notification_minutes: '00'
+aws_cloud_view_items_per_page: 50
+aws_cloud_view_expose_items_per_page: true
+aws_cloud_instance_type_prices: true
+aws_cloud_instance_type_prices_spreadsheet: true
+aws_cloud_instance_type_cost: true
+aws_cloud_instance_type_cost_list: true
+aws_cloud_instance_list_cost_column: true
+aws_cloud_ec2_pricing_endpoint: 'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current'
+aws_cloud_price_rate_ec2: 100
+aws_cloud_region_locations:
+  af-south-1:
+    country: ZA
+    city: 'Cape Town'
+    latitude: '-33.928992'
+    longitude: '18.417396'
+  ap-east-1:
+    country: HK
+    city: 'Hong Kong'
+    latitude: '22.319304'
+    longitude: '114.169361'
+  ap-northeast-1:
+    country: JP
+    city: Tokyo
+    latitude: '35.681236'
+    longitude: '139.767125'
+  ap-northeast-2:
+    country: KR
+    city: Seoul
+    latitude: '37.566535'
+    longitude: '126.977969'
+  ap-south-1:
+    country: IN
+    city: Mumbai
+    latitude: '19.075984'
+    longitude: '72.877656'
+  ap-southeast-1:
+    country: SG
+    city: Singapore
+    latitude: '1.352083'
+    longitude: '103.819836'
+  ap-southeast-2:
+    country: AU
+    city: Sydney
+    latitude: '-33.86882'
+    longitude: '151.209296'
+  ca-central-1:
+    country: CA
+    city: Central
+    latitude: '45.42153'
+    longitude: '-75.697193'
+  eu-central-1:
+    country: DE
+    city: Frankfurt
+    latitude: '50.110922'
+    longitude: '8.682127'
+  eu-north-1:
+    country: SE
+    city: Stockholm
+    latitude: '59.329324'
+    longitude: '18.068581'
+  eu-south-1:
+    country: IT
+    city: Milan
+    latitude: '45.4668'
+    longitude: '9.1905'
+  eu-west-1:
+    country: IE
+    city: Ireland
+    latitude: '53.349805'
+    longitude: '-6.26031'
+  eu-west-2:
+    country: GB
+    city: London
+    latitude: '51.507351'
+    longitude: '-0.127758'
+  eu-west-3:
+    country: FR
+    city: Paris
+    latitude: '48.856614'
+    longitude: '2.352222'
+  me-south-1:
+    country: BH
+    city: Bahrain
+    latitude: '26.0667'
+    longitude: '50.5577'
+  sa-east-1:
+    country: BR
+    city: 'São Paulo'
+    latitude: '-23.55052'
+    longitude: '-46.633309'
+  us-east-1:
+    country: US
+    city: 'North Virginia'
+    latitude: '37.431573'
+    longitude: '-78.656894'
+  us-east-2:
+    country: US
+    city: Ohio
+    latitude: '39.96226'
+    longitude: '-83.000706'
+  us-west-1:
+    country: US
+    city: 'North California'
+    latitude: '38.837522'
+    longitude: '-120.895824'
+  us-west-2:
+    country: US
+    city: Oregon
+    latitude: '46.15'
+    longitude: '-123.88'
+aws_cloud_update_resources_queue_cron_time: 5

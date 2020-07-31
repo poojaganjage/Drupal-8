@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.openstack
+    - field.storage.cloud_config.field_os_region
+id: cloud_config.openstack.field_os_region
+field_name: field_os_region
+entity_type: cloud_config
+bundle: openstack
+label: Region
+description: 'OpenStack region.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

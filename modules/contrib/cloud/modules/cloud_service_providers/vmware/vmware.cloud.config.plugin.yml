@@ -1,0 +1,7 @@
+# Plugin property $defaults are defined in CloudConfigPluginManager.
+vmware.cloud_config:
+  id: vmware
+  entity_type: cloud_config
+  entity_bundle: vmware
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudConfigCloudContextBundleDeriver'
+  class: '\Drupal\vmware\Plugin\cloud\config\VmwareCloudConfigPlugin'

@@ -1,0 +1,47 @@
+# For Elastic IP.
+AllocateAddress:
+  PublicIp: {{public_ip}}
+  AllocationId: {{allocation_id}}
+  Domain: {{domain}}
+
+# For Elastic IP.
+DescribeAddresses:
+  Addresses:
+    - PublicIp: {{public_ip}}
+      PrivateIpAddress: {{private_ip_address}}
+      InstanceId: {{instance_id}}
+      AllocationId: {{allocation_id}}
+      AssociationId: {{association_id}}
+      Domain: {{domain}}
+
+# For NetworkInterface.
+DescribeNetworkInterfaces:
+  NetworkInterfaces:
+    - NetworkInterfaceId: {{network_interface_id}}
+      VpcId: {{vpc_id}}
+      Description: {{description}}
+      SubnetId: {{subnet_id}}
+      MacAddress: {{mac_address}}
+      Status: {{status}}
+      PrivateDnsName: {{private_dns_name}}
+      OwnerId: {{owner_id}}
+      SourceDestCheck: {{source_dest_check}}
+      PrivateIpAddress: {{primary_private_ip}}
+      Attachment:
+        AttachmentId: {{attachment_id}}
+        InstanceOwnerId: {{instance_owner_id}}
+        Status: {{attachment_status}}
+        InstanceId: {{instance_id}}
+        DeviceIndex: {{device_id}}
+        DeleteOnTermination: {{delete_on_termination}}
+      Association:
+        AllocationId: {{allocation_id}}
+      PrivateIpAddresses:
+        - Primary: {{is_primary}}
+          PrivateIpAddress: {{secondary_private_ips}}
+      Groups:
+        - GroupName: {{security_groups}}
+
+DescribeInstanceAttribute:
+  DisableApiTermination:
+    Value: 0

@@ -1,0 +1,12 @@
+cloud.cloud_server_template_type.*:
+  type: config_entity
+  label: 'Launch template type'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string

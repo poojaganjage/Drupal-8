@@ -1,0 +1,111 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.openstack
+    - field.field.cloud_config.openstack.field_access_key
+    - field.field.cloud_config.openstack.field_account_id
+    - field.field.cloud_config.openstack.field_api_endpoint
+    - field.field.cloud_config.openstack.field_location_city
+    - field.field.cloud_config.openstack.field_location_country
+    - field.field.cloud_config.openstack.field_location_latitude
+    - field.field.cloud_config.openstack.field_location_longitude
+    - field.field.cloud_config.openstack.field_os_region
+    - field.field.cloud_config.openstack.field_secret_key
+  module:
+    - cloud
+  enforced:
+    module:
+      - openstack
+id: cloud_config.openstack.default
+targetEntityType: cloud_config
+bundle: openstack
+mode: default
+content:
+  field_access_key:
+    weight: 4
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_account_id:
+    weight: 1
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_api_endpoint:
+    weight: 2
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_location_city:
+    weight: 7
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_location_country:
+    weight: 6
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_location_latitude:
+    weight: 8
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_location_longitude:
+    weight: 9
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_os_region:
+    weight: 3
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_secret_key:
+    weight: 5
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  name:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 10
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    region: content
+    third_party_settings: {  }
+hidden: {  }

@@ -1,0 +1,100 @@
+# This is the /clouds menu.
+cloud.service_providers.menu:
+  class: Drupal\cloud\Plugin\Menu\CloudProviderLink
+  menu_name: main
+  expanded: true
+  weight: 100
+
+# MENU_NORMAL_ITEM.
+cloud.design.menu:
+  title: 'Design'
+  route_name: 'view.cloud_server_template.list'
+  menu_name: main
+  expanded: true
+  weight: 110
+
+# Manage cloud service provider (CloudConfig).
+cloud.admin.menu:
+  title: 'Manage'
+  route_name: 'view.cloud_config.admin'
+  menu_name: main
+  expanded: true
+  weight: 120
+
+cloud.menu.cloud_links:
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudMenuLinks'
+  weight: 110
+
+cloud.menu.design_links:
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudDesignMenuLinks'
+  weight: 110
+
+# Structure | Cloud service provider
+cluod.admin_structure:
+  title: 'Cloud service providers'
+  description: 'Create and manage cloud service providers.'
+  route_name: entity.cloud_config.collection
+  parent: system.admin_structure
+
+# Structure | Cloud service provider | Add cloud service provider.
+cloud.cloud_config.add_form:
+  title: 'Add cloud service provider'
+  description: 'Add a cloud service provider.'
+  parent: cluod.admin_structure
+  route_name: entity.cloud_config.add_page
+  weight: 10
+
+# Structure | Cloud service providers | Cloud service provider types.
+cluod.admin_structure.cloud_service_provider_types:
+  title: 'Cloud service provider types'
+  description: 'Create and manage cloud service provider types.'
+  parent: cluod.admin_structure
+  route_name: entity.cloud_config_type.collection
+  weight: 20
+
+# Structure | Cloud service providers | Cloud server template types.
+cluod.admin_structure.cloud_server_template_types:
+  title: 'Launch template types'
+  description: 'Add a launch template type.'
+  parent: cluod.admin_structure
+  route_name: entity.cloud_server_template_type.collection
+  weight: 30
+
+# Structure | Cloud service providers | Cloud project types.
+cluod.admin_structure.cloud_project_types:
+  title: 'Cloud project types'
+  description: 'Add a cloud project type.'
+  parent: cluod.admin_structure
+  route_name: entity.cloud_project_type.collection
+  weight: 40
+
+# Structure | Cloud service providers | cloud service provider types |
+# Add cloud service provider type.
+cloud.cloud_service_provider_types.add_form:
+  title: 'Add cloud service provider type'
+  description: 'Add a cloud service provider type.'
+  parent: cluod.admin_structure.cloud_service_provider_types
+  route_name: entity.cloud_config_type.add_form
+
+# Structure | Cloud service providers | cloud server template types |
+# Add cloud server template type.
+cloud.cloud_server_tepmlate_types.add_form:
+  title: 'Add launch template type'
+  description: 'Add a launch template type.'
+  parent: cluod.admin_structure.cloud_server_template_types
+  route_name: entity.cloud_server_template_type.add_form
+
+# Structure | Cloud service providers | cloud project types |
+# Add cloud project type.
+cloud.cloud_project_types.add_form:
+  title: 'Add cloud project types'
+  route_name: entity.cloud_project_type.add_form
+  parent: cluod.admin_structure.cloud_project_types
+
+# Configuration | Web services | Cloud settings.
+# Admin settings for cloud.
+cloud.settings:
+  title: 'Cloud settings'
+  description: 'Configure Cloud module.'
+  parent: system.admin_config_services
+  route_name: cloud.settings

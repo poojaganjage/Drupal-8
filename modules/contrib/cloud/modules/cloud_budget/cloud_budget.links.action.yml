@@ -1,0 +1,36 @@
+####################
+# Cloud Credit
+####################
+
+entity.cloud_credit.add_form:
+  route_name: entity.cloud_credit.add_form
+  title: 'Add Cloud Credit'
+  appears_on:
+    - view.cloud_credit.list
+
+# entity.cloud_credit.refresh:
+#   route_name: entity.cloud_credit.list_update
+#   title: 'Refresh'
+#   appears_on:
+#     - view.cloud_credit.list
+
+entity.cloud_credit.collection:
+  route_name: view.cloud_credit.list
+  title: 'List Cloud Credits'
+  appears_on:
+    - entity.cloud_credit.add_form
+    - entity.cloud_credit.edit_form
+    - entity.cloud_credit.delete_form
+    - entity.cloud_credit.canonical
+
+entity.cloud_credit.edit:
+  route_name: entity.cloud_credit.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.cloud_credit.canonical
+
+entity.cloud_credit.delete:
+  route_name: entity.cloud_credit.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.cloud_credit.canonical

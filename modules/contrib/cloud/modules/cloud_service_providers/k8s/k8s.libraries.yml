@@ -1,0 +1,51 @@
+moment:
+  remote: https://github.com/moment/moment/
+  version: 2.24.0
+  license:
+    name: MIT License
+    url: https://raw.githubusercontent.com/moment/moment/develop/LICENSE
+  js:
+    https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js: { type: external, minified: true }
+
+k8s_entity_metrics:
+  version: 8.x-2.x
+  js:
+    js/k8s_entity_metrics.js: {}
+  dependencies:
+    - core/jquery
+    - k8s/moment
+    - cloud/chartjs
+
+# K8s Node Heatmap
+k8s_node_heatmap:
+  version: 8.x-2.x
+  js:
+    js/k8s_node_heatmap.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/d3
+
+k8s_node_allocated_resources:
+  version: 8.x-2.x
+  js:
+    js/k8s_node_allocated_resources.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/d3
+
+k8s_namespace_costs_chart:
+  version: 8.x-2.x
+  js:
+    js/k8s_namespace_costs_chart.js: {}
+  dependencies:
+    - core/jquery
+    - cloud/d3
+    - k8s/moment
+    - cloud/chartjs
+
+k8s_all_resources:
+  version: 8.x-2.x
+  js:
+    js/k8s_all_resources.js: {}
+  dependencies:
+    - core/jquery

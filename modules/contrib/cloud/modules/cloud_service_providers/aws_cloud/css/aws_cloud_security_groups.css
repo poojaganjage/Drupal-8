@@ -1,0 +1,23 @@
+.field-multiple-table tr > td:first-child,
+.field-multiple-table tr > td:first-child .ajax-new-content {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+div[class*='form-item-outbound-permission'],
+div[class*='form-item-ip-permission'] {
+  margin: 5px;
+}
+
+div[class$='-group-name'] {
+  clear: both;
+}
+
+.ip-protocol-select,
+.ip-type-select {
+  margin-top: 5px;
+}
+
+.hide {
+  display: none;
+}

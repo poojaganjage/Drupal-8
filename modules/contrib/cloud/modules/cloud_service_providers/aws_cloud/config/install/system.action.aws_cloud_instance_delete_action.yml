@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_instance_delete_action
+label: 'Terminate instance(s)'
+type: aws_cloud_instance
+plugin: entity:delete_action:aws_cloud_instance
+configuration: {  }

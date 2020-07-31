@@ -1,0 +1,6 @@
+k8s.settings.local_tasks.k8s_to_s3:
+  title: K8s to S3
+  route_name: 'k8s.settings.k8s_to_s3'
+  base_route: 'k8s.settings'
+  description: 'Configure the Docker registry, K8s as a source and S3 as the destination to export K8s resources.'
+  weight: 2

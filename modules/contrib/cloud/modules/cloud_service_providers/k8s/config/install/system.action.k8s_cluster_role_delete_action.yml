@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - k8s
+id: k8s_cluster_role_delete_action
+label: 'Delete Cluster Role(s)'
+type: k8s_cluster_role
+plugin: entity:delete_action:k8s_cluster_role
+configuration: {  }

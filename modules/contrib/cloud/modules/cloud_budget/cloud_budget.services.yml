@@ -1,0 +1,12 @@
+services:
+  plugin.manager.cloud_cost_calculator:
+    class: Drupal\cloud_budget\Plugin\cloud_budget\CloudCostCalculatorManager
+    parent: default_plugin_manager
+    tags:
+      - { name: plugin_manager_cache_clear }
+
+  plugin.manager.cloud_cost_storage:
+    class: Drupal\cloud_budget\Plugin\cloud_cost_storage\CloudCostStorageManager
+    parent: default_plugin_manager
+    tags:
+      - { name: plugin_manager_cache_clear }

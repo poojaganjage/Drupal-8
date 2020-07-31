@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @file
+ * Docker module.
+ *
+ * This module manage docker.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function docker_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.docker':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Docker module allows users to manage Docker.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the Docker module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+      return $output;
+
+    default:
+      return '';
+  }
+}

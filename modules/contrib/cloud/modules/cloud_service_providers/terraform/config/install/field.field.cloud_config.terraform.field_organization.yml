@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.terraform
+    - field.storage.cloud_config.field_organization
+id: cloud_config.terraform.field_organization
+field_name: field_organization
+entity_type: cloud_config
+bundle: terraform
+label: Organization
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

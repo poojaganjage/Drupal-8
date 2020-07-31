@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud
+  enforced:
+    module:
+      - openstack
+id: openstack
+label: OpenStack

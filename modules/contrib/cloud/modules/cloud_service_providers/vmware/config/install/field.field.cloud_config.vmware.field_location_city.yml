@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.vmware
+    - field.storage.cloud_config.field_location_city
+id: cloud_config.vmware.field_location_city
+field_name: field_location_city
+entity_type: cloud_config
+bundle: vmware
+label: City
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

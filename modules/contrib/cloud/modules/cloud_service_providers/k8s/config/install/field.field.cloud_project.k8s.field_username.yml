@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.storage.cloud_project.field_username
+  module:
+    - options
+id: cloud_project.k8s.field_username
+field_name: field_username
+entity_type: cloud_project
+bundle: k8s
+label: Username
+description: 'Username to create a project.'
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: list_string

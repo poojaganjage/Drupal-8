@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_elastic_ip_disassociate_action
+label: 'Disassociate Elastic IP(s)'
+type: aws_cloud_elastic_ip
+plugin: aws_cloud_elastic_ip_disassociate_action
+configuration: {  }

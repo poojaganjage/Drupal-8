@@ -1,0 +1,144 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator - Networking'
+Mappings:
+  SubnetCidrBlocks:
+    PublicSubnet1:
+      CidrBlock: 10.0.0.0/24
+    PrivateSubnet1:
+      CidrBlock: 10.0.1.0/24
+    PrivateSubnet2:
+      CidrBlock: 10.0.2.0/24
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: >-
+      A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier.
+      Must be between 1 and 20 characters and only contain alphanumeric characters
+      and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: !Sub
+          - '${StackPrefix} VPC'
+          - StackPrefix: !Ref StackPrefix
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Sub
+          - '${StackPrefix} Internet Gateway'
+          - StackPrefix: !Ref StackPrefix
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetCidrBlocks
+        - PublicSubnet1
+        - CidrBlock
+      AvailabilityZone: !Select
+        - '0'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - '${StackPrefix} Public Subnet 1'
+            - StackPrefix: !Ref StackPrefix
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetCidrBlocks
+        - PrivateSubnet1
+        - CidrBlock
+      AvailabilityZone: !Select
+        - '0'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - '${StackPrefix} Private Subnet 1'
+            - StackPrefix: !Ref StackPrefix
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !FindInMap
+        - SubnetCidrBlocks
+        - PrivateSubnet2
+        - CidrBlock
+      AvailabilityZone: !Select
+        - '1'
+        - !GetAZs ''
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - '${StackPrefix} Private Subnet 2'
+            - StackPrefix: !Ref StackPrefix
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub
+            - '${StackPrefix} Public Route Table'
+            - StackPrefix: !Ref StackPrefix
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+      - Key: Name
+        Value: !Sub
+          - '${StackPrefix} Private Route Table'
+          - StackPrefix: !Ref StackPrefix
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+Outputs:
+  VPC:
+    Description: "VPC ID"
+    Value: !Ref VPC
+  PublicSubnet1:
+    Value: !Ref PublicSubnet1
+  PrivateSubnet1:
+    Value: !Ref PrivateSubnet1
+  PrivateSubnet2:
+    Value: !Ref PrivateSubnet2
+

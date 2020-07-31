@@ -1,0 +1,132 @@
+# The cloud service provider (CloudConfig) routing definition.
+
+entity.cloud_config.canonical:
+  route_name: entity.cloud_config.canonical
+  base_route: entity.cloud_config.canonical
+  title: 'View'
+
+entity.cloud_config.edit_form:
+  route_name: entity.cloud_config.edit_form
+  base_route: entity.cloud_config.canonical
+  title: 'Edit'
+
+entity.cloud_config.version_history:
+  route_name: entity.cloud_config.version_history
+  base_route: entity.cloud_config.canonical
+  title: 'Revisions'
+
+entity.cloud_config.delete_form:
+  route_name:  entity.cloud_config.delete_form
+  base_route:  entity.cloud_config.canonical
+  title: Delete
+  weight: 10
+
+entity.cloud_server_template.canonical:
+  route_name: entity.cloud_server_template.canonical
+  base_route: entity.cloud_server_template.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudServerTemplateTab'
+  title: 'View'
+
+entity.cloud_server_template.edit_form:
+  route_name: entity.cloud_server_template.edit_form
+  base_route: entity.cloud_server_template.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudServerTemplateTab'
+  title: 'Edit'
+
+entity.cloud_server_template.delete_form:
+  route_name:  entity.cloud_server_template.delete_form
+  base_route:  entity.cloud_server_template.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudServerTemplateTab'
+  title: 'Delete'
+
+entity.cloud_server_template.version_history:
+  route_name: entity.cloud_server_template.version_history
+  base_route: entity.cloud_server_template.canonical
+  title: 'Revisions'
+
+entity.cloud_server_template.launch:
+  route_name: entity.cloud_server_template.launch
+  base_route: entity.cloud_server_template.canonical
+  title: 'Launch'
+
+entity.cloud_server_template.copy:
+  route_name: entity.cloud_server_template.copy
+  base_route: entity.cloud_server_template.canonical
+  title: 'Copy'
+
+entity.cloud_project.canonical:
+  route_name: entity.cloud_project.canonical
+  base_route: entity.cloud_project.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudProjectTab'
+  title: 'View'
+
+entity.cloud_project.edit_form:
+  route_name: entity.cloud_project.edit_form
+  base_route: entity.cloud_project.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudProjectTab'
+  title: 'Edit'
+
+entity.cloud_project.delete_form:
+  route_name:  entity.cloud_project.delete_form
+  base_route:  entity.cloud_project.canonical
+  class: '\Drupal\cloud\Plugin\Derivative\CloudProjectTab'
+  title: 'Delete'
+
+entity.cloud_project.version_history:
+  route_name: entity.cloud_project.version_history
+  base_route: entity.cloud_project.canonical
+  title: 'Revisions'
+
+entity.cloud_project.launch:
+  route_name: entity.cloud_project.launch
+  base_route: entity.cloud_project.canonical
+  title: 'Launch'
+
+entity.cloud_project.copy:
+  route_name: entity.cloud_project.copy
+  base_route: entity.cloud_project.canonical
+  title: 'Copy'
+
+# Structure | Cloud service providers | List.
+# The cloud service provider (CloudConfig) menu items definition.
+cloud.cloud_config.collection:
+  title: 'List'
+  description: 'List cloud service providers.'
+  route_name: entity.cloud_config.collection
+  base_route: cloud.admin_structure
+  weight: 100
+
+# Structure | Cloud service providers | Cloud service provider types.
+# The cloud service provider type (CloudConfigType) menu items definition.
+cloud.cloud_config_type.collection:
+  title: 'Cloud service provider types'
+  description: 'List cloud service provider types (bundles)'
+  route_name: entity.cloud_config_type.collection
+  base_route: cloud.admin_structure
+  weight: 110
+
+# Structure | Cloud service providers | Cloud server template types.
+# The cloud server template type menu items definition.
+cloud.cloud_server_template_type.collection:
+  title: 'Launch template types'
+  description: 'List launch template types (bundles)'
+  route_name: entity.cloud_server_template_type.collection
+  base_route: cloud.admin_structure
+  weight: 120
+
+# Structure | Cloud service providers | Cloud project types.
+# The cloud project type menu items definition.
+cloud.cloud_project_type.collection:
+  title: 'Cloud project types'
+  description: 'List cloud project types (bundles)'
+  route_name: entity.cloud_project_type.collection
+  base_route: cloud.admin_structure
+  weight: 130
+
+# Configuration | Web services | Cloud settings | Settings.
+cloud.settings:
+  title: 'Settings'
+  description: 'Configure the location map for cloud service providers.'
+  route_name: cloud.settings
+  base_route: cloud.settings
+  weight: 20

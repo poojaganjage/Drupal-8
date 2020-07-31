@@ -1,0 +1,82 @@
+<?php
+
+/**
+ * @file
+ * Install and updates for VMware.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function vmware_install() {
+  // Setup default icons.
+  \Drupal::service('cloud')->addDefaultIcon('vmware');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function vmware_uninstall() {
+
+  // Delete VMware cloud service provider entities.
+  \Drupal::service('cloud')->uninstallServiceProvider('vmware');
+
+  // Delete default icon.
+  \Drupal::service('cloud')->deleteDefaultIcon('vmware');
+}
+
+/**
+ * Install location fields to cloud config.
+ */
+function vmware_update_8201() {
+  $files = [
+    'field.field.cloud_config.vmware.field_location_city.yml',
+    'field.field.cloud_config.vmware.field_location_country.yml',
+    'field.field.cloud_config.vmware.field_location_latitude.yml',
+    'field.field.cloud_config.vmware.field_location_longitude.yml',
+    'core.entity_form_display.cloud_config.vmware.default.yml',
+    'core.entity_view_display.cloud_config.vmware.default.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'vmware');
+}
+
+/**
+ * Add entity type vmware_vm and view vmware_vm and vmware_profile.
+ */
+function vmware_update_8202() {
+  // Add entity type vmware_vm.
+  $definition_update_manager = \Drupal::entityDefinitionUpdateManager();
+  $entity_type = \Drupal::entityTypeManager()->getDefinition('vmware_vm');
+  if (!empty($entity_type)) {
+    $definition_update_manager->uninstallEntityType($entity_type);
+    $definition_update_manager->installEntityType($entity_type);
+  }
+  // Add view vmware_vm.
+  $files = [
+    'views.view.vmware_profile.yml',
+    'views.view.vmware_vm.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'vmware');
+}
+
+/**
+ * Add operation links to view vmware_vm.
+ */
+function vmware_update_8203() {
+  // Update view vmware_vm.
+  $files = [
+    'views.view.vmware_vm.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'vmware');
+}
+
+/**
+ * Update view vmware_vm to fix notice "Undefined index: VM ID".
+ */
+function vmware_update_8204() {
+  // Update view vmware_vm.
+  $files = [
+    'views.view.vmware_vm.yml',
+  ];
+  \Drupal::service('cloud')->updateYmlDefinitions($files, 'vmware');
+}

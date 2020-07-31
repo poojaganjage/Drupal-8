@@ -1,0 +1,680 @@
+<?php
+
+/**
+ * @file
+ * K8s to S3 module.
+ *
+ * This module transfers definitions of K8s resources to Amazon S3 bucket.
+ */
+
+use Drupal\aws_cloud\Service\Ecr\EcrServiceInterface;
+use Drupal\aws_cloud\Service\S3\S3ServiceInterface;
+use Drupal\cloud\Entity\CloudContentEntityBase;
+use Drupal\cloud\Plugin\cloud\config\CloudConfigPluginException;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Messenger\Messenger;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\docker\Service\DockerServiceInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_help().
+ */
+function k8s_to_s3_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.k8s_to_s3':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The K8s to S3 module allows users to support the migration from K8s to the other K8s via S3 bucket.') . '</p>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the K8s to S3 module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+      return $output;
+
+    default:
+      return '';
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function k8s_to_s3_cron() {
+  if (!k8s_to_s3_validate_config()) {
+    return;
+  }
+
+  $lock = \Drupal::lock();
+  $lock_name = $lock->getLockId('k8s_to_s3_export_entities');
+  if ($lock->acquire($lock_name)) {
+    k8s_to_s3_export_entities();
+    $lock->release($lock_name);
+  }
+
+  $config = \Drupal::config('k8s_to_s3.settings');
+  if ($config->get('enable_automatic_ecr_import_export') === TRUE) {
+    $lock_name = $lock->getLockId('k8s_to_s3_export_server_template');
+    if ($lock->acquire($lock_name)) {
+      k8s_to_s3_export_server_templates();
+      $lock->release($lock_name);
+    }
+  }
+}
+
+/**
+ * Validate if the k8s and aws configuration is available.
+ *
+ * @return bool
+ *   TRUE if valid, else FALSE.
+ */
+function k8s_to_s3_validate_config() {
+  $logger = \Drupal::logger('k8s_to_s3');
+  $config = \Drupal::config('k8s_to_s3.settings');
+  $k8s_clusters = empty($config->get('k8s_clusters'))
+    ? []
+    : json_decode($config->get('k8s_clusters'), TRUE);
+  if (empty($k8s_clusters)) {
+    $logger->error('The configuration k8s_clusters is empty. Please select K8s Clusters in admin setting page.');
+    return FALSE;
+  }
+
+  $aws_cloud_context = $config->get('aws_cloud');
+  if (empty($aws_cloud_context)) {
+    $logger->error('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.');
+    return FALSE;
+  }
+
+  $s3_bucket = $config->get('s3_bucket');
+  if (empty($s3_bucket)) {
+    $logger->error('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.');
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Copy K8s yaml templates up to S3.
+ */
+function k8s_to_s3_export_entities() {
+  /* @var \Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr */
+  $ecr = \Drupal::service('aws_cloud.ecr');
+
+  /* @var \Drupal\docker\Service\DockerServiceInterface $docker */
+  $docker = \Drupal::service('docker');
+
+  $config = \Drupal::config('k8s_to_s3.settings');
+  $enable_automatic_ecr_import_export = $config->get('enable_automatic_ecr_import_export');
+  if ($enable_automatic_ecr_import_export && !$docker->isDockerUp()) {
+    \Drupal::logger('k8s_to_s3')->info(t('Docker unavailable. Skipping cloud entity export.'));
+    return;
+  }
+
+  $k8s_clusters = empty($config->get('k8s_clusters'))
+    ? []
+    : json_decode($config->get('k8s_clusters'), TRUE);
+
+  $aws_cloud_context = $config->get('aws_cloud');
+  $s3_bucket = $config->get('s3_bucket');
+  $entity_types = k8s_get_exportable_entity_types();
+
+  $operations = [];
+  $entity_type_manager = \Drupal::entityTypeManager();
+  foreach (array_keys($k8s_clusters) ?: [] as $cloud_context) {
+    k8s_update_resources($cloud_context);
+
+    foreach ($entity_types ?: [] as $entity_type) {
+      $entities = $entity_type_manager->getStorage($entity_type)->loadByProperties(
+        ['cloud_context' => [$cloud_context]]
+      );
+
+      $s3_service = \Drupal::service('aws_cloud.s3');
+      $s3_service->setCloudContext($aws_cloud_context);
+      $s3_service->deleteMatchingObjects(
+        [
+          'Bucket' => $s3_bucket,
+          'Prefix' => $cloud_context . '/' . $entity_type,
+        ]
+      );
+
+      foreach ($entities ?: [] as $entity) {
+        $key = k8s_to_s3_build_k8s_s3_key($entity, $entity_type);
+        if ($entity_type === 'k8s_namespace') {
+          $yaml = [
+            'metadata' => [
+              'name' => $entity->getName(),
+            ],
+          ];
+        }
+        else {
+          $yaml = [];
+          if (!empty($entity->getCreationYaml())) {
+            $yaml = Yaml::decode($entity->getCreationYaml());
+          }
+        }
+
+        if (empty($yaml)) {
+          continue;
+        }
+
+        if ($enable_automatic_ecr_import_export) {
+          k8s_to_s3_add_transfer_image_operations($operations, $yaml, $entity_type, $ecr, $docker, $aws_cloud_context);
+        }
+
+        $operations[] = [
+          'k8s_to_s3_export_entity_batch',
+          [
+            Yaml::encode($yaml),
+            $s3_bucket,
+            $aws_cloud_context,
+            $entity,
+          ],
+        ];
+      }
+    }
+  }
+
+  if (count($operations)) {
+    k8s_to_s3_run_batch($operations);
+  }
+}
+
+/**
+ * Export server template to s3.
+ */
+function k8s_to_s3_export_server_templates() {
+  $config = \Drupal::config('k8s_to_s3.settings');
+  $s3_bucket = $config->get('s3_bucket');
+  $aws_cloud_context = $config->get('aws_cloud');
+  $k8s_clusters = empty($config->get('k8s_clusters'))
+    ? []
+    : json_decode($config->get('k8s_clusters'), TRUE);
+
+  /* @var \Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr */
+  $ecr = \Drupal::service('aws_cloud.ecr');
+
+  /* @var \Drupal\docker\Service\DockerServiceInterface $docker */
+  $docker = \Drupal::service('docker');
+
+  /* @var \Drupal\aws_cloud\Service\S3\S3ServiceInterface $s3_service */
+  $s3_service = \Drupal::service('aws_cloud.s3');
+
+  if ($docker->isDockerUp() === FALSE) {
+    \Drupal::logger('k8s_to_s3')->info(t('Docker unavailable. Skipping launch template export.'));
+    return;
+  }
+
+  $operations = [];
+
+  foreach (array_keys($k8s_clusters) ?: [] as $cloud_context) {
+    $entities = \Drupal::entityTypeManager()
+      ->getStorage('cloud_server_template')
+      ->loadByProperties(
+        [
+          'cloud_context' => [$cloud_context],
+        ]
+      );
+    $s3_service->setCloudContext($aws_cloud_context);
+    $s3_service->deleteMatchingObjects(
+      [
+        'Bucket' => $s3_bucket,
+        'Prefix' => $cloud_context . '/cloud_server_template',
+      ]
+    );
+    foreach ($entities ?: [] as $entity) {
+      $yaml = Yaml::decode($entity->get('field_detail')->value);
+      $containers = [];
+      $object = $entity->get('field_object')->value;
+
+      k8s_to_s3_add_transfer_image_operations($operations, $yaml, 'k8s_' . $object, $ecr, $docker, $aws_cloud_context);
+
+      // If there are transfer operations, then copy the yaml up.
+      if (count($operations)) {
+        $operations[] = [
+          'k8s_to_s3_export_entity_batch',
+          [
+            Yaml::encode($yaml),
+            $s3_bucket,
+            $aws_cloud_context,
+            $entity,
+          ],
+        ];
+      }
+    }
+  }
+
+  if (count($operations)) {
+    k8s_to_s3_run_batch($operations);
+  }
+
+}
+
+/**
+ * Run batch operations to copy docker container images to Ecr.
+ *
+ * @param array $operations
+ *   Array of operations for batch to perform.
+ */
+function k8s_to_s3_run_batch(array $operations) {
+  if (count($operations)) {
+    $batch = [
+      'title' => t('Transferring k8s cloud images to ECR and S3'),
+      'operations' => $operations,
+      'init_message' => t('Start processing'),
+      'progress_message' => t('Processed @current out of @total. Estimated time: @estimate.'),
+      'error_message' => t('The transfer process has encountered an error.'),
+    ];
+    $start = time();
+
+    batch_set($batch);
+    $batch = &batch_get();
+    $batch['progressive'] = FALSE;
+    batch_process();
+
+    $end = time();
+    \Drupal::logger('k8s_to_s3')->info(
+      t(
+        'Docker image operations transfer took @time seconds.',
+        [
+          '@time' => $end - $start,
+        ]
+      )
+    );
+  }
+}
+
+/**
+ * Export an entity to S3 bucket.
+ *
+ * @param string $yaml
+ *   The yaml body.
+ * @param string $s3_bucket
+ *   The S3 bucket.
+ * @param string $cloud_context
+ *   The aws cloud context.
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The cloud server template entity.
+ * @param array $context
+ *   The batch process context that gets passed.
+ */
+function k8s_to_s3_export_entity_batch(
+  $yaml,
+  $s3_bucket,
+  $cloud_context,
+  EntityInterface $entity,
+  array &$context
+) {
+  $s3_service = \Drupal::service('aws_cloud.s3');
+  $s3_service->setCloudContext($cloud_context);
+
+  $entity_type = $entity->getEntityTypeId();
+  $key = "{$entity->getCloudContext()}/$entity_type/{$entity->getName()}.yaml";
+
+  if (!empty($yaml)) {
+    k8s_to_s3_put_object($s3_service, $s3_bucket, $key, $yaml);
+    $context['results'][] = $key;
+    $context['message'] = t(
+      'Copied @key to S3',
+      [
+        '@key' => $key,
+      ]
+    );
+  }
+}
+
+/**
+ * Batch function for transferring image to S3.
+ *
+ * @param Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr
+ *   ECR service object.
+ * @param Drupal\docker\Service\DockerServiceInterface $docker
+ *   Docker server object.
+ * @param string $image
+ *   Image to transfer.
+ * @param string $cloud_context
+ *   Cloud context for ECR.
+ * @param array $context
+ *   The batch process context that gets passed.
+ */
+function k8s_to_s3_transfer_image_batch(
+  EcrServiceInterface $ecr,
+  DockerServiceInterface $docker,
+  $image,
+  $cloud_context,
+  array &$context
+) {
+  $target = k8s_to_s3_transfer_image(
+    $ecr,
+    $docker,
+    $image,
+    $cloud_context
+  );
+  if ($target !== FALSE) {
+    $context['results'][] = $image;
+    $context['message'] = t(
+      'Copied @image to ECR as @target',
+      [
+        '@image' => $image,
+        '@target' => $target,
+      ]);
+  }
+}
+
+/**
+ * Return authentication tokens.
+ *
+ * @param \Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr
+ *   EcrServiceInterface to use.
+ * @param string $cloud_context
+ *   The cloud context to use with ECR.
+ *
+ * @return array
+ *   Auth array.
+ */
+function k8s_to_s3_get_auth_token(EcrServiceInterface $ecr, $cloud_context) {
+  $ecr->setCloudContext($cloud_context);
+  $token = $ecr->getAuthorizationToken();
+  $token = base64_decode($token);
+  $token_parts = explode(':', $token);
+  $auth = [];
+  if (count($token_parts) === 2) {
+    $auth = [
+      'username' => $token_parts[0],
+      'password' => $token_parts[1],
+      'serveraddress' => $ecr->getEcrEndpoint(),
+    ];
+  }
+  return $auth;
+}
+
+/**
+ * Transfer image to S3.
+ *
+ * @param Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr
+ *   ECR service object.
+ * @param Drupal\docker\Service\DockerServiceInterface $docker
+ *   Docker server object.
+ * @param string $image
+ *   Image to transfer.
+ * @param string $cloud_context
+ *   Cloud context for ECR.
+ *
+ * @return bool|string
+ *   Target image uri or false if not transferred.
+ */
+function k8s_to_s3_transfer_image(
+  EcrServiceInterface $ecr,
+  DockerServiceInterface $docker,
+  $image,
+  $cloud_context
+) {
+  $auth = k8s_to_s3_get_auth_token($ecr, $cloud_context);
+
+  if (count($auth)) {
+    $info = $docker->parseImage($image);
+    $endpoint = $ecr->getEcrEndpoint();
+
+    // Create the repository if it doesn't exist.
+    if ($ecr->doesRepositoryExists($info['full_repository']) === FALSE) {
+      $ecr->createRepository($info['full_repository']);
+    }
+
+    $target_tag = k8s_to_s3_get_ecr_target($docker, $ecr, $image, $cloud_context);
+    // Docker pull from repo, tag and push to target sequence.sequence.
+    if ($docker->pullImage($info['name']) === TRUE) {
+      $docker->tagImage($image, $target_tag, $info['tag']);
+      $docker->pushImage($target_tag, $auth);
+      // Check to see if the image got pushed.  If error, log it.
+      if ($ecr->doesImageExist($info['full_repository'], $info['tag']) === FALSE) {
+        \Drupal::logger('k8s_to_s3')->error(
+          t(
+            'Image @image not pushed to ECR @endpoint',
+            [
+              '@image' => $info['name'],
+              '@endpoint' => $endpoint,
+            ])
+        );
+      }
+    }
+    else {
+      \Drupal::logger('k8s_to_s3')->error(
+        t(
+          'Unable to pull image @image for launch template transfer.',
+          [
+            '@image' => $info['name'],
+          ]
+        )
+      );
+    }
+  }
+  return $target_tag;
+}
+
+/**
+ * Derive docker target image url.
+ *
+ * @param \Drupal\docker\Service\DockerServiceInterface $docker
+ *   Docker service.
+ * @param \Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr
+ *   The ECR service.
+ * @param string $image
+ *   Image to derive.
+ * @param string $cloud_context
+ *   The cloud context for the ECR service.
+ *
+ * @return string
+ *   The derived target.
+ */
+function k8s_to_s3_get_ecr_target(
+  DockerServiceInterface $docker,
+  EcrServiceInterface $ecr,
+  $image,
+  $cloud_context
+) {
+  $ecr->setCloudContext($cloud_context);
+  $endpoint = $ecr->getEcrEndpoint();
+  $info = $docker->parseImage($image);
+  $target_tag = $endpoint . '/' . $info['full_repository'];
+  $target_tag .= !empty($info['tag']) ? ":{$info['tag']}" : ':latest';
+  return $target_tag;
+}
+
+/**
+ * Build the k8s key.
+ *
+ * @param \Drupal\cloud\Entity\CloudContentEntityBase $entity
+ *   The k8s entity.
+ * @param string $entity_type
+ *   The entity type.
+ * @param bool $delete
+ *   The delete flag.
+ *
+ * @return string
+ *   The built key.
+ */
+function k8s_to_s3_build_k8s_s3_key(CloudContentEntityBase $entity, $entity_type, $delete = FALSE) {
+  $delete_str = '';
+  if ($delete) {
+    $delete_str = '.delete';
+  }
+  $key = "{$entity->getCloudContext()}{$delete_str}/$entity_type";
+  $key .= method_exists($entity, 'getNamespace') ? "/{$entity->getNamespace()}" : '';
+  $key .= "/{$entity->getName()}.yaml";
+  return $key;
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function k8s_to_s3_entity_delete(EntityInterface $entity) {
+  $entity_type = $entity->getEntityTypeId();
+  if (!in_array($entity_type, k8s_get_exportable_entity_types())) {
+    return;
+  }
+
+  if (!k8s_to_s3_validate_config()) {
+    return;
+  }
+
+  $config = \Drupal::config('k8s_to_s3.settings');
+  $k8s_clusters = empty($config->get('k8s_clusters'))
+    ? []
+    : json_decode($config->get('k8s_clusters'), TRUE);
+  $aws_cloud_context = $config->get('aws_cloud');
+  $s3_bucket = $config->get('s3_bucket');
+
+  if (!in_array($entity->getCloudContext(), $k8s_clusters)) {
+    return;
+  }
+
+  $key = k8s_to_s3_build_k8s_s3_key($entity, $entity_type, TRUE);
+
+  $s3_service = \Drupal::service('aws_cloud.s3');
+  try {
+    $s3_service->setCloudContext($aws_cloud_context);
+  }
+  catch (CloudConfigPluginException $e) {
+    \Drupal::logger('k8s_to_s3')->error("{$e->getMessage()}: {$entity->label()}");
+    return;
+  }
+
+  k8s_to_s3_put_object($s3_service, $s3_bucket, $key, '');
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function k8s_to_s3_entity_presave(EntityInterface $entity) {
+  if (!$entity->isNew()) {
+    return;
+  }
+
+  // Check whether the entity type is exportable or not.
+  $entity_type = $entity->getEntityTypeId();
+  if (!in_array($entity_type, k8s_get_exportable_entity_types())) {
+    return;
+  }
+
+  if (!k8s_to_s3_validate_config()) {
+    return;
+  }
+
+  if ($entity_type === 'k8s_namespace') {
+    $body = Yaml::encode([
+      'metadata' => [
+        'name' => $entity->getName(),
+      ],
+    ]);
+  }
+  else {
+    $body = $entity->getCreationYaml();
+  }
+
+  $config = \Drupal::config('k8s_to_s3.settings');
+  $k8s_clusters = empty($config->get('k8s_clusters'))
+    ? []
+    : json_decode($config->get('k8s_clusters'), TRUE);
+  $aws_cloud_context = $config->get('aws_cloud');
+  $s3_bucket = $config->get('s3_bucket');
+
+  if (!in_array($entity->getCloudContext(), $k8s_clusters)) {
+    return;
+  }
+
+  $key = k8s_to_s3_build_k8s_s3_key($entity, $entity_type);
+
+  $s3_service = \Drupal::service('aws_cloud.s3');
+  $s3_service->setCloudContext($aws_cloud_context);
+
+  if (!empty($body)) {
+    k8s_to_s3_put_object($s3_service, $s3_bucket, $key, $body);
+  }
+}
+
+/**
+ * Put object to S3.
+ *
+ * @param \Drupal\aws_cloud\Service\S3\S3ServiceInterface $s3_service
+ *   The S3 service.
+ * @param string $s3_bucket
+ *   The S3 bucket.
+ * @param string $key
+ *   The key of S3 object.
+ * @param string $body
+ *   The body of S3 object.
+ */
+function k8s_to_s3_put_object(S3ServiceInterface $s3_service, $s3_bucket, $key, $body) {
+  $result = $s3_service->putObject([
+    'Bucket' => $s3_bucket,
+    'Key' => $key,
+    'Body' => $body,
+  ]);
+
+  // Output error messages in messenger to the logger.
+  if (empty($result)) {
+    $messages = \Drupal::messenger()->messagesByType(Messenger::TYPE_ERROR);
+    foreach ($messages ?: [] as $message) {
+      \Drupal::logger('k8s_to_s3')->error($message);
+    }
+    \Drupal::logger('k8s_to_s3')->error("Failed to export an entity to s3://$s3_bucket/$key.");
+  }
+}
+
+/**
+ * Add operations of transferring images.
+ *
+ * @param array &$operations
+ *   The operations.
+ * @param array &$yaml
+ *   The K8s content yaml.
+ * @param string $entity_type
+ *   The entity type.
+ * @param \Drupal\aws_cloud\Service\Ecr\EcrServiceInterface $ecr
+ *   The ECR service.
+ * @param \Drupal\docker\Service\DockerServiceInterface $docker
+ *   Docker service.
+ * @param string $aws_cloud_context
+ *   The cloud context for the ECR service.
+ */
+function k8s_to_s3_add_transfer_image_operations(
+  array &$operations,
+  array &$yaml,
+  $entity_type,
+  EcrServiceInterface $ecr,
+  DockerServiceInterface $docker,
+  $aws_cloud_context
+) {
+  $containers = [];
+
+  // Extract the containers array.
+  switch ($entity_type) {
+    case 'k8s_deployment':
+      $containers =& $yaml['spec']['template']['spec']['containers'];
+      break;
+
+    case 'k8s_pod':
+      $containers =& $yaml['spec']['containers'];
+      break;
+
+    default:
+      break;
+  }
+
+  // Use batch operation for transfer the images.
+  foreach ($containers ?: [] as $key => $container) {
+    // With the image, download image.
+    if (isset($container['image'])) {
+      $image = $container['image'];
+      $operations[] = [
+        'k8s_to_s3_transfer_image',
+        [
+          $ecr,
+          $docker,
+          $image,
+          $aws_cloud_context,
+        ],
+      ];
+
+      $target_tag = k8s_to_s3_get_ecr_target($docker, $ecr, $image, $aws_cloud_context);
+
+      // Replace image location with the ECR version.
+      $containers[$key]['image'] = $target_tag;
+    }
+  }
+}

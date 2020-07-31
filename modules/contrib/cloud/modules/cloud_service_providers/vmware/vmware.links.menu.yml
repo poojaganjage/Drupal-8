@@ -1,0 +1,9 @@
+vmware.menu.cloud_context:
+  deriver: 'Drupal\vmware\Plugin\Derivative\VmwareMenuLinks'
+  weight: 100
+
+vmware.settings:
+  title: VMware settings
+  description: 'List VMware profiles and configure VMware view settings.'
+  parent: system.admin_config_services
+  route_name: 'vmware.settings'

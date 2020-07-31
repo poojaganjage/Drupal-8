@@ -1,0 +1,3 @@
+views.field.cloud_credit_bulk_form:
+  type: views_field_bulk_form
+  label: 'credit bulk form'

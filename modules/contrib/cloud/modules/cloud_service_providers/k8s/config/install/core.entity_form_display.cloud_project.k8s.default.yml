@@ -1,0 +1,114 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.field.cloud_project.k8s.field_enable_resource_scheduler
+    - field.field.cloud_project.k8s.field_enable_time_scheduler
+    - field.field.cloud_project.k8s.field_k8s_clusters
+    - field.field.cloud_project.k8s.field_pod_count
+    - field.field.cloud_project.k8s.field_request_cpu
+    - field.field.cloud_project.k8s.field_request_memory
+    - field.field.cloud_project.k8s.field_startup_time_hour
+    - field.field.cloud_project.k8s.field_startup_time_minute
+    - field.field.cloud_project.k8s.field_stop_time_hour
+    - field.field.cloud_project.k8s.field_stop_time_minute
+    - field.field.cloud_project.k8s.field_username
+  enforced:
+    module:
+      - k8s
+id: cloud_project.k8s.default
+targetEntityType: cloud_project
+bundle: k8s
+mode: default
+content:
+  field_enable_resource_scheduler:
+    weight: 49
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_enable_time_scheduler:
+    weight: 50
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_k8s_clusters:
+    weight: 59
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_pod_count:
+    weight: 52
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_request_cpu:
+    weight: 53
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_request_memory:
+    weight: 54
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+  field_startup_time_hour:
+    weight: 55
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_startup_time_minute:
+    weight: 56
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_stop_time_hour:
+    weight: 57
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_stop_time_minute:
+    weight: 58
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  field_username:
+    weight: 60
+    settings: {  }
+    third_party_settings: {  }
+    type: options_select
+    region: content
+  name:
+    type: string_textfield
+    weight: -4
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+  uid:
+    type: entity_reference_autocomplete
+    weight: 5
+    settings:
+      match_operator: CONTAINS
+      match_limit: 10
+      size: 60
+      placeholder: ''
+    region: content
+    third_party_settings: {  }
+hidden: {  }

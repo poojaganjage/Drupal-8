@@ -1,0 +1,10 @@
+cloud_location_geocoder_plugin: 'openstreetmap'
+cloud_default_location_map_json_url: 'https://enjalot.github.io/wwsd/data/world/ne_50m_admin_0_countries.geojson'
+cloud_custom_location_map_json_url: 'https://enjalot.github.io/wwsd/data/world/ne_50m_admin_0_countries.geojson'
+cloud_custom_d3_js_url: 'https://d3js.org/d3.v5.min.js'
+cloud_custom_c3_js_url: 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.js'
+cloud_custom_c3_css_url: 'https://cdnjs.cloudflare.com/ajax/libs/c3/0.7.15/c3.min.css'
+cloud_custom_chart_js_url: 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js'
+cloud_custom_select2_js_url: "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"
+cloud_custom_select2_css_url: "https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"
+cloud_use_default_urls: '1'

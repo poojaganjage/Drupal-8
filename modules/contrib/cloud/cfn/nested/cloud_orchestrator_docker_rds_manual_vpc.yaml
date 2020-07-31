@@ -1,0 +1,394 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cloud Orchestrator Master Template - Docker Based - Manually
+  select VPC and Subnet
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Stack Prefix
+        Parameters:
+          - StackPrefix
+      - Label:
+          default: VPC and Subnet
+        Parameters:
+          - VPC
+          - PublicSubnet1
+          - PrivateSubnet1
+          - PrivateSubnet2
+      - Label:
+          default: Amazon EC2 Configuration
+        Parameters:
+          - InstanceType
+          - KeyName
+      - Label:
+          default: Amazon RDS Database Configuration
+        Parameters:
+          - PubliclyAccessible
+          - RDSInstanceType
+          - MySQLUserName
+          - MySQLPassword
+          - DatabaseName
+          - DBAllocatedStorage
+      - Label:
+          default: Drupal Configuration
+        Parameters:
+          - DrupalUserName
+          - DrupalPassword
+          - DrupalEmail
+          - CloudOrchestratorVersion
+    ParameterLabels:
+      StackPrefix:
+        default: Stack Prefix
+      DrupalUserName:
+        default: Drupal administrator account
+      DrupalPassword:
+        default: Drupal administrator password
+      DrupalEmail:
+        default: Drupal email account
+      RDSInstanceType:
+        default: RDS instance type
+      MySQLUserName:
+        default: MySQL administrator username
+      MySQLPassword:
+        default: MySQL administrator password
+      DatabaseName:
+        default: MySQL database name
+      DBAllocatedStorage:
+        default: Database allocated storage
+      InstanceType:
+        default: EC2 instance type
+      KeyName:
+        default: EC2 key name
+      PublicSubnet1:
+        default: Public Subnet
+      PrivateSubnet1:
+        default: Private Subnet 1
+      PrivateSubnet2:
+        default: Private Subnet 2
+      PubliclyAccessible:
+        default: Publicly Accessible
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier. Must be between 1 and 20 characters
+      and only contain alphanumeric characters and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+  VPC:
+    Type: AWS::EC2::VPC::Id
+    Description: Select a VPC to use with this stack.
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a public subnet to use with the EC2 instance.
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a private subnet to for RDS, Security Groups and Cache
+      resources. Private Subnet 1 and Private Subnet 2 must be in two different
+      Availability Zones in the same region. For RDS to be publicly accessible,
+      please add a route to the internet gateway for this subnet.
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet::Id
+    Description: Select a private subnet to for RDS, Security Groups and Cache
+      resources. Private Subnet 1 and Private Subnet 2 must be in two different
+      Availability Zones in the same region. For RDS to be publicly accessible,
+      please add a route to the internet gateway for this subnet.
+  PubliclyAccessible:
+    Description: Indicates whether the DB instance is an internet-facing
+      instance.  If true, please updated the RDS's VPC Security Group after the
+      CFn template launches.  By default, all public IPs are disabled from
+      accessing the database.  Manually choose which IPs to enable.
+    Type: String
+    Default: false
+    AllowedValues:
+      - false
+      - true
+  KeyName:
+    Description: Name of an existing EC2 key pair to SSH access into the EC2
+      instance.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    MinLength: '1'
+  InstanceType:
+    Description: The EC2 instance type.
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+      - t3.2xlarge
+      - t3a.medium
+      - t3a.large
+      - t3a.xlarge
+      - t3a.2xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+      - m5.8xlarge
+      - m5.12xlarge
+      - m5.16xlarge
+      - m5.24xlarge
+      - m5a.large
+      - m5a.xlarge
+      - m5a.2xlarge
+      - m5a.4xlarge
+      - m5a.8xlarge
+      - m5a.12xlarge
+      - m5a.16xlarge
+      - m5a.24xlarge
+      - c5.large
+      - c5.xlarge
+      - c5.2xlarge
+      - c5.4xlarge
+      - c5.9xlarge
+      - c5.12xlarge
+      - c5.18xlarge
+      - c5.24xlarge
+      - c5d.large
+      - c5d.xlarge
+      - c5d.2xlarge
+      - c5d.4xlarge
+      - c5d.9xlarge
+      - c5d.12xlarge
+      - c5d.18xlarge
+      - c5d.24xlarge
+      - r5.large
+      - r5.xlarge
+      - r5.2xlarge
+      - r5.4xlarge
+      - r5.8xlarge
+      - r5.12xlarge
+      - r5.16xlarge
+      - r5.24xlarge
+      - r5a.large
+      - r5a.xlarge
+      - r5a.2xlarge
+      - r5a.4xlarge
+      - r5a.8xlarge
+      - r5a.12xlarge
+      - r5a.16xlarge
+      - r5a.24xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - i3.large
+      - i3.xlarge
+      - i3.2xlarge
+      - i3.4xlarge
+      - i3.8xlarge
+      - i3.16xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+  MySQLUserName:
+    Description: Username for the database. Must be between 5 and 16 characters
+      and only contain alphanumeric characters and underscores.
+    Default: administrator
+    Type: String
+    NoEcho: 'false'
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    ConstraintDescription: Must contain only alphanumeric characters,
+      underscores and must be between 5 and 16 characters long.
+  MySQLPassword:
+    Description: Password for the RDS Username.  Must be between 6 and 32
+      characters and only contain alphanumeric characters and these special
+      characters '_'`~!#$%^&*()_+,-.
+    Type: String
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: ^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$
+    ConstraintDescription: Your MySQLPassword must be letters (upper or lower),
+      numbers, and these special characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+  DatabaseName:
+    Description: The name of the database. Must be between 4 and 32 characters
+      and only contain alphanumeric characters and underscores.
+    Type: String
+    Default: cloud_orchestrator
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    MinLength: '4'
+    MaxLength: '32'
+    ConstraintDescription: Your database name must be between 4 and 32
+      characters and contain alphanumeric characters and underscores.
+  RDSInstanceType:
+    Description: RDS Instance Type.
+    Default: db.t2.micro
+    Type: String
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+      - db.t2.xlarge
+      - db.t2.2xlarge
+      - db.m4.large
+      - db.m4.xlarge
+      - db.m4.2xlarge
+      - db.m4.4xlarge
+      - db.m4.10xlarge
+      - db.m4.16xlarge
+      - db.m5.large
+      - db.m5.xlarge
+      - db.m5.4xlarge
+      - db.m5.12xlarge
+      - db.m5.24xlarge
+      - db.r4.large
+      - db.r4.xlarge
+      - db.r4.2xlarge
+      - db.r4.4xlarge
+      - db.r4.8xlarge
+      - db.r4.16xlarge
+      - db.r5.large
+      - db.r5.xlarge
+      - db.r5.2xlarge
+      - db.r5.4xlarge
+      - db.r5.12xlarge
+      - db.r5.24xlarge
+    ConstraintDescription: Must be a valid RDS Instance Type.
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb).  Must be between 5 and 16384.
+    Type: Number
+    MinValue: '5'
+    MaxValue: '16384'
+    ConstraintDescription: Must be between 20 and 16384Gb.
+  DrupalUserName:
+    Default: cloud_admin
+    Description: The Drupal admin account username. Must be between 5 and 16
+      characters and only contain alphanumeric characters and underscores.
+    Type: String
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9_]*'
+    NoEcho: 'false'
+    ConstraintDescription: Must only contain alphanumeric characters,
+      underscores and must be between 5 and 16 characters long.
+  DrupalPassword:
+    Type: String
+    Description: The Drupal admin account password. Must be between 6 and 32
+      characters and only contain alphanumeric characters and these special
+      characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: ^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$
+    ConstraintDescription: Your Drupal password must be between 6 and 32
+      characters and be letters (upper or lower), numbers, and these special
+      characters '_'`~!#$%^&*()_+,-.
+  DrupalEmail:
+    Description: Drupal site administrator email.
+    Type: String
+    AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
+    ConstraintDescription: Must be a valid email address.
+  CloudOrchestratorVersion:
+    Description: Version of the Cloud Orchestrator to install.
+    Default: 8.2.0
+    Type: String
+    AllowedValues:
+      - 8.2.0
+      - 3.x-dev
+Resources:
+  IamRole:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: iam/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+  PublicSubnetCidr:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: lambda/vpc_attributes/template.yaml
+      Parameters:
+        VPC: !Ref VPC
+        Subnet: !Ref PublicSubnet1
+  Ec2Security:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: security/ec2/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+        VPC:
+          Ref: VPC
+  SubnetSecurity:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: security/subnet/template.yaml
+      Parameters:
+        StackPrefix: !Ref StackPrefix
+        VPC: !Ref VPC
+        PublicSubnet: !GetAtt PublicSubnetCidr.Outputs.SubnetCidrBlock
+  Database:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: database/template.yaml
+      Parameters:
+        StackPrefix: !Ref StackPrefix
+        MySQLUserName: !Ref MySQLUserName
+        MySQLPassword: !Ref MySQLPassword
+        DatabaseName: !Ref DatabaseName
+        RDSInstanceType: !Ref RDSInstanceType
+        DBAllocatedStorage: !Ref DBAllocatedStorage
+        SubnetSecurityGroup: !GetAtt SubnetSecurity.Outputs.SubnetSecurityGroup
+        PrivateSubnet1: !Ref PrivateSubnet1
+        PrivateSubnet2: !Ref PrivateSubnet2
+        PubliclyAccessible: !Ref PubliclyAccessible
+  Ec2Instance:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ec2/docker_rds/template.yaml
+      Parameters:
+        StackPrefix: !Ref StackPrefix
+        IAMInstanceProfile: !GetAtt IamRole.Outputs.InstanceProfileName
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        PublicSubnet1: !Ref PublicSubnet1
+        EC2SecurityGroup: !GetAtt Ec2Security.Outputs.EC2SecurityGroup
+        MySQLUserName: !Ref MySQLUserName
+        MySQLPassword: !Ref MySQLPassword
+        DatabaseName: !Ref DatabaseName
+        DatabaseEndpointAddress: !GetAtt Database.Outputs.DatabaseEndpointAddress
+        DatabasePort: !GetAtt Database.Outputs.DatabasePort
+        DrupalUserName: !Ref DrupalUserName
+        DrupalPassword: !Ref DrupalPassword
+        DrupalEmail: !Ref DrupalEmail
+        CloudOrchestratorVersion: !Ref CloudOrchestratorVersion
+Outputs:
+  Instructions:
+    Value: The CFn template has completed.  Please allow 10-15 minutes for the
+      install script to complete the Cloud Orchestrator installation.  To
+      follow the installation progress, access the instance using SSH and tail
+      the /var/log/cloud-init-output.log file.  Once completed, use the
+      DrupalUserName and DrupalPassword to log into your Cloud Orchestrator
+      instance.
+  SSHAccess:
+    Value: !GetAtt Ec2Instance.Outputs.SSHAccess
+  DrupalUrl:
+    Value: !GetAtt Ec2Instance.Outputs.DrupalUrl
+  DrupalUserName:
+    Value: !GetAtt Ec2Instance.Outputs.DrupalUserName
+  DrupalPassword:
+    Value: !GetAtt Ec2Instance.Outputs.DrupalPassword
+  DrupalEmail:
+    Value: !GetAtt Ec2Instance.Outputs.DrupalEmail
+  CloudOrchestratorVersion:
+    Value: !Ref CloudOrchestratorVersion
+  RDSInstanceName:
+    Value: !GetAtt Database.Outputs.RDSInstanceName
+  DatabaseName:
+    Value: !Ref DatabaseName
+  MySQLUserName:
+    Value: !Ref MySQLUserName
+  MySQLPassword:
+    Value: !Ref MySQLPassword
+  DatabaseEndpointAddress:
+    Value: !GetAtt Database.Outputs.DatabaseEndpointAddress
+  DatabasePort:
+    Value: !GetAtt Database.Outputs.DatabasePort
+  EC2InstanceName:
+    Value: !GetAtt Ec2Instance.Outputs.EC2InstanceName

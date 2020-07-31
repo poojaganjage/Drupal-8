@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_project_type.k8s
+    - field.storage.cloud_project.field_enable_resource_scheduler
+id: cloud_project.k8s.field_enable_resource_scheduler
+field_name: field_enable_resource_scheduler
+entity_type: cloud_project
+bundle: k8s
+label: 'Enable resource scheduler'
+description: 'Enable resource base scheduling.'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'On'
+  off_label: 'Off'
+field_type: boolean

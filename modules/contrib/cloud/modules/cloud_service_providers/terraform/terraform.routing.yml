@@ -1,0 +1,119 @@
+# Terraform Routing Definition
+
+# Terraform Admin Settings
+terraform.settings:
+  path: '/admin/config/services/cloud/terraform'
+  defaults:
+    _entity_list: 'cloud_config'
+    _title: Terraform
+  requirements:
+    _permission: 'administer terraform'
+
+terraform.settings.options:
+  path: '/admin/config/services/cloud/terraform/settings'
+  defaults:
+    _title: Terraform
+    _form: '\Drupal\terraform\Form\Config\TerraformAdminSettings'
+  requirements:
+    _permission: 'administer terraform'
+
+
+entity.terraform_workspace.list_update:
+  path: '/clouds/terraform/{cloud_context}/workspace/update'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::updateWorkspaceList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform workspace'
+
+entity.terraform_run.list_update:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/run/update'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::updateRunList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform run'
+      parameters:
+        terraform_workspace:
+          type: 'entity:terraform_workspace'
+          converter: paramconverter.entity
+
+entity.terraform_run.update:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/run/{terraform_run}/update'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::updateRun'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform run'
+      parameters:
+        terraform_workspace:
+          type: 'entity:terraform_workspace'
+          converter: paramconverter.entity
+        terraform_run:
+          type: 'entity:terraform_run'
+          converter: paramconverter.entity
+
+entity.terraform_run.logs:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/run/{terraform_run}/logs'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::getRunLogs'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform run'
+      parameters:
+        terraform_workspace:
+          type: 'entity:terraform_workspace'
+          converter: paramconverter.entity
+        terraform_run:
+          type: 'entity:terraform_run'
+          converter: paramconverter.entity
+
+entity.terraform_state.list_update:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/state/update'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::updateStateList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform state'
+      parameters:
+        terraform_workspace:
+          type: 'entity:terraform_workspace'
+          converter: paramconverter.entity
+
+entity.terraform_variable.list_update:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/variable/update'
+  defaults:
+    _controller: '\Drupal\terraform\Controller\ApiController::updateVariableList'
+  requirements:
+    # Use custom access that will check for cloud_context and the desired permission.
+    # Desired permission is passed as an option in the "perm" variable
+    _custom_access: '\Drupal\cloud\Controller\CloudConfigController::access'
+  options:
+      perm: 'view terraform run'
+      parameters:
+        terraform_workspace:
+          type: 'entity:terraform_workspace'
+          converter: paramconverter.entity
+
+entity.terraform_run.apply_form:
+  path: '/clouds/terraform/{cloud_context}/workspace/{terraform_workspace}/run/{terraform_run}/apply'
+  defaults:
+    _entity_form: 'terraform_run.apply'
+    _title: 'Apply'
+  requirements:
+    _entity_access: 'terraform_run.apply'

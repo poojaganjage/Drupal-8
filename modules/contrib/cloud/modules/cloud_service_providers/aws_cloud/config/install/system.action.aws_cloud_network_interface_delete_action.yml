@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_network_interface_delete_action
+label: 'Delete network interface(s)'
+type: aws_cloud_network_interface
+plugin: entity:delete_action:aws_cloud_network_interface
+configuration: {  }

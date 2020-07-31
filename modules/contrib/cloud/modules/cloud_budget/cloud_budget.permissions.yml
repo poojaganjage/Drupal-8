@@ -1,0 +1,44 @@
+###########
+# Cloud Budget
+###########
+administer cloud_budget:
+  title: 'Administer Cloud Budget settings'
+  description: 'Perform administration tasks for Cloud Budget.'
+
+############################
+# Cloud Credit
+############################
+add cloud credit:
+  title: 'Add cloud credit'
+  description: 'Allow users to add cloud credit.'
+list cloud credit:
+  title: 'List cloud credit'
+  description: 'Allow users to list cloud credit.'
+view cloud credit:
+  title: 'View cloud credit'
+  description: 'Allow users to view cloud credit.'
+edit cloud credit:
+  title: 'Edit cloud credit'
+  description: 'Allow users to edit cloud credit.'
+delete cloud credit:
+  title: 'Delete cloud credit'
+  description: 'Allow users to delete cloud credit.'
+
+############################
+# Cloud Cost Storage
+############################
+add cloud cost storage:
+  title: 'Add cloud cost storage'
+  description: 'Allow users to add cloud cost storage.'
+list cloud cost storage:
+  title: 'List cloud cost storage'
+  description: 'Allow users to list cloud cost storage.'
+view cloud cost storage:
+  title: 'View cloud cost storage'
+  description: 'Allow users to view cloud cost storage.'
+edit cloud cost storage:
+  title: 'Edit cloud cost storage'
+  description: 'Allow users to edit cloud cost storage.'
+delete cloud cost storage:
+  title: 'Delete cloud cost storage'
+  description: 'Allow users to delete cloud cost storage.'

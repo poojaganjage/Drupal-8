@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_network_interface_delete_action
+label: 'Delete network interface(s)'
+type: openstack_network_interface
+plugin: entity:delete_action:openstack_network_interface
+configuration: {  }

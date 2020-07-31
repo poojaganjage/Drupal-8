@@ -1,0 +1,168 @@
+# Setup permissions based on cloud context
+permission_callbacks:
+  - Drupal\cloud\Entity\CloudPermissions::configPermissions
+
+access dashboard:
+  title: 'Access cloud dashboard'
+  description: 'Allow access to cloud dashboard.'
+
+view all cloud service providers:
+  title: 'Access all cloud service providers'
+  description: 'Allows access to all cloud service providers. Entity permissions such as <em>List AWS Instances</em> and <em>View own AWS Cloud Instance</em> (or <em>View any AWS Cloud Instance</em>) need to be granted in conjunction. Otherwise, no cloud service provider will be shown to the user.'
+
+view cloud service provider admin list:
+  title: 'View cloud service provider administration list'
+
+add cloud service providers:
+  title: 'Create new cloud service providers'
+
+administer cloud service providers:
+  title: 'Administer cloud service providers'
+  description: 'Allow to access the administration form to configure cloud service providers.'
+  restrict access: true
+
+delete cloud service providers:
+  title: 'Delete cloud service providers'
+
+delete own cloud service providers:
+  title: 'Delete own cloud service providers'
+
+edit cloud service providers:
+  title: 'Edit cloud service providers'
+
+edit own cloud service providers:
+  title: 'Edit own cloud service providers'
+
+view published cloud service providers:
+  title: 'View published cloud service providers'
+
+view own published cloud service providers:
+  title: 'View own published cloud service providers'
+
+view unpublished cloud service providers:
+  title: 'View unpublished cloud service providers'
+
+view own unpublished cloud service providers:
+  title: 'View own unpublished cloud service providers'
+
+view all cloud service provider revisions:
+  title: 'View all cloud service provider revisions'
+
+revert all cloud service provider revisions:
+  title: 'Revert all cloud service provider revisions'
+  description: 'Role requires permission <em>view cloud service provider revisions</em> and <em>edit rights</em> for cloud service providers in question or <em>administer cloud service providers</em>.'
+
+delete all cloud service provider revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>view cloud service provider revisions</em> and <em>delete rights</em> for cloud service providers in question or <em>administer cloud service providers</em>.'
+
+# Cloud server template permissions
+list cloud server template:
+  title: 'List cloud server template'
+  description: 'Allow access to list cloud server templates.'
+
+# Cloud server template entity permissions.
+add cloud server templates:
+  title: 'Create new cloud server templates'
+
+administer cloud server templates:
+  title: 'Administer cloud server templates'
+  description: 'Allow to access the administration form to configure cloud server templates.'
+  restrict access: true
+
+delete any cloud server templates:
+  title: 'Delete any cloud server templates'
+
+delete own cloud server templates:
+  title: 'Delete own cloud server templates'
+
+edit any cloud server templates:
+  title: 'Edit any cloud server templates'
+
+edit own cloud server templates:
+  title: 'Edit own cloud server templates'
+
+view any published cloud server templates:
+  title: 'View any published cloud server templates'
+
+view own published cloud server templates:
+  title: 'View own published cloud server templates'
+
+view any unpublished cloud server templates:
+  title: 'View any unpublished cloud server templates'
+
+view own unpublished cloud server templates:
+  title: 'View own unpublished cloud server templates'
+
+access cloud server template revisions:
+  title: 'Access cloud server template revisions'
+
+revert all cloud server template revisions:
+  title: 'Revert all cloud server template revisions'
+  description: 'Role requires permission <em>access cloud server template revisions</em> and <em>edit rights</em> for cloud server templates in question or <em>administer cloud server templates</em>.'
+
+delete all cloud server template revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>access cloud server template revisions</em> and <em>delete rights</em> for cloud server templates in question or <em>administer cloud server templates</em>.'
+
+launch cloud server template:
+  title: 'Launch cloud server template'
+  description: 'Allow user to launch cloud server templates.'
+
+# Cloud project permissions
+list cloud project:
+  title: 'List cloud project'
+  description: 'Allow access to list cloud projects.'
+
+# Cloud project entity permissions.
+add cloud projects:
+  title: 'Create new cloud projects'
+
+administer cloud projects:
+  title: 'Administer cloud projects'
+  description: 'Allow to access the administration form to configure cloud projects.'
+  restrict access: true
+
+delete any cloud projects:
+  title: 'Delete any cloud projects'
+
+delete own cloud projects:
+  title: 'Delete own cloud projects'
+
+edit any cloud projects:
+  title: 'Edit any cloud projects'
+
+edit own cloud projects:
+  title: 'Edit own cloud projects'
+
+view any published cloud projects:
+  title: 'View any published cloud projects'
+
+view own published cloud projects:
+  title: 'View own published cloud projects'
+
+view any unpublished cloud projects:
+  title: 'View any unpublished cloud projects'
+
+view own unpublished cloud projects:
+  title: 'View own unpublished cloud projects'
+
+access cloud project revisions:
+  title: 'Access cloud project revisions'
+
+revert all cloud project revisions:
+  title: 'Revert all cloud project revisions'
+  description: 'Role requires permission <em>access cloud project revisions</em> and <em>edit rights</em> for cloud projects in question or <em>administer cloud projects</em>.'
+
+delete all cloud project revisions:
+  title: 'Delete all revisions'
+  description: 'Role requires permission to <em>access cloud project revisions</em> and <em>delete rights</em> for cloud projects in question or <em>administer cloud projects</em>.'
+
+launch cloud project:
+  title: 'Launch cloud project'
+  description: 'Allow user to launch cloud projects.'
+
+# Cloud administer permissions.
+administer cloud:
+  title: 'Administer Cloud settings'
+  description: 'Perform administration tasks for Cloud.'

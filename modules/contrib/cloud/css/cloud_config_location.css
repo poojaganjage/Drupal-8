@@ -1,0 +1,82 @@
+.map {
+  fill: #ddc;
+}
+
+use:hover {
+  cursor: pointer;
+}
+
+use.aws_cloud {
+  fill: #fcc07e;
+  stroke: #ec912d;
+}
+
+use.aws_cloud.own_location {
+  fill: #ec912d;
+}
+
+use.aws_cloud:hover {
+  fill: #ec912d;
+}
+
+use.k8s {
+  fill: #6e9bfa;
+  stroke: #326de6;
+}
+
+use.k8s.own_location {
+  fill: #326de6;
+}
+
+use.k8s:hover {
+  fill: #326de6;
+}
+
+use.openstack {
+  fill: #f69393;
+  stroke: #ed1e48;
+}
+
+use.openstack.own_location {
+  fill: #ed1e48;
+}
+
+use.openstack:hover {
+  fill: #ed1e48;
+}
+
+use.multiple {
+  fill: #9fd5a2;
+  stroke: #68c16c;
+}
+
+use.multiple.own_location {
+  fill: #68c16c;
+}
+
+use.multiple:hover {
+  fill: #68c16c;
+}
+
+.map_tooltip {
+  background-color: #68c16c;
+  color: #ffffff;
+}
+.map_tooltip a {
+  color: #ffffff;
+  font-size: 1.1em;
+}
+
+.map_tooltip a:hover {
+  color: #ffffff;
+}
+
+.map_tooltip .location {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 0.8em;
+}
+
+.map_tooltip .location .glyphicon:before {
+  margin-right: 2px;
+}

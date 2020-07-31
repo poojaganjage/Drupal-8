@@ -1,0 +1,9 @@
+terraform.menu.cloud_context:
+  deriver: 'Drupal\terraform\Plugin\Derivative\TerraformMenuLinks'
+  weight: 100
+
+terraform.settings:
+  title: Terraform settings
+  description: 'List Terraform profiles and configure Terraform view settings.'
+  parent: system.admin_config_services
+  route_name: 'terraform.settings'

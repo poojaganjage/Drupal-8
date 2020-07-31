@@ -1,0 +1,23 @@
+action.configuration.aws_cloud_elastic_ip_delete_action:
+  type: action_configuration_default
+  label: 'Delete the selected Elastic IP(s) configuration'
+
+action.configuration.aws_cloud_elastic_ip_disassociate_action:
+  type: action_configuration_default
+  label: 'Disassociate the selected Elastic IP(s) configuration'
+
+action.configuration.aws_cloud_instance_start_action:
+  type: action_configuration_default
+  label: 'Start the selected Instance(s) configuration'
+
+action.configuration.aws_cloud_instance_stop_action:
+  type: action_configuration_default
+  label: 'Stop the selected Instance(s) configuration'
+
+action.configuration.aws_cloud_instance_reboot_action:
+  type: action_configuration_default
+  label: 'Reboot the selected Instance(s) configuration'
+
+action.configuration.aws_cloud_volume_detach_action:
+  type: action_configuration_default
+  label: 'Detach the selected Volume(s) configuration'

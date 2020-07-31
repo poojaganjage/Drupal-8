@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - cloud_budget
+id: cloud_credit_delete_action
+label: 'Delete Credit(s)'
+type: cloud_credit
+plugin: entity:delete_action:cloud_credit
+configuration: {  }

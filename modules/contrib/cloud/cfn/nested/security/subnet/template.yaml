@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 'Cloud Orchestrator - Subnet Security Groups'
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: >-
+      A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier.
+      Must be between 1 and 20 characters and only contain alphanumeric characters
+      and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+  VPC:
+    Description: VPC Id
+    Type: String
+  PublicSubnet:
+    Description: Public Subnet
+    Type: String
+Resources:
+  SubnetSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName:
+        !Sub '${StackPrefix} Subnet Private Security Group'
+      GroupDescription: "Internal Security Group for DB and ElastiCache"
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp:
+            !Ref PublicSubnet
+        - IpProtocol: tcp
+          FromPort: 11211
+          ToPort: 11211
+          CidrIp:
+            !Ref PublicSubnet
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+Outputs:
+  SubnetSecurityGroup:
+    Description: 'Subnet Security Group ID'
+    Value: !Ref SubnetSecurityGroup

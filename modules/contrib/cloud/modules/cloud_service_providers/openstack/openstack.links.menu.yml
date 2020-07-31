@@ -1,0 +1,9 @@
+openstack.menu.cloud_context:
+  deriver: 'Drupal\openstack\Plugin\Derivative\OpenStackMenuLinks'
+  weight: 100
+
+openstack.settings:
+  title: OpenStack settings
+  description: 'List OpenStack profiles and configure views, scheduling, notifications, and costs.'
+  parent: system.admin_config_services
+  route_name: 'openstack.settings.options'

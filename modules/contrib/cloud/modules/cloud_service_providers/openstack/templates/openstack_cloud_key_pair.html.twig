@@ -1,0 +1,22 @@
+{#
+/**
+ * @file openstack_key_pair.html.twig
+ * Default theme implementation to present OpenStack Key Pair data.
+ *
+ * This template is used when viewing OpenStack Key Pair pages.
+ *
+ *
+ * Available variables:
+ * - content: A list of content items. Use 'content' to print all content, or
+ * - attributes: HTML attributes for the container element.
+ *
+ * @see template_preprocess_openstack_key_pair()
+ *
+ * @ingroup themeable
+ */
+#}
+<div{{ attributes.addClass('openstack_key_pair') }}>
+  {% if content %}
+    {{- content -}}
+  {% endif %}
+</div>

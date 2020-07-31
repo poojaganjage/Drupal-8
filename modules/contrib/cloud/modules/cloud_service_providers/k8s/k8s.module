@@ -1,0 +1,2569 @@
+<?php
+
+/**
+ * @file
+ * K8s module.
+ *
+ * This module handles UI interactions with the cloud system for K8s.
+ */
+
+use Drupal\cloud\Entity\CloudConfig;
+use Drupal\cloud\Entity\CloudServerTemplate;
+use Drupal\Component\Serialization\Yaml;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\ReplaceCommand;
+use Drupal\Core\Database\Query\AlterableInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityMalformedException;
+use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Url;
+use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\file\Entity\File;
+use Drupal\k8s\Entity\K8sEntityInterface;
+use Drupal\k8s\Entity\K8sExportableEntityInterface;
+use Drupal\k8s\Entity\K8sNamespace;
+use Drupal\k8s\Service\K8sService;
+use Drupal\k8s\Service\K8sServiceException;
+use Drupal\k8s\Entity\K8sEntityBase;
+use Drupal\user\Entity\User;
+use Drupal\field\Entity\FieldConfig;
+
+/**
+ * Implements hook_help().
+ */
+function k8s_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.k8s':
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('This module creates a user interface for managing Kubernetes (K8s).') . '</p>';
+      $output .= '<h3>' . t('Features') . '</h3>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('<strong>K8s</strong>');
+      $output .= '<ul>';
+      $output .= '<li>' . t('Manage K8s clusters.') . '</li>';
+      $output .= '<li>' . t('Manage most of K8s resources.') . '</li>';
+      $output .= '<li>' . t('Support multi-tenant like a K8s as a service.') . '</li>';
+      $output .= '<li>' . t('Support K8s clusters under fully closed (Internet unreachable) network.') . '</li>';
+      $output .= '</ul></li></ul>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('<strong>K8s Resources Optimization</strong>');
+      $output .= '<ul>';
+      $output .= '<li>' . t('Integrate w/ Amazon EC2 / EKS.') . '</li>';
+      $output .= '<li>' . t('Visualize costs on EKS.') . '</li>';
+      $output .= '<li>' . t('Schedule and manage K8s resource allocation based on entire resource utilization.') . '</li>';
+      $output .= '<li>' . t('Support resource deployment under multi-cluster environment.') . '</li>';
+      $output .= '</ul></li></ul>';
+      $output .= '<p>' . t('For more information, see the <a href=":cloud_documentation">online documentation for the K8s module</a>.', [':cloud_documentation' => 'https://www.drupal.org/docs/8/modules/cloud']) . '</p>';
+
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_cloud_config_update().
+ */
+function k8s_cloud_config_update(CloudConfig $cloud_config) {
+  if ($cloud_config->bundle() === 'k8s') {
+    // Update resources.
+    k8s_update_resources($cloud_config->getCloudContext());
+  }
+}
+
+/**
+ * Implements hook_cloud_config_delete().
+ */
+function k8s_cloud_config_delete(CloudConfig $cloud_config) {
+  if ($cloud_config->bundle() === 'k8s') {
+    /* @var \Drupal\k8s\Service\K8sServiceInterface $k8s_service */
+    $k8s_service = \Drupal::service('k8s');
+    $k8s_service->setCloudContext($cloud_config->getCloudContext());
+    $k8s_service->clearAllEntities();
+    K8sService::clearCacheValue();
+  }
+}
+
+/**
+ * Update resources.
+ *
+ * @param string $cloud_context
+ *   The cloud service provider entities.
+ */
+function k8s_update_resources($cloud_context) {
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($cloud_context);
+  $k8s_service->updateNodes();
+  $k8s_service->updateNamespaces();
+  $k8s_service->updatePods();
+  $k8s_service->updateDeployments();
+  $k8s_service->updateReplicaSets();
+  $k8s_service->updateServices();
+  $k8s_service->updateCronJobs();
+  $k8s_service->updateJobs();
+  $k8s_service->updateResourceQuotas();
+  $k8s_service->updateLimitRanges();
+  $k8s_service->updateSecrets();
+  $k8s_service->updateConfigMaps();
+  $k8s_service->updateNetworkPolicies();
+  $k8s_service->updateRoles();
+  $k8s_service->updateClusterRoles();
+  $k8s_service->updatePersistentVolumes();
+  $k8s_service->updateStorageClasses();
+  $k8s_service->updateStatefulSets();
+  $k8s_service->updateIngresses();
+  $k8s_service->updateDaemonSets();
+  $k8s_service->updateEndpoints();
+  $k8s_service->updateEvents();
+  $k8s_service->updatePersistentVolumeClaims();
+  $k8s_service->updateClusterRoleBindings();
+  $k8s_service->updateApiServices();
+  $k8s_service->updateRoleBindings();
+  $k8s_service->updateServiceAccounts();
+  $k8s_service->updatePriorityClasses();
+
+  K8sService::clearCacheValue();
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_config_k8s_edit_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  k8s_form_cloud_config_k8s_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_config_k8s_add_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['cloud_context']['#access'] = FALSE;
+  $form['actions']['submit']['#submit'] = ['k8s_form_cloud_config_k8s_add_form_submit'];
+  $form['#validate'][] = 'k8s_form_cloud_config_k8s_add_form_validate';
+
+  k8s_form_cloud_config_k8s_form_common_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Validate function for form cloud_config_k8s_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_config_k8s_add_form_validate(array &$form, FormStateInterface $form_state) {
+
+  // Validate Name.
+  $name = $form_state->getValue('name')[0]['value'];
+
+  $cloud_context_exists = \Drupal::service('cloud')->cloudContextExists($name);
+  if ($cloud_context_exists === TRUE) {
+    $form_state->setErrorByName(
+      'name',
+      t('The cloud service providers have existed with the same cloud service provider.')
+    );
+    return;
+  }
+
+  // Validate API server.
+  if (empty($form_state->getValue('field_api_server')[0]['value'])) {
+    $form_state->setErrorByName(
+      'field_api_server',
+      t('The API server field cannot be empty.')
+    );
+  }
+
+  // Validate Token.
+  if (empty($form_state->getValue('field_token')[0]['value'])) {
+    $form_state->setErrorByName(
+      'field_token',
+      t('The token field cannot be empty.')
+    );
+  }
+}
+
+/**
+ * Submit function for form cloud_config_k8s_add_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_config_k8s_add_form_submit(array $form, FormStateInterface $form_state) {
+  // Create CloudConfig.
+  $entity = $form_state->getFormObject()->buildEntity($form, $form_state);
+
+  // Set cloud_context.
+  $name = $form_state->getValue('name')[0]['value'];
+  $cloud_context = \Drupal::service('cloud')->generateCloudContext($name);
+  $entity->setCloudContext($cloud_context);
+  $entity->save();
+
+  \Drupal::service('cloud')->processOperationStatus($entity, 'created');
+
+  // Verify Endpoint.
+  $api_server = $form_state->getValue('field_api_server')[0]['value'];
+  $token = $form_state->getValue('field_token')[0]['value'];
+
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($cloud_context);
+
+  // Validate API Server and Token.
+  if ($k8s_service->isAccessible($api_server, $token)) {
+    $enable_metrics_server = $form_state->getValue('field_enable_metrics_server')['value'];
+    if (!empty($enable_metrics_server)) {
+      k8s_create_metrics_server_templates($cloud_context);
+    }
+
+    k8s_update_resources($cloud_context);
+  }
+  else {
+    $page_link = Link::fromTextAndUrl(
+      $name, Url::fromRoute(
+        'entity.cloud_config.edit_form', [
+          'cloud_config' => $entity->id(),
+        ]
+      )
+    )->toString();
+
+    \Drupal::messenger()->addError(t('The endpoint is unreachable. Please check the API server and token: @page_link', [
+      '@page_link' => $page_link,
+    ]));
+  }
+
+  // Rebuild menu.
+  \Drupal::service('plugin.cache_clearer')->clearCachedDefinitions();
+
+  $form_state->setRedirect('entity.cloud_config.collection', []);
+}
+
+/**
+ * Create cloud server templates for metrics server.
+ *
+ * @param string $cloud_context
+ *   The cloud context.
+ */
+function k8s_create_metrics_server_templates($cloud_context) {
+  $name = 'metrics_server';
+  $templates = \Drupal::entityTypeManager()
+    ->getStorage('cloud_server_template')
+    ->loadByProperties(
+      [
+        'cloud_context' => $cloud_context,
+        'name' => $name,
+      ]
+    );
+
+  if (!empty($templates)) {
+    return;
+  }
+
+  $template = CloudServerTemplate::create([
+    'type' => 'k8s',
+    'name' => $name,
+    'cloud_context' => $cloud_context,
+  ]);
+
+  // Create template.
+  $yaml_url = 'https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml';
+  $template->field_namespace->value = 'kube-system';
+  $template->field_source_type->value = 'yml';
+  $template->set('field_yaml_url', [
+    'uri' => $yaml_url,
+  ]);
+
+  $content = file_get_contents($yaml_url);
+  if (!empty($content)) {
+    $template->set('field_detail', $content);
+  }
+
+  $template->save();
+}
+
+/**
+ * Common alter function.
+ *
+ * Common alter function for k8s_form_cloud_config_k8s_edit_form and
+ * k8s_form_cloud_config_k8s_add_form.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Edit form_id.
+ */
+function k8s_form_cloud_config_k8s_form_common_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  try {
+    // Set the default K8s icon.
+    $config = \Drupal::config('k8s.settings');
+    $default_image = $config->get('k8s_cloud_config_icon');
+    if ($default_image) {
+      $file = File::load($default_image);
+      $image = \Drupal::service('image.factory')->get($file->getFileUri());
+      $form['image']['widget'][0]['#default_image'] = [
+        'fid' => $default_image,
+        'width' => $image->getWidth(),
+        'height' => $image->getHeight(),
+      ];
+    }
+
+    k8s_cloud_config_fieldsets($form);
+
+    $form['new_revision']['#access'] = FALSE;
+    $form['revision_log_message']['#access'] = FALSE;
+  }
+  catch (\Exception $e) {
+    \Drupal::service('cloud')->handleException($e);
+  }
+}
+
+/**
+ * Implements hook_default_cloud_config_icon().
+ */
+function k8s_default_cloud_config_icon($entity) {
+  // Provides the calling hook with the default K8s icon.
+  if ($entity->bundle() === 'k8s') {
+    $config = \Drupal::config('k8s.settings');
+    return $config->get('k8s_cloud_config_icon');
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function k8s_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if (strpos($form_id, 'views_form_k8s_') === 0) {
+    $form['#submit'][] = 'cloud_views_bulk_form_submit';
+  }
+}
+
+/**
+ * Implements hook_query_TAG_Alter().
+ */
+function k8s_query_k8s_entity_views_access_with_namespace_alter(AlterableInterface $query) {
+  if (!$account = $query->getMetaData('account')) {
+    $account = \Drupal::currentUser();
+  }
+
+  $route = \Drupal::routeMatch();
+  $cloud_context = $route->getParameter('cloud_context');
+
+  if ($route->getRouteName() === 'views.ajax') {
+    // When the request is from ajax, get the cloud context from referer.
+    global $base_url;
+    // Get the referer url.
+    $referer = \Drupal::request()->headers->get('referer');
+    if (!empty($referer)) {
+      // Get the alias or the referer.
+      $alias = substr($referer, strlen($base_url));
+      $url = Url::fromUri('internal:' . $alias);
+      $params = $url->getRouteParameters();
+      $cloud_context = !empty($params['cloud_context']) ? $params['cloud_context'] : NULL;
+    }
+  }
+
+  // Get namespaces.
+  $entity_storage = \Drupal::entityTypeManager()->getStorage('k8s_namespace');
+  $namespace_query = $entity_storage->getQuery();
+  if (!empty($cloud_context)) {
+    $namespace_query = $namespace_query->condition('cloud_context', $cloud_context);
+  }
+  $entity_ids = $namespace_query->execute();
+  $namespaces = $entity_storage->loadMultiple($entity_ids);
+
+  $namespace_names = [];
+  foreach ($namespaces ?: [] as $namespace) {
+    if ($account->hasPermission('view k8s namespace ' . $namespace->getName())) {
+      $namespace_names[] = $namespace->getName();
+    }
+  }
+  $namespace_names = array_unique($namespace_names);
+
+  // Add a namespace condition.
+  if (!empty($namespace_names)) {
+    $query->condition('namespace', $namespace_names, 'IN');
+  }
+  else {
+    // Add a dummy condition to make result empty.
+    $query->condition('namespace', '');
+  }
+
+  // Add owner condition.
+  $target_route_names = [
+    'view.k8s_pod.list',
+    'view.k8s_deployment.list',
+  ];
+  $route_name = $route->getRouteName();
+  if (in_array($route_name, $target_route_names)) {
+    preg_match('@^view.(.*).list$@', $route_name, $matches);
+    $entity_type = $matches[1];
+    $entity_type_name = str_replace('_', ' ', $entity_type);
+    if ($account->hasPermission("view any $entity_type_name")) {
+      return;
+    }
+    else {
+      // Add a uid condition.
+      $query->condition("$entity_type.uid", $account->id());
+    }
+  }
+}
+
+/**
+ * Implements hook_query_TAG_Alter().
+ */
+function k8s_query_all_resources_views_access_alter(AlterableInterface $query) {
+  if (!$account = $query->getMetaData('account')) {
+    $account = \Drupal::currentUser();
+  }
+
+  $entities = \Drupal::service('plugin.manager.cloud_config_plugin')->loadConfigEntities('k8s');
+  $cloud_contexts = [];
+  foreach ($entities ?: [] as $entity) {
+    if ($account->hasPermission('view all cloud service providers') || $account->hasPermission('view ' . $entity->getCloudContext())) {
+      $cloud_contexts[] = $entity->getCloudContext();
+    }
+  }
+
+  $cloud_context_field = 'cloud_context';
+  if ($query->getMetaData('base_table')) {
+    $cloud_context_field = $query->getMetaData('base_table') . '.' . $cloud_context_field;
+  }
+  if (count($cloud_contexts)) {
+    $query->condition($cloud_context_field, $cloud_contexts, 'IN');
+  }
+  else {
+    // No permissions, don't let them view any cloud context.
+    // Return an empty page. This is just a catch all. In
+    // normal cases, users will have access to certain cloud context.
+    $query->condition($cloud_context_field, '');
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+
+  // If not the view we are looking, move on.
+  if (!in_array($form['#id'], [
+    'views-exposed-form-k8s-node-list',
+    'views-exposed-form-k8s-node-all',
+    'views-exposed-form-k8s-node-project',
+    'views-exposed-form-k8s-namespace-list',
+    'views-exposed-form-k8s-namespace-all',
+    'views-exposed-form-k8s-namespace-project',
+    'views-exposed-form-k8s-pod-list',
+    'views-exposed-form-k8s-pod-all',
+    'views-exposed-form-k8s-pod-project',
+    'views-exposed-form-k8s-deployment-list',
+    'views-exposed-form-k8s-deployment-all',
+    'views-exposed-form-k8s-deployment-project',
+    'views-exposed-form-k8s-replica-set-list',
+    'views-exposed-form-k8s-replica-set-all',
+    'views-exposed-form-k8s-replica-set-project',
+    'views-exposed-form-k8s-service-list',
+    'views-exposed-form-k8s-service-all',
+    'views-exposed-form-k8s-service-project',
+    'views-exposed-form-k8s-cron-job-list',
+    'views-exposed-form-k8s-cron-job-all',
+    'views-exposed-form-k8s-cron-job-project',
+    'views-exposed-form-k8s-job-list',
+    'views-exposed-form-k8s-job-all',
+    'views-exposed-form-k8s-job-project',
+    'views-exposed-form-k8s-resource-quota-list',
+    'views-exposed-form-k8s-resource-quota-all',
+    'views-exposed-form-k8s-resource-quota-project',
+    'views-exposed-form-k8s-limit-range-list',
+    'views-exposed-form-k8s-limit-range-all',
+    'views-exposed-form-k8s-limit-range-project',
+    'views-exposed-form-k8s-secret-list',
+    'views-exposed-form-k8s-secret-all',
+    'views-exposed-form-k8s-secret-project',
+    'views-exposed-form-k8s-config-map-list',
+    'views-exposed-form-k8s-config-map-all',
+    'views-exposed-form-k8s-config-map-project',
+    'views-exposed-form-k8s-network-policy-list',
+    'views-exposed-form-k8s-network-policy-all',
+    'views-exposed-form-k8s-network-policy-project',
+    'views-exposed-form-k8s-cluster-role-list',
+    'views-exposed-form-k8s-cluster-role-all',
+    'views-exposed-form-k8s-cluster-role-project',
+    'views-exposed-form-k8s-role-list',
+    'views-exposed-form-k8s-role-all',
+    'views-exposed-form-k8s-role-project',
+    'views-exposed-form-k8s-persistent-volume-list',
+    'views-exposed-form-k8s-persistent-volume-all',
+    'views-exposed-form-k8s-persistent-volume-project',
+    'views-exposed-form-k8s-stateful-set-list',
+    'views-exposed-form-k8s-stateful-set-all',
+    'views-exposed-form-k8s-stateful-set-project',
+    'views-exposed-form-k8s-ingress-list',
+    'views-exposed-form-k8s-ingress-all',
+    'views-exposed-form-k8s-ingress-project',
+    'views-exposed-form-k8s-daemon-set-list',
+    'views-exposed-form-k8s-daemon-set-all',
+    'views-exposed-form-k8s-daemon-set-project',
+    'views-exposed-form-k8s-endpoint-list',
+    'views-exposed-form-k8s-endpoint-all',
+    'views-exposed-form-k8s-endpoint-project',
+    'views-exposed-form-k8s-event-list',
+    'views-exposed-form-k8s-event-all',
+    'views-exposed-form-k8s-event-project',
+    'views-exposed-form-k8s-persistent-volume-claim-list',
+    'views-exposed-form-k8s-persistent-volume-claim-all',
+    'views-exposed-form-k8s-persistent-volume-claim-project',
+    'views-exposed-form-k8s-cluster-role-binding-list',
+    'views-exposed-form-k8s-cluster-role-binding-all',
+    'views-exposed-form-k8s-cluster-role-binding-project',
+    'views-exposed-form-k8s-api-service-list',
+    'views-exposed-form-k8s-api-service-all',
+    'views-exposed-form-k8s-api-service-project',
+    'views-exposed-form-k8s-role-binding-list',
+    'views-exposed-form-k8s-role-binding-all',
+    'views-exposed-form-k8s-role-binding-project',
+    'views-exposed-form-k8s-service-account-list',
+    'views-exposed-form-k8s-service-account-all',
+    'views-exposed-form-k8s-service-account-project',
+    'views-exposed-form-k8s-storage-class-list',
+    'views-exposed-form-k8s-storage-class-all',
+    'views-exposed-form-k8s-storage-class-project',
+    'views-exposed-form-k8s-priority-class-list',
+    'views-exposed-form-k8s-priority-class-all',
+    'views-exposed-form-k8s-priority-class-project',
+  ])) {
+    return FALSE;
+  }
+
+  $route = \Drupal::routeMatch();
+  $cloud_context = $route->getParameter('cloud_context');
+  $cloud_project_id = $route->getParameter('cloud_project');
+  $cloud_project = NULL;
+  $k8s_clusters = [];
+  if (!empty($cloud_project_id)) {
+    $cloud_project = \Drupal::entityTypeManager()->getStorage('cloud_project')->load($cloud_project_id);
+    if (!empty($cloud_project)) {
+      foreach ($cloud_project->get('field_k8s_clusters')->getValue() ?: [] as $k8s_cluster) {
+        $k8s_clusters[] = $k8s_cluster['value'];
+      }
+    }
+  }
+
+  if (empty($cloud_context) || !empty($cloud_project_id) && !empty($form['cloud_context'])) {
+    $account = \Drupal::currentUser();
+
+    $entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+      ->loadConfigEntities('k8s');
+    $options = [];
+    foreach ($entities ?: [] as $entity) {
+      if ($account->hasPermission('view all cloud service providers') || $account->hasPermission('view ' . $entity->getCloudContext())) {
+        $options[$entity->getCloudContext()] = $entity->getName();
+      }
+    }
+
+    if (!empty($cloud_project) && !empty($options)) {
+      foreach ($options ?: [] as $key => $option) {
+        if (!in_array($key, $k8s_clusters)) {
+          unset($options[$key]);
+        }
+      }
+    }
+
+    $form['cloud_context'] = [
+      '#type' => 'select',
+      '#multiple' => FALSE,
+      '#empty_option' => t('- Any -'),
+      '#options' => $options,
+      '#weight' => -60,
+    ];
+  }
+
+  // Query namespaces.
+  $storage = Drupal::getContainer()
+    ->get('entity_type.manager')
+    ->getStorage('k8s_namespace');
+
+  // Gather namespaces sort by title.
+  $query = $storage->getQuery();
+  if (!empty($cloud_project_id)) {
+    $query = $query->condition('cloud_context', $k8s_clusters, 'IN');
+  }
+  elseif (!empty($cloud_context)) {
+    $query = $query->condition('cloud_context', $cloud_context);
+  }
+
+  $namespace_ids = $query
+    ->sort('name')
+    ->execute();
+
+  // If there are no namespaces, move on.
+  if (!$namespace_ids) {
+    return FALSE;
+  }
+
+  // Start building out the options for our select list.
+  $options = [];
+  $namespaces = $storage->loadMultiple($namespace_ids);
+
+  // Push titles into select list.
+  $account = \Drupal::currentUser();
+  foreach ($namespaces ?: [] as $namespace) {
+    if ($account->hasPermission('view k8s namespace ' . $namespace->getName())) {
+      $options[$namespace->getName()] = $namespace->getName();
+    }
+  }
+
+  // Replace namespace item to select item.
+  if (!empty($form['namespace'])) {
+    $form['namespace'] = [
+      '#type' => 'select',
+      '#multiple' => FALSE,
+      '#empty_option' => t('- Any -'),
+      '#options' => $options,
+    ];
+
+    // For all resource view.
+    if (empty($cloud_context) || !empty($cloud_project_id)) {
+      $cloud_context_namespaces = [];
+      foreach ($namespaces ?? [] as $namespace) {
+        $cloud_context_namespaces[$namespace->getCloudContext()][$namespace->getName()] = $namespace->getName();
+      }
+      $form['namespace']['#attached']['library'][] = 'k8s/k8s_all_resources';
+      $form['namespace']['#attached']['drupalSettings']['k8s']['cloud_context_namespaces'] = $cloud_context_namespaces;
+    }
+  }
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function k8s_k8s_namespace_delete(K8sNamespace $namespace) {
+  K8sService::clearCacheValue();
+}
+
+/**
+ * Set allowed values for the K8s cluster.
+ *
+ * @return array
+ *   An array of possible key and value options.
+ */
+function k8s_cluster_allowed_values() {
+  $options = [];
+  $account = \Drupal::currentUser();
+
+  $k8s_cloud_configs = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  foreach ($k8s_cloud_configs ?: [] as $k8s_cloud_config) {
+    if ($account->hasPermission('view ' . $k8s_cloud_config->getCloudContext())
+      || $account->hasPermission('view all cloud service providers')) {
+
+      $options[$k8s_cloud_config->getCloudContext()] = $k8s_cloud_config->getName();
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Set allowed values for the field_namespace.
+ *
+ * @param \Drupal\field\Entity\FieldStorageConfig $definition
+ *   The field definition.
+ * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
+ *   The entity being created if applicable.
+ * @param bool $cacheable
+ *   Boolean indicating if the results are cacheable.
+ *
+ * @return array
+ *   An array of possible key and value options.
+ *
+ * @see options_allowed_values()
+ */
+function k8s_namespace_allowed_values_function(FieldStorageConfig $definition, ContentEntityInterface $entity = NULL, $cacheable) {
+
+  $route = \Drupal::routeMatch();
+  $cloud_context = $route->getParameter('cloud_context');
+
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($cloud_context);
+
+  $options = [];
+  $namespaces = [];
+
+  try {
+    $namespaces = $k8s_service->getNamespaces();
+  }
+  catch (\Exception $e) {
+    $k8s_service->handleError($e, $cloud_context);
+  }
+
+  foreach ($namespaces ?: [] as $namespace) {
+    if (is_object($namespace)) {
+      $namespace = $namespace->toArray();
+    }
+    $name = $namespace['metadata']['name'] ?? '';
+    $options[$name] = $name;
+  }
+  return $options;
+}
+
+/**
+ * Set allowed values for the field_object.
+ *
+ * @param \Drupal\field\Entity\FieldStorageConfig $definition
+ *   The field definition.
+ * @param \Drupal\Core\Entity\ContentEntityInterface|null $entity
+ *   The entity being created if applicable.
+ * @param bool $cacheable
+ *   Boolean indicating if the results are cacheable.
+ *
+ * @return array
+ *   An array of possible key and value options.
+ *
+ * @see options_allowed_values()
+ */
+function k8s_object_allowed_values_function(FieldStorageConfig $definition, ContentEntityInterface $entity = NULL, $cacheable) {
+  return k8s_supported_cloud_server_templates();
+}
+
+/**
+ * Defines the supported cloud server template types.
+ *
+ * @return array
+ *   An array of supported templates.
+ */
+function k8s_supported_cloud_server_templates() {
+  $k8s_types = [];
+
+  foreach (\Drupal::entityTypeManager()->getDefinitions() ?: [] as $name => $definition) {
+    if ($definition->entityClassImplements(K8sEntityBase::class)) {
+      $class_parts = explode('\\', $definition->getClass());
+      $class_name = end($class_parts);
+      $k8s_types[str_replace('k8s_', '', $name)] = str_replace('K8s', '', $class_name);
+    }
+  }
+
+  $k8s_types['service'] = 'Service';
+  $k8s_types['api_service'] = 'APIService';
+  $k8s_types['mixed'] = 'Mixed';
+
+  ksort($k8s_types);
+  return $k8s_types;
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ *
+ * @throws \Drupal\k8s\Service\K8sServiceException
+ *   Thrown when unable to get metrics nodes.
+ */
+function k8s_entity_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->getEntityTypeId() === 'cloud_server_template'
+    && $entity->bundle() === 'k8s'
+  ) {
+    if (isset($build['field_git_password'][0]['#context']['value'])) {
+      $build['field_git_password'][0]['#context']['value'] = '********';
+    }
+    \Drupal::service('cloud')->reorderForm($build, k8s_server_template_field_orders(FALSE));
+
+    $build['k8s']['cloud_context'] = $entity->cloud_context->view();
+    $build['k8s']['cloud_context']['#title'] = t('K8s Cluster');
+    $build['k8s']['cloud_context']['#label_display'] = 'inline';
+    $values = k8s_cluster_allowed_values();
+
+    $build['k8s']['cloud_context'][0]['#context']['value'] = $values[$build['k8s']['cloud_context'][0]['#context']['value']];
+    $build['k8s']['field_object']['#title'] = t('Kind');
+
+    if ((isset($build['source']['field_source_type']) && $build['source']['field_source_type'][0]['#markup'] !== 'Git')
+      || (!isset($build['source']['git_account']['field_git_password'][0]['#context']['value'])
+      && !isset($build['source']['git_account']['field_git_username'][0]['#context']['value']))) {
+      unset($build['source']['git_account']);
+    }
+
+    if (!isset($build['source']['field_yaml_url'][0]['#url']) && !isset($build['source']['field_source_type'][0]['#markup'])) {
+      unset($build['source']);
+    }
+
+    if (isset($build['source']['field_yaml_url'][0]['#url'])) {
+      if (isset($build['source']['field_source_type'][0]['#markup']) && $build['source']['field_source_type'][0]['#markup'] === 'Git') {
+        $build['source']['field_yaml_url']['#title'] = t('Git Repository URL');
+      }
+      else {
+        $build['source']['field_yaml_url']['#title'] = t('YAML URL');
+      }
+    }
+
+    if (!isset($build['details']['field_detail'][0]['#markup'])) {
+      unset($build['details']);
+    }
+  }
+
+  if (in_array($entity->getEntityTypeId(), ['k8s_node', 'k8s_pod'])
+    && !empty($entity->getCloudContext())) {
+
+    // Confirm whether the metrics API can be used or not.
+    $metrics_enabled = TRUE;
+    $k8s_service = \Drupal::service('k8s');
+    if (!empty($entity->getCloudContext())) {
+      $k8s_service->setCloudContext($entity->getCloudContext());
+      try {
+        $k8s_service->getMetricsNodes();
+      }
+      catch (K8sServiceException $e) {
+        $metrics_enabled = FALSE;
+      }
+    }
+
+    if (isset($build['entity_metrics'])) {
+
+      $build['entity_metrics']['k8s_entity_metrics'] = [
+        '#markup' => '<div id="k8s_entity_metrics"></div>',
+      ];
+
+      $build['#attached']['library'][] = 'k8s/k8s_entity_metrics';
+    }
+
+    if (isset($build['node_allocated_resources'])) {
+
+      $build['node_allocated_resources']['k8s_node_allocated_resources'] = [
+        '#markup' => '<div id="k8s_node_allocated_resources"></div>',
+      ];
+
+      $build['#attached']['library'][] = 'k8s/k8s_node_allocated_resources';
+      $build['#attached']['drupalSettings']['k8s']['resource_url'] = k8s_get_resource_url();
+    }
+
+    if (isset($build['node_heatmap'])) {
+
+      $build['node_heatmap']['k8s_node_heatmap'] = [
+        '#markup' => '<div id="k8s_node_heatmap"></div>',
+      ];
+
+      $build['#attached']['library'][] = 'k8s/k8s_node_heatmap';
+      $build['#attached']['drupalSettings']['k8s']['resource_url'] = k8s_get_resource_url();
+    }
+
+    $build['#attached']['drupalSettings']['k8s']['metrics_enabled'] = $metrics_enabled;
+    $config = \Drupal::config('k8s.settings');
+    $build['#attached']['drupalSettings']['k8s']['k8s_js_refresh_interval']
+      = $config->get('k8s_js_refresh_interval');
+  }
+
+  if (isset($build['node_pods'])) {
+
+    $build['node_pods']['k8s_node_pods'] = [
+      '#type' => 'view',
+      '#name' => 'k8s_pod',
+      '#display_id' => 'block_for_node',
+    ];
+
+  }
+
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_presave().
+ */
+function k8s_cloud_server_template_presave(EntityInterface $entity) {
+  if ($entity->bundle() !== 'k8s') {
+    return;
+  }
+
+  $source_type = $entity->field_source_type->value;
+  $yamls = k8s_decode_multiple_doc_yaml($entity->field_detail->value);
+  if (empty($yamls)) {
+    return;
+  }
+
+  if (count($yamls) > 1) {
+    $entity->field_object->value = 'mixed';
+    return;
+  }
+
+  $yaml = $yamls[0];
+  if (!empty($yaml['kind'])) {
+    $templates = k8s_supported_cloud_server_templates();
+    $object = array_search($yaml['kind'], $templates);
+    if (!empty($object)) {
+      $entity->field_object->value = $object;
+    }
+    else {
+      $entity->field_object->value = NULL;
+    }
+  }
+  elseif ($source_type !== 'git') {
+    $entity->field_object->value = NULL;
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function k8s_form_cloud_server_template_k8s_add_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['field_object']['#access'] = FALSE;
+  $form['field_launch_resources']['#access'] = FALSE;
+  k8s_form_cloud_server_template_k8s_form_common_alter($form, $form_state, $form_id);
+
+  $index = array_search('::save', $form['actions']['submit']['#submit']);
+  array_splice($form['actions']['submit']['#submit'], $index, 0, 'k8s_form_cloud_server_template_k8s_form_submit');
+
+}
+
+/**
+ * Submit function for K8s server template form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_server_template_k8s_form_submit(array $form, FormStateInterface $form_state) {
+  $server_template = $form_state
+    ->getFormObject()
+    ->getEntity();
+
+  $source_type = $server_template->get('field_source_type')->value;
+  $yaml_url = $server_template->get('field_yaml_url')->uri;
+  $detail = $server_template->get('field_detail')->value;
+
+  if (!empty($yaml_url) && empty($detail) && $source_type === 'yml') {
+    $content = file_get_contents($yaml_url);
+    if (!empty($content)) {
+      $server_template->set('field_detail', $content);
+    }
+  }
+  if ($source_type === 'git') {
+    $server_template->set('field_object', NULL);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_server_template_k8s_edit_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['field_object']['#access'] = FALSE;
+  $form['field_launch_resources']['#access'] = FALSE;
+  $form['old_yaml_url'] = [
+    '#type' => 'hidden',
+    '#value' => $form['field_yaml_url']['widget'][0]['uri']['#default_value'],
+    '#disabled' => TRUE,
+  ];
+  $form['old_detail'] = [
+    '#type' => 'hidden',
+    '#value' => $form['field_detail']['widget'][0]['value']['#default_value'],
+    '#disabled' => TRUE,
+  ];
+  k8s_form_cloud_server_template_k8s_form_common_alter($form, $form_state, $form_id);
+  // Hide new revision checkbox.
+  $form['new_revision']['#access'] = FALSE;
+
+  $cloud_context = $form['others']['cloud_context'];
+  unset($form['others']['cloud_context']);
+
+  $cloud_context['#disabled'] = FALSE;
+  $cloud_context['widget'][0]['value']['#title'] = t('Cluster');
+  $cloud_context['widget'][0]['value']['#type'] = 'select';
+  $cloud_context['widget'][0]['value']['#options'] = k8s_cluster_allowed_values();
+  $cloud_context['widget'][0]['value']['#ajax'] = [
+    'callback' => 'k8s_ajax_callback_get_fields',
+  ];
+  unset($cloud_context['widget'][0]['value']['#size']);
+  unset($cloud_context['widget'][0]['value']['#description']);
+  $cloud_context['#weight'] = 1;
+  $form['k8s']['cloud_context'] = $cloud_context;
+
+  $form['#entity_builders'][] = 'k8s_form_cloud_server_template_k8s_edit_entity_builder';
+  $index = array_search('::save', $form['actions']['submit']['#submit']);
+  array_splice($form['actions']['submit']['#submit'], $index, 0, 'k8s_form_cloud_server_template_k8s_form_submit');
+}
+
+/**
+ * Update feilds accoding to the source type field and the yaml url field.
+ *
+ * @param string $entity_type_id
+ *   The entity type identifier.
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The entity updated with the submitted values.
+ * @param array $form
+ *   The complete form array.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_server_template_k8s_edit_entity_builder($entity_type_id, EntityInterface $entity, array $form, FormStateInterface &$form_state) {
+  $old_detail = $form['old_detail']['#value'];
+  $source_type = $entity->get('field_source_type')->getValue();
+  $yaml_url = $entity->get('field_yaml_url')->getValue();
+  $detail = $entity->get('field_detail')->getValue();
+
+  if ($source_type[0]['value'] !== 'git') {
+    $entity->get('field_git_path')->setValue(NULL);
+    $entity->get('field_git_username')->setValue(NULL);
+    $entity->get('field_git_password')->setValue(NULL);
+  }
+  elseif (!empty($detail)) {
+    $entity->get('field_detail')->setValue(NULL);
+  }
+
+  if (!empty($detail) && !empty($yaml_url)) {
+    if ($detail[0]['value'] !== $old_detail) {
+      $entity->get('field_yaml_url')->setValue(NULL);
+    }
+    else {
+      $entity->get('field_detail')->setValue(NULL);
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_server_template_k8s_copy_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['field_object']['#access'] = FALSE;
+  $form['field_launch_resources']['#access'] = FALSE;
+  $form['old_yaml_url'] = [
+    '#type' => 'hidden',
+    '#value' => $form['field_yaml_url']['widget'][0]['uri']['#default_value'],
+    '#disabled' => TRUE,
+  ];
+  $form['old_detail'] = [
+    '#type' => 'hidden',
+    '#value' => $form['field_detail']['widget'][0]['value']['#default_value'],
+    '#disabled' => TRUE,
+  ];
+
+  k8s_form_cloud_server_template_k8s_form_common_alter($form, $form_state, $form_id);
+
+  $name = $form['pod']['name']['widget'][0]['value']['#default_value'];
+  $form['pod']['name']['widget'][0]['value']['#default_value'] = t('copy_of_@name',
+    [
+      '@name' => $name,
+    ]);
+
+  // Hide new revision checkbox.
+  $form['new_revision']['#access'] = FALSE;
+
+  // Clear the revision log message.
+  $form['others']['revision_log_message']['widget'][0]['value']['#default_value'] = NULL;
+
+  // Change value of the submit button.
+  $form['actions']['submit']['#value'] = t('Copy');
+
+  // Delete the delete button.
+  $form['actions']['delete']['#access'] = FALSE;
+
+  $form['#entity_builders'][] = 'k8s_form_cloud_server_template_k8s_edit_entity_builder';
+  $form['actions']['submit']['#submit'][1] = 'k8s_form_cloud_server_template_k8s_form_submit';
+  $form['actions']['submit']['#submit'][2] = 'k8s_form_cloud_server_template_k8s_copy_form_submit';
+
+}
+
+/**
+ * Submit function for K8s server template copy.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_server_template_k8s_copy_form_submit(array $form, FormStateInterface $form_state) {
+  $server_template = $form_state
+    ->getFormObject()
+    ->getEntity();
+
+  $server_template = $server_template->createDuplicate();
+  $server_template->get('field_launch_resources')->setValue(NULL);
+  if ($server_template->save()) {
+
+    \Drupal::service('cloud')->processOperationStatus($server_template, 'created');
+
+    $form_state->setRedirect(
+      'entity.cloud_server_template.canonical',
+      [
+        'cloud_context' => $server_template->getCloudContext(),
+        'cloud_server_template' => $server_template->id(),
+      ]
+    );
+  }
+  else {
+    \Drupal::service('cloud')->processOperationErrorStatus($server_template, 'created');
+  }
+}
+
+/**
+ * Validate function for form cloud_server_template_k8s_copy_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_cloud_form_cloud_server_template_k8s_form_validate(array &$form, FormStateInterface $form_state) {
+  $form_object = $form_state->getFormObject();
+  $server_template = $form_object->getEntity();
+  $server_template->setName($form_state->getValue('copy_server_template_name'));
+  $violations = $server_template->validate();
+  foreach ($violations->getByField('name') ?: [] as $violation) {
+    $form_state->setErrorByName('copy_server_template_name', $violation->getMessage());
+  }
+}
+
+/**
+ * Common alter function for edit and add forms.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Get form_id.
+ */
+function k8s_form_cloud_server_template_k8s_form_common_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $form['field_git_password']['widget'][0]['value']['#type'] = 'password';
+  \Drupal::service('cloud')->reorderForm($form, k8s_server_template_field_orders());
+
+  $form['source']['field_yaml_url']['widget'][0]['uri']['#title'] = t('Git Repository or YAML URL');
+
+  // Enable field_yaml_url if field_detail is empty
+  // or field_detail doesn't change.
+  $states_conditions = [['value' => '']];
+  if (!empty($form['old_detail']) && !empty($form['old_detail']['#value'])) {
+    $states_conditions[] = ['value' => $form['old_detail']['#value']];
+  }
+  $form['source']['field_yaml_url']['#states'] = [
+    'enabled' => [
+      'textarea[name="field_detail[0][value]"]' => $states_conditions,
+    ],
+  ];
+
+  $form['source']['field_git_path']['#states'] = [
+    'visible' => [
+      'select[name="field_source_type"]' => ['value' => 'git'],
+    ],
+  ];
+
+  $form['source']['git_account']['#states'] = [
+    'visible' => [
+      'select[name="field_source_type"]' => ['value' => 'git'],
+    ],
+  ];
+
+  $form['details']['#states'] = [
+    'invisible' => [
+      [
+        'select[name="field_source_type"]' => ['value' => 'git'],
+      ],
+    ],
+  ];
+
+  // Enable field_detail if field_yaml_url is empty
+  // or field_yaml_url doesn't change.
+  $states_conditions = [['value' => '']];
+  if (!empty($form['old_yaml_url']) && !empty($form['old_yaml_url']['#value'])) {
+    $states_conditions[] = ['value' => $form['old_yaml_url']['#value']];
+  }
+  $form['details']['field_detail']['#states'] = [
+    'enabled' => [
+      'input[name="field_yaml_url[0][uri]"]' => $states_conditions,
+    ],
+  ];
+}
+
+/**
+ * Return orders of K8s cloud server template fields.
+ *
+ * @param bool $include_name
+ *   Whether to include name field or not.
+ *
+ * @return array
+ *   Fieldsets array.
+ */
+function k8s_server_template_field_orders($include_name = TRUE) {
+  $fieldsets_def = [
+    [
+      'name' => 'k8s',
+      'title' => t('K8s'),
+      'open' => TRUE,
+      'fields' => [
+        'name',
+        'field_namespace',
+        'field_object',
+      ],
+    ],
+    [
+      'name' => 'source',
+      'title' => t('Source'),
+      'open' => TRUE,
+      'fields' => [
+        'field_source_type',
+        'field_yaml_url',
+        'field_git_path',
+      ],
+      'subfieldsets' => [
+        [
+          'name' => 'git_account',
+          'title' => t('Git Account'),
+          'open' => TRUE,
+          'fields' => [
+            'field_git_username',
+            'field_git_password',
+          ],
+        ],
+      ],
+    ],
+    [
+      'name' => 'details',
+      'title' => t('Details'),
+      'open' => FALSE,
+      'fields' => [
+        'field_detail',
+      ],
+    ],
+    [
+      'name' => 'others',
+      'title' => t('Others'),
+      'open' => FALSE,
+      'fields' => [
+        'field_launch_resources',
+        'revision_log_message',
+        'cloud_context',
+        'uid',
+      ],
+    ],
+  ];
+
+  if (!$include_name) {
+    unset($fieldsets_def[0]['fields'][0]);
+  }
+
+  return $fieldsets_def;
+}
+
+/**
+ * Implements hook_entity_bundle_field_info_alter().
+ */
+function k8s_entity_bundle_field_info_alter(array &$fields, EntityTypeInterface $entity_type, $bundle) {
+  if ($bundle === 'k8s') {
+    if (isset($fields['field_detail'])) {
+      // Use the ID as defined in the annotation of the constraint definition.
+      $fields['field_detail']->addConstraint('yaml_array_data', []);
+      $fields['field_detail']->addConstraint('yaml_object_support', []);
+    }
+    if (isset($fields['field_git_path'])) {
+      $fields['field_git_path']->addPropertyConstraints('value', [
+        'Regex' => [
+          'pattern' => '/^\//i',
+        ],
+      ]);
+    }
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function k8s_cron() {
+  $k8s_service = \Drupal::service('k8s');
+
+  // Update resources.
+  $config_entities = \Drupal::service('plugin.manager.cloud_config_plugin')
+    ->loadConfigEntities('k8s');
+  foreach ($config_entities ?: [] as $config_entity) {
+    $k8s_service->setCloudContext($config_entity->getCloudContext());
+    $k8s_service->createResourceQueueItems();
+  }
+
+  // Update cost and resource storage.
+  $k8s_service->createCostStorageQueueItems();
+
+  // K8s time based scheduler.
+  $k8s_service->runTimeScheduler();
+}
+
+/**
+ * Convert the value of CPU to float value.
+ *
+ * @param string $cpu
+ *   The string value of CPU.
+ *
+ * @return float
+ *   The value converted.
+ */
+function k8s_convert_cpu_to_float($cpu) {
+  $type = substr($cpu, -1);
+  if ($type === 'm') {
+    return (float) (substr($cpu, 0, strlen($cpu) - 1)) / 1000;
+  }
+
+  if ($type === 'n') {
+    return (float) (substr($cpu, 0, strlen($cpu) - 1)) / 1000000000;
+  }
+
+  return (float) ($cpu);
+}
+
+/**
+ * Convert the value of memory to integer value.
+ *
+ * @param string $memory
+ *   The string value of memory.
+ *
+ * @return int
+ *   The value converted.
+ */
+function k8s_convert_memory_to_integer($memory) {
+  $decimal_units = [
+    'k',
+    'm',
+    'g',
+    't',
+    'p',
+    'e',
+  ];
+
+  $binary_units = [
+    'ki',
+    'mi',
+    'gi',
+    'ti',
+    'pi',
+    'ei',
+  ];
+
+  $memory = strtolower($memory);
+  $unit = substr($memory, -1);
+  $pos = array_search($unit, $decimal_units);
+  if ($pos !== FALSE) {
+    $number = (int) (substr($memory, 0, strlen($memory) - 1));
+    return $number * pow(1000, $pos + 1);
+  }
+
+  $unit = substr($memory, -2);
+  $pos = array_search($unit, $binary_units);
+  if ($pos !== FALSE) {
+    $number = (int) (substr($memory, 0, strlen($memory) - 2));
+
+    return $number * pow(1024, $pos + 1);
+  }
+
+  return 0;
+}
+
+/**
+ * Format memory string.
+ *
+ * @param float $number
+ *   The number of memory size.
+ *
+ * @return string
+ *   The formatted memory string.
+ */
+function k8s_format_memory($number) {
+  $binary_units = [
+    'Ki',
+    'Mi',
+    'Gi',
+    'Ti',
+    'Pi',
+    'Ei',
+  ];
+
+  $exp = 1;
+  $memory_unit = '';
+  $memory_number = $number;
+  foreach ($binary_units ?: [] as $unit) {
+    $base_number = pow(1024, $exp++);
+    if ($number < $base_number) {
+      break;
+    }
+
+    $memory_number = round($number / $base_number, 2);
+    $memory_unit = $unit;
+  }
+
+  return $memory_number . $memory_unit;
+}
+
+/**
+ * Get fieldsets of cloud config page.
+ *
+ * @param array $fields
+ *   Array of fields.
+ */
+function k8s_cloud_config_fieldsets(array &$fields) {
+  $fieldset_defs = [
+    [
+      'name' => 'cloud_provider',
+      'title' => t('Cloud Service Provider'),
+      'open' => TRUE,
+      'fields' => [
+        'cloud_context',
+        'name',
+        'image',
+        'field_enable_metrics_server',
+        'field_tags',
+      ],
+    ],
+    [
+      'name' => 'credentials',
+      'title' => t('Credentials'),
+      'open' => TRUE,
+      'fields' => [
+        'field_api_server',
+        'field_token',
+      ],
+    ],
+    [
+      'name' => 'location',
+      'title' => t('Location'),
+      'open' => TRUE,
+      'fields' => [
+        'cloud_config_location_map',
+        'field_location_country',
+        'field_location_city',
+        'field_location_latitude',
+        'field_location_longitude',
+      ],
+    ],
+  ];
+
+  $others = [
+    'name' => 'others',
+    'title' => t('Others'),
+    'open' => FALSE,
+    'fields' => [
+      'uid',
+    ],
+  ];
+
+  $fieldset_defs[] = $others;
+
+  \Drupal::service('cloud')->reorderForm($fields, $fieldset_defs);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view_alter().
+ */
+function k8s_cloud_config_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->bundle() === 'k8s') {
+    $map_json_url = \Drupal::config('cloud.settings')->get('cloud_custom_location_map_json_url');
+    $url = Url::fromRoute('entity.cloud_config.location', ['cloud_config' => $entity->id()])
+      ->toString();
+
+    $build['cloud_config_location_map'] = [
+      '#markup' => '<div id="cloud_config_location"></div>',
+      '#attached' => [
+        'library' => [
+          'cloud/cloud_config_location',
+        ],
+        'drupalSettings' => [
+          'cloud' => [
+            'cloud_location_map_json_url' => $map_json_url,
+            'cloud_config_location_json_url' => $url,
+          ],
+        ],
+      ],
+    ];
+
+    $build['field_location_country']['#access'] = FALSE;
+    $build['field_location_city']['#access'] = FALSE;
+    $build['field_location_longitude']['#access'] = FALSE;
+    $build['field_location_latitude']['#access'] = FALSE;
+
+    k8s_cloud_config_fieldsets($build);
+
+  }
+}
+
+/**
+ * Ajax callback function to get fields(namespace, cloud server template).
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ */
+function k8s_ajax_callback_get_fields(array $form, FormStateInterface $form_state) {
+  $cloud_context = isset($form['k8s']) ?
+    $form['k8s']['cloud_context']['widget'][0]['value']['#value'] :
+    $form['cloud_context']['widget'][0]['value']['#value'];
+
+  // Field namespace.
+  $field_namespace = isset($form['k8s']) ? $form['k8s']['field_namespace'] : $form['field_namespace'];
+  $field_namespace['#id'] = 'edit-field-namespace-wrapper';
+
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($cloud_context);
+
+  try {
+    $namespaces = $k8s_service->getNamespaces();
+  }
+  catch (\Exception $e) {
+    $k8s_service->handleError($e, $cloud_context);
+  }
+
+  $options = [];
+  foreach ($namespaces ?: [] as $namespace) {
+    if (is_object($namespace)) {
+      $namespace = $namespace->toArray();
+    }
+    $name = $namespace['metadata']['name'] ?? '';
+    $options[$name] = $name;
+  }
+  $field_namespace['widget']['#options'] = $options;
+
+  $response = new AjaxResponse();
+  $response->addCommand(
+    new ReplaceCommand('#edit-field-namespace-wrapper',
+      \Drupal::service('renderer')->render($field_namespace))
+  );
+
+  return $response;
+}
+
+/**
+ * Get all exportable entity types.
+ *
+ * @return array
+ *   All exportable entity types.
+ */
+function k8s_get_exportable_entity_types() {
+  $entity_types = [];
+  $entity_types[] = 'k8s_namespace';
+
+  foreach (\Drupal::entityTypeManager()
+    ->getDefinitions() ?: [] as $name => $definition) {
+    if ($definition->entityClassImplements(K8sExportableEntityInterface::class)) {
+      $entity_types[] = $name;
+    }
+  }
+
+  return $entity_types;
+}
+
+/**
+ * Implements hook_entity_bundle_field_info_alter().
+ */
+function k8s_entity_type_alter(array &$entity_types) {
+  // Add aws constraint to cloud_server_template.
+  // This constraint will perform K8s specific validations.
+  $entity_types['cloud_server_template']->addConstraint('k8s_yaml_url');
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_create().
+ */
+function k8s_k8s_pod_create(EntityInterface $entity) {
+  k8s_update_node_for_pod($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function k8s_k8s_pod_update(EntityInterface $entity) {
+  k8s_update_node_for_pod($entity);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function k8s_k8s_pod_delete(EntityInterface $entity) {
+  k8s_update_node_for_pod($entity);
+}
+
+/**
+ * Update node for pod entity.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $entity
+ *   The pod entity.
+ */
+function k8s_update_node_for_pod(EntityInterface $entity) {
+  if (empty($entity->getNodeName())) {
+    return;
+  }
+
+  if ($entity->isNew()) {
+    $route = \Drupal::routeMatch();
+    $cloud_context = $route->getParameter('cloud_context');
+  }
+  else {
+    $cloud_context = $entity->getCloudContext();
+  }
+
+  $nodes = \Drupal::entityTypeManager()
+    ->getStorage('k8s_node')
+    ->loadByProperties(
+      [
+        'cloud_context' => $cloud_context,
+        'name' => $entity->getNodeName(),
+      ]
+    );
+
+  foreach ($nodes ?: [] as $node) {
+    if (!$node->getDirty()) {
+      $node->setDirty(TRUE);
+      $node->save();
+    }
+  }
+}
+
+/**
+ * Check if metrics server is enabled.
+ *
+ * @param string $cloud_context
+ *   The cloud context to check.
+ *
+ * @return bool
+ *   True if metrics server is enabled.
+ */
+function k8s_is_metrics_enabled($cloud_context) {
+  $metrics_enabled = FALSE;
+  $k8s_service = \Drupal::service('k8s');
+  $k8s_service->setCloudContext($cloud_context);
+  try {
+    $k8s_service->getMetricsNodes();
+    $metrics_enabled = TRUE;
+  }
+  catch (K8sServiceException $e) {
+    $metrics_enabled = FALSE;
+  }
+  return $metrics_enabled;
+}
+
+/**
+ * Determine heatmap url depending on which page the block is on.
+ *
+ * @return string
+ *   The heatmap url to use.
+ */
+function k8s_get_resource_url() {
+  $resource_url = Url::fromRoute('entity.k8s_node.usage_lists')->toString();
+  $route_match = \Drupal::routeMatch();
+  $cloud_context = $route_match->getParameter('cloud_context');
+  $cloud_project = $route_match->getParameter('cloud_project');
+  $k8s_node = $route_match->getParameter('k8s_node');
+
+  // If cloud_context or k8s_node nid is set, return those urls.
+  if (!empty($cloud_context)) {
+    if (!empty($k8s_node)) {
+      $resource_url = Url::fromRoute(
+        'entity.k8s_node.usage',
+        [
+          'cloud_context' => $cloud_context,
+          'k8s_node' => $k8s_node->id(),
+        ]
+      )->toString();
+    }
+    elseif (!empty($cloud_project)) {
+      $resource_url = Url::fromRoute(
+        'entity.k8s_node.cloud_project.usage',
+        [
+          'cloud_context' => $cloud_context,
+          'cloud_project' => $cloud_project->id(),
+        ]
+      )->toString();
+    }
+    else {
+      $resource_url = Url::fromRoute(
+        'entity.k8s_node.usage_list',
+        [
+          'cloud_context' => $cloud_context,
+        ]
+      )->toString();
+    }
+  }
+  return $resource_url;
+}
+
+/**
+ * Implements hook_preprocess_field().
+ */
+function k8s_preprocess_field(&$variables) {
+  if ($variables['element']['#object']->getEntityTypeId() == 'cloud_server_template') {
+    $name = $variables['element']['#field_name'];
+    if ($name === 'field_object' && count($variables['items']) > 1) {
+      $objects = [];
+      foreach ($variables['items'] ?: [] as $idx => &$item) {
+        $object = $item['content']['#markup'];
+        if (isset($objects[$object])) {
+          ++$objects[$object];
+          unset($variables['items'][$idx]);
+        }
+        else {
+          $objects[$object] = 1;
+        }
+      }
+      foreach ($variables['items'] ?: [] as $idx => &$item) {
+        $object = $item['content']['#markup'];
+        $count = $objects[$object];
+        if ($count > 1) {
+          $item['content']['#markup'] = "$count $object" . 's';
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function k8s_form_cloud_server_template_k8s_delete_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $server_template = $form_state
+    ->getFormObject()
+    ->getEntity();
+
+  $resources = $server_template->get('field_launch_resources')->getValue();
+  if (!empty($resources)) {
+    $form['field_delete_option'] = [
+      '#type' => 'radios',
+      '#options' => [
+        'both' => t('Delete both application and resources'),
+        'resources' => t('Delete only resources'),
+        'application' => t('Delete only application'),
+      ],
+      '#title' => t('Delete Options'),
+      '#default_value' => 'both',
+    ];
+
+    \Drupal::messenger()->addWarning(t("Please make sure the following resources will be deleted if you select <em>'Delete both application and resources'</em> or <em>'Delete only resources'</em> option."));
+    k8s_create_resources_message($form, $resources);
+
+    $index = array_search('::submitForm', $form['actions']['submit']['#submit']);
+    array_splice($form['actions']['submit']['#submit'], $index, 1, 'k8s_form_cloud_server_template_k8s_delete_form_submit');
+  }
+}
+
+/**
+ * Submit function for k8s cloud server template delete form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_server_template_k8s_delete_form_submit(array &$form, FormStateInterface $form_state) {
+  $server_template = $form_state->getFormObject()->buildEntity($form, $form_state);
+  $delete_option = $form_state->getValue('field_delete_option');
+
+  $resources = $server_template->get('field_launch_resources')->getValue();
+  if (!empty($resources)) {
+    $entities = [];
+    foreach ($resources ?: [] as $resource) {
+      $type = $resource['item_key'];
+      $id = $resource['item_value'];
+      $entity = \Drupal::entityTypeManager()
+        ->getStorage($type)
+        ->load($id);
+      if (!empty($entity)) {
+        $entities[] = $entity;
+      }
+    }
+    if (!empty($entities)) {
+      $k8s_service = \Drupal::service('k8s');
+      if ($delete_option === 'both' || $delete_option === 'resources') {
+        $k8s_service->deleteResourcesWithEntities($entities);
+      }
+      elseif ($delete_option === 'application') {
+        foreach ($entities ?: [] as $entity) {
+          $annotations = $entity->getAnnotations();
+          if (empty($annotations[K8sEntityBase::ANNOTATION_LAUNCHED_APPLICATION_ID])
+            || $annotations[K8sEntityBase::ANNOTATION_LAUNCHED_APPLICATION_ID] !== $server_template->id()) {
+            continue;
+          }
+
+          unset($annotations[K8sEntityBase::ANNOTATION_LAUNCHED_APPLICATION_ID]);
+
+          try {
+            $k8s_service->setCloudContext($entity->getCloudContext());
+
+            // Get the name of method updateXXXXs.
+            $entity_type_id_plural = !empty($entity->getEntityType()) ? $entity->getEntityType()->get('id_plural') : '';
+            $short_name = '';
+            if (!empty($entity_type_id_plural)) {
+              $name_plural_camel = $short_name = substr($entity_type_id_plural, strlen('k8s_'));
+            }
+            else {
+              $name_plural_camel = str_replace(' ', '', ucwords(str_replace('_', ' ', $short_name)));
+            }
+            $update_entities_method_name = "update${name_plural_camel}";
+
+            // Update entity.
+            $k8s_service->$update_entities_method_name([
+              'metadata.name' => $entity->getName(),
+            ], FALSE);
+
+            // Get new entity.
+            $entity = \Drupal::entityTypeManager()
+              ->getStorage($entity->getEntityTypeId())
+              ->load($entity->id());
+
+            // Get the name of method updateXXXX.
+            $short_name = substr($entity->getEntityTypeId(), strlen('k8s_'));
+            $name_camel = str_replace(' ', '', ucwords(str_replace('_', ' ', $short_name)));
+            $update_resource_method_name = "update{$name_camel}";
+
+            // Update resource in k8s.
+            $params = Yaml::decode($entity->getDetail());
+            $params['metadata']['annotations'] = $annotations;
+            if (method_exists($entity, 'getNamespace')) {
+              $k8s_service->$update_resource_method_name(
+                $entity->getNamespace(),
+                $params
+              );
+            }
+            else {
+              $k8s_service->$update_resource_method_name($params);
+            }
+
+            // Update entity again.
+            $k8s_service->$update_entities_method_name([
+              'metadata.name' => $entity->getName(),
+            ], FALSE);
+          }
+          catch (K8sServiceException $e) {
+            \Drupal::messenger()->addError(t('Unable to update @label.', [
+              '@label' => $entity->getEntityType()->getSingularLabel(),
+            ]));
+          }
+        }
+      }
+    }
+  }
+
+  if ($delete_option === 'resources') {
+    $server_template->set('field_object', NULL);
+    $server_template->set('field_launch_resources', NULL);
+    $server_template->setValidationRequired(FALSE);
+    $server_template->save();
+    $url = $server_template->toUrl('canonical', ['cloud_context', $server_template->getCloudContext()]);
+    $form_state->setRedirectUrl($url);
+  }
+  else {
+    $form_object = $form_state->getFormObject();
+    $form_object->submitForm($form, $form_state);
+  }
+}
+
+/**
+ * Create the messages listing resources.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param array $resources
+ *   Array of resources.
+ */
+function k8s_create_resources_message(array &$form, array $resources) {
+  if (empty($resources)) {
+    return;
+  }
+
+  foreach ($resources ?: [] as $resource) {
+    $type = $resource['item_key'];
+    $id = $resource['item_value'];
+    $entity = \Drupal::entityTypeManager()
+      ->getStorage($type)
+      ->load($id);
+    if (isset($entity)) {
+      \Drupal::messenger()->addWarning(t('@type: <a href=":url">%name</a>', [
+        '@type' => \Drupal::entityTypeManager()->getDefinition($entity->bundle())->getSingularLabel(),
+        '%name' => $entity->getName(),
+        ':url' => $entity->toUrl('canonical')->toString(),
+      ]));
+    }
+  }
+  $messages = \Drupal::messenger()->deleteAll();
+
+  $form['confirm_message'] = [
+    '#theme' => 'status_messages',
+    '#message_list' => $messages,
+  ];
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function k8s_entity_delete(EntityInterface $entity) {
+  if ($entity instanceof K8sEntityInterface && !empty($entity->getAnnotations())) {
+    $annotations = $entity->getAnnotations();
+    if (isset($annotations[K8sEntityBase::ANNOTATION_LAUNCHED_APPLICATION_ID])) {
+      $server_template_id = $annotations[K8sEntityBase::ANNOTATION_LAUNCHED_APPLICATION_ID];
+      $server_template = \Drupal::entityTypeManager()
+        ->getStorage('cloud_server_template')
+        ->load($server_template_id);
+      if (!empty($server_template)) {
+        $resources = $server_template->get('field_launch_resources')->getValue();
+        if (!empty($resources)) {
+          foreach ($resources ?: [] as $idx => $resource) {
+            $type = $resource['item_key'];
+            $id = $resource['item_value'];
+            if ($type === $entity->bundle() && $id === $entity->id()) {
+              $server_template->get('field_launch_resources')->removeItem($idx);
+              $server_template->setValidationRequired(FALSE);
+              $server_template->save();
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Get default project name.
+ *
+ * @return string
+ *   The default project name.
+ */
+function k8s_get_default_project_name() {
+  $username = \Drupal::currentUser()->getAccountName();
+  $date = date("Ymd-His");
+  return "$username-project-$date";
+}
+
+/**
+ * Helper function to generate values in the time drop down.
+ *
+ * @param int $max
+ *   The maximum numbers to generate.
+ * @param int $digit
+ *   The number of digit.
+ *
+ * @return array
+ *   Array of time values.
+ */
+function k8s_align_digits($max, $digit) {
+  $digits = [];
+  $format = '%0' . $digit . 'd';
+  for ($i = 0; $i < $max; $i++) {
+    $digits[sprintf($format, $i)] = sprintf($format, $i);
+  }
+  return $digits;
+}
+
+/**
+ * Get existing user list.
+ */
+function k8s_get_user_list() {
+  // TODO: add condition to consider the access control.
+  $users = \Drupal::entityTypeManager()->getStorage('user')
+    ->getQuery()
+    ->execute();
+  $user_list = [];
+  foreach ($users ?: [] as $user) {
+    if (!empty($user)) {
+      $username = User::load($user)->get('name')->value;
+      $user_list[$username] = $username;
+    }
+  }
+  return $user_list;
+}
+
+/**
+ * Common alter function for delete forms.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Get form_id.
+ */
+function k8s_form_cloud_project_k8s_delete_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $project = $form_state
+    ->getFormObject()
+    ->getEntity();
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_delete().
+ */
+function k8s_cloud_project_delete(EntityInterface $entity) {
+
+  if ($entity->bundle() !== 'k8s' || $entity->getEntityType()->id() !== 'cloud_project') {
+    return;
+  }
+
+  $k8s_clusters = $entity->get('field_k8s_clusters');
+  $messenger = \Drupal::messenger();
+  $k8s_cluster_list = [];
+
+  foreach ($k8s_clusters ?: [] as $cloud_context) {
+    if (!empty($cloud_context->value)) {
+      $k8s_cluster_list[$cloud_context->value] = $cloud_context->value;
+    }
+  }
+
+  $k8s_resource_list = [
+    'k8s_namespace',
+    'k8s_resource_quota',
+  ];
+
+  try {
+
+    k8s_delete_specific_resource($k8s_cluster_list, $k8s_resource_list, $entity->getName());
+
+    // Delete the role if it exists.
+    $roles = \Drupal::entityTypeManager()->getStorage('user_role')
+      ->loadByProperties([
+        'id' => $entity->getName(),
+      ]);
+
+    if (!empty($roles)) {
+
+      $role = array_shift($roles);
+      $role->delete();
+
+      \Drupal::service('cloud')->processOperationStatus($role, 'deleted');
+    }
+
+    $message_all = $messenger->all();
+    $messages = array_shift($message_all);
+    $messenger->deleteAll();
+
+    $output = '';
+    $search = "/ {$entity->getName()} /";
+
+    foreach ($messages ?: [] as $message) {
+
+      $string = $message->jsonSerialize();
+      if (preg_match($search, $string)) {
+        $output .= "<li>${message}</li>";
+      }
+      else {
+        $messenger->addStatus($message);
+      }
+    }
+
+    $messenger->addStatus(t('The @type @label has been deleted.<ul>@output</ul>', [
+      '@type' => $entity->getEntityType()->getSingularLabel(),
+      '@label' => $entity->label(),
+      '@output' => Markup::Create($output),
+    ]));
+
+    \Drupal::logger('k8s')->notice('@type: deleted %label.', [
+      '@type' => $entity->getEntityType()->getSingularLabel(),
+      '%label' => $entity->label(),
+    ]);
+
+  }
+  catch (EntityStorageException $e) {
+
+    try {
+
+      \Drupal::service('cloud')->processOperationErrorStatus($entity, 'deleted');
+    }
+    catch (EntityMalformedException $e) {
+      \Drupal::service('cloud')->handleException($e);
+    }
+  }
+}
+
+/**
+ * Delete specific resrouce.
+ *
+ * @param array $k8s_cluster_list
+ *   The list of kubernetes cluster.
+ * @param array $k8s_resource_list
+ *   The list of resource.
+ * @param string $entity_name
+ *   The name of entity.
+ */
+function k8s_delete_specific_resource(array $k8s_cluster_list, array $k8s_resource_list, string $entity_name) {
+  $k8s_service = \Drupal::service('k8s');
+  foreach ($k8s_cluster_list ?: [] as $k8s_cluster => $cloud_context) {
+    $k8s_service->setCloudContext($cloud_context);
+    foreach ($k8s_resource_list ?: [] as $entity_type) {
+      $resources = \Drupal::entityTypeManager()->getStorage($entity_type)
+        ->loadByProperties([
+          'name' => $entity_name,
+          'cloud_context' => $cloud_context,
+        ]);
+
+      if (empty($resources)) {
+        continue;
+      }
+      $k8s_service = \Drupal::service('k8s');
+      $k8s_service->deleteResourcesWithEntities($resources);
+    }
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ */
+function k8s_form_cloud_project_k8s_add_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  k8s_form_cloud_project_k8s_form_common_alter($form, $form_state, $form_id);
+  $index = array_search('::save', $form['actions']['submit']['#submit']);
+  array_splice($form['actions']['submit']['#submit'], $index, 0, 'k8s_form_cloud_project_k8s_form_submit');
+}
+
+/**
+ * Submit function for K8s project form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_project_k8s_form_submit(array $form, FormStateInterface $form_state) {
+  $project = $form_state
+    ->getFormObject()
+    ->getEntity();
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_project_k8s_edit_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  k8s_form_cloud_project_k8s_form_common_alter($form, $form_state, $form_id);
+  // Hide new revision checkbox.
+  $form['new_revision']['#access'] = FALSE;
+  $form['project']['field_username']['#access'] = FALSE;
+  $form['project']['name']['#access'] = FALSE;
+  $index = array_search('::save', $form['actions']['submit']['#submit']);
+  array_splice($form['actions']['submit']['#submit'], $index, 0, 'k8s_form_cloud_project_k8s_form_submit');
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_project_k8s_copy_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  k8s_form_cloud_project_k8s_form_common_alter($form, $form_state, $form_id);
+
+  // Clear the revision log message.
+  $form['others']['revision_log_message']['widget'][0]['value']['#default_value'] = NULL;
+
+  // Change value of the submit button.
+  $form['actions']['submit']['#value'] = t('Copy');
+
+  // Delete the delete button.
+  $form['actions']['delete']['#access'] = FALSE;
+
+  $form['actions']['submit']['#submit'][1] = 'k8s_form_cloud_project_k8s_form_submit';
+  $form['actions']['submit']['#submit'][2] = 'k8s_form_cloud_project_k8s_copy_form_submit';
+
+}
+
+/**
+ * Submit function for K8s project copy.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_form_cloud_project_k8s_copy_form_submit(array $form, FormStateInterface $form_state) {
+
+  $project = $form_state
+    ->getFormObject()
+    ->getEntity();
+
+  $project = $project->createDuplicate();
+
+  if ($project->save()) {
+
+    \Drupal::service('cloud')->processOperationStatus($project, 'created');
+
+    $form_state->setRedirect(
+      'entity.cloud_project.launch',
+      [
+        'cloud_context' => $project->getCloudContext(),
+        'cloud_project' => $project->id(),
+      ]
+    );
+  }
+  else {
+    \Drupal::service('cloud')->processOperationErrorStatus($project, 'created');
+  }
+}
+
+/**
+ * Validate function for form cloud_project_k8s_copy_form.
+ *
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current state of the form.
+ */
+function k8s_cloud_form_cloud_project_k8s_form_validate(array &$form, FormStateInterface $form_state) {
+  $form_object = $form_state->getFormObject();
+  $project = $form_object->getEntity();
+  $project->setName($form_state->getValue('copy_project_name'));
+  $violations = $project->validate();
+  foreach ($violations->getByField('name') as $violation) {
+    $form_state->setErrorByName('copy_project_name', $violation->getMessage());
+  }
+}
+
+/**
+ * Common alter function for edit and add forms.
+ *
+ * @param array $form
+ *   Array of form object.
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ *   The current form state.
+ * @param int $form_id
+ *   Get form_id.
+ */
+function k8s_form_cloud_project_k8s_form_common_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $current_user = \Drupal::currentUser()->getAccountName();
+
+  $form['k8s_startup_time_title'] = [
+    '#type' => 'item',
+    '#title' => 'Start-up Time',
+    '#description' => 'Time launching set resources in project',
+  ];
+
+  $form['k8s_stop_time_title'] = [
+    '#type' => 'item',
+    '#title' => 'Stop Time',
+    '#description' => 'Time to stop set resources in project',
+  ];
+
+  \Drupal::service('cloud')->reorderForm($form, k8s_project_field_orders());
+  if (empty($form['project']['field_username']['widget']['#default_value'])) {
+    $form['project']['field_username']['widget']['#default_value'] = $current_user;
+  }
+  if (empty($form['project']['name']['widget'][0]['value']['#default_value'])) {
+    $form['project']['name']['widget'][0]['value']['#default_value'] = k8s_get_default_project_name();
+  }
+
+  $form['time_scheduler']['field_startup_time_hour']['widget']['#title_display'] = 'invisible';
+  $form['time_scheduler']['field_startup_time_minute']['widget']['#title_display'] = 'invisible';
+  $form['time_scheduler']['field_stop_time_hour']['widget']['#title_display'] = 'invisible';
+  $form['time_scheduler']['field_stop_time_minute']['widget']['#title_display'] = 'invisible';
+  $form['time_scheduler']['field_startup_time_hour']['widget']['#options'] = k8s_align_digits(24, 1);
+  $form['time_scheduler']['field_startup_time_minute']['widget']['#options'] = k8s_align_digits(60, 1);
+  $form['time_scheduler']['field_stop_time_hour']['widget']['#options'] = k8s_align_digits(24, 1);
+  $form['time_scheduler']['field_stop_time_minute']['widget']['#options'] = k8s_align_digits(60, 1);
+
+  $form['time_scheduler']['field_startup_time_hour']['#prefix'] = '<div class= "container-inline">';
+  $form['time_scheduler']['field_startup_time_minute']['widget']['#prefix'] = ': ';
+  $form['time_scheduler']['field_startup_time_minute']['#suffix'] = '</div>';
+  $form['time_scheduler']['field_stop_time_hour']['#prefix'] = '<div class= "container-inline">';
+  $form['time_scheduler']['field_stop_time_minute']['widget']['#prefix'] = ': ';
+  $form['time_scheduler']['field_stop_time_minute']['#suffix'] = '</div>';
+
+  $form['resource_scheduler']['field_pod_count']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_resource_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['resource_scheduler']['field_request_cpu']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_resource_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['resource_scheduler']['field_request_memory']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_resource_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['k8s_startup_time_title']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['k8s_stop_time_title']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['field_startup_time_hour']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['field_startup_time_minute']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['field_stop_time_hour']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+
+  $form['time_scheduler']['field_stop_time_minute']['#states'] = [
+    'invisible' => [
+      ':input[name="field_enable_time_scheduler[value]"]' => ['checked' => FALSE],
+    ],
+  ];
+}
+
+/**
+ * Return orders of K8s cloud project fields.
+ *
+ * @param bool $include_name
+ *   Whether to include name field or not.
+ *
+ * @return array
+ *   Fieldsets array.
+ */
+function k8s_project_field_orders($include_name = TRUE) {
+  $fieldsets_def = [
+    [
+      'name' => 'project',
+      'title' => t('Project'),
+      'open' => TRUE,
+      'fields' => [
+        'field_username',
+        'name',
+        'field_k8s_clusters',
+      ],
+    ],
+    [
+      'name' => 'resource_scheduler',
+      'title' => t('Resource scheduler'),
+      'open' => TRUE,
+      'fields' => [
+        'field_enable_resource_scheduler',
+        'field_pod_count',
+        'field_request_cpu',
+        'field_request_memory',
+      ],
+    ],
+    [
+      'name' => 'time_scheduler',
+      'title' => t('Time scheduler'),
+      'open' => TRUE,
+      'fields' => [
+        'field_enable_time_scheduler',
+        'k8s_startup_time_title',
+        'field_startup_time_hour',
+        'field_startup_time_minute',
+        'k8s_stop_time_title',
+        'field_stop_time_hour',
+        'field_stop_time_minute',
+      ],
+    ],
+    [
+      'name' => 'others',
+      'title' => t('Others'),
+      'open' => FALSE,
+      'fields' => [
+        'revision_log_message',
+        'cloud_context',
+        'uid',
+      ],
+    ],
+  ];
+
+  if (!$include_name) {
+    unset($fieldsets_def[0]['fields'][0]);
+  }
+
+  return $fieldsets_def;
+}
+
+/**
+ * Implements hook_entity_view_alter().
+ */
+function k8s_cloud_project_view_alter(array &$build, EntityInterface $entity, EntityViewDisplayInterface $display) {
+  if ($entity->getEntityTypeId() === 'cloud_project'
+    && $entity->bundle() === 'k8s'
+  ) {
+
+    \Drupal::service('cloud')->reorderForm($build, k8s_project_field_orders(TRUE));
+
+    $build['project']['field_username']['#title'] = t('User');
+    $build['project']['field_username']['#label_display'] = 'inline';
+    $build['project']['name']['#label_display'] = 'inline';
+    $build['project']['field_k8s_clusters']['#label_display'] = 'inline';
+
+    if ($build['resource_scheduler']['field_enable_resource_scheduler']['0']['#markup'] === 'Off') {
+      unset($build['resource_scheduler']);
+    }
+    else {
+      $build['resource_scheduler']['field_enable_resource_scheduler']['#label_display'] = 'inline';
+      $build['resource_scheduler']['field_pod_count']['#label_display'] = 'inline';
+      $build['resource_scheduler']['field_request_cpu']['#label_display'] = 'inline';
+      $build['resource_scheduler']['field_request_memory']['#label_display'] = 'inline';
+    };
+
+    if ($build['time_scheduler']['field_enable_time_scheduler']['0']['#markup'] === 'Off') {
+      unset($build['time_scheduler']);
+    }
+    else {
+      $startup_hour = $build['time_scheduler']['field_startup_time_hour'][0]['#markup'];
+      $startup_minute = $build['time_scheduler']['field_startup_time_minute'][0]['#markup'];
+      $stop_hour = $build['time_scheduler']['field_stop_time_hour'][0]['#markup'];
+      $stop_minute = $build['time_scheduler']['field_stop_time_minute'][0]['#markup'];
+
+      $build['time_scheduler']['field_enable_time_scheduler']['#label_display'] = 'inline';
+      $build['time_scheduler']['field_startup_time_hour']['#title'] = 'Start-up time';
+      $build['time_scheduler']['field_startup_time_hour']['#label_display'] = 'inline';
+      $build['time_scheduler']['field_startup_time_hour']['#prefix'] = '<div class= "container-inline">';
+      $build['time_scheduler']['field_startup_time_hour'][0]['#markup'] = $startup_hour . ':' . $startup_minute;
+      $build['time_scheduler']['field_startup_time_hour']['#suffix'] = '</div>';
+
+      $build['time_scheduler']['field_stop_time_hour']['#title'] = 'Stop time';
+      $build['time_scheduler']['field_stop_time_hour']['#label_display'] = 'inline';
+      $build['time_scheduler']['field_stop_time_hour']['#prefix'] = '<div class= "container-inline">';
+      $build['time_scheduler']['field_stop_time_hour'][0]['#markup'] = $stop_hour . ':' . $stop_minute;
+      $build['time_scheduler']['field_stop_time_hour']['#suffix'] = '</div>';
+      unset($build['time_scheduler']['field_startup_time_minute']);
+      unset($build['time_scheduler']['field_stop_time_minute']);
+    };
+
+    unset($build['others']);
+  }
+
+}
+
+/**
+ * Implements hook_queue_info_alter().
+ */
+function k8s_queue_info_alter(&$queues) {
+  $config = \Drupal::config('k8s.settings');
+  if (!empty($queues['k8s_update_resources_queue'])) {
+    $queues['k8s_update_resources_queue']['cron']['time'] = $config->get('k8s_update_resources_queue_cron_time');
+  }
+  if (!empty($queues['k8s_update_cost_storage_queue'])) {
+    $queues['k8s_update_cost_storage_queue']['cron']['time'] = $config->get('k8s_update_cost_storage_queue_cron_time');
+  }
+  if (!empty($queues['k8s_update_resource_storage_queue'])) {
+    $queues['k8s_update_resource_storage_queue']['cron']['time'] = $config->get('k8s_update_resource_storage_queue_cron_time');
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function k8s_form_cloud_project_k8s_launch_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  $entity = $form_state->getFormObject()->getEntity();
+  $fieldset_defs = k8s_project_field_orders();
+  $entity_type = $entity->getEntityTypeId();
+  $bundle = $entity->bundle();
+  $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions($entity_type, $bundle);
+
+  $weight = 4;
+  foreach ($fieldset_defs ?: [] as $fieldset_def) {
+    $fieldset_name = $fieldset_def['name'];
+    $form[$fieldset_name] = [
+      '#type' => 'details',
+      '#title' => $fieldset_def['title'],
+      '#weight' => $weight++,
+      '#open' => $fieldset_def['open'],
+    ];
+
+    foreach ($fieldset_def['fields'] ?: [] as $field_name) {
+      if (!$entity->hasField($field_name) || !isset($field_name)) {
+        continue;
+      }
+
+      $label = FieldConfig::loadByName($entity_type, $bundle, $field_name);
+      $values = array_column($entity->get($field_name)->getValue(), 'value');
+      if (!empty($label)) {
+        $form[$fieldset_name][$field_name]['widget'][0] = [
+          '#label_display' => 'inline',
+          '#type' => 'item',
+          '#title' => $label->getLabel() . ':',
+          '#markup' => implode(", ", $values),
+        ];
+      }
+      else {
+        $form[$fieldset_name][$field_name]['widget'][0] = [
+          '#label_display' => 'inline',
+          '#type' => 'item',
+          '#title' => $field_definitions[$field_name]->getLabel() . ':',
+          '#markup' => implode(", ", $values),
+        ];
+      }
+      $form[$fieldset_name][$field_name]['#weight'] = $weight++;
+    }
+  }
+
+  unset($form['others']);
+  if ($form['time_scheduler']['field_enable_time_scheduler']['widget'][0]['#markup'] === '0') {
+    unset($form['time_scheduler']);
+  }
+  else {
+    $form['time_scheduler']['field_enable_time_scheduler']['widget'][0]['#markup'] = 'On';
+  }
+  if ($form['resource_scheduler']['field_enable_resource_scheduler']['widget'][0]['#markup'] === '0') {
+    unset($form['resource_scheduler']);
+  }
+  else {
+    $form['resource_scheduler']['field_enable_resource_scheduler']['widget'][0]['#markup'] = 'On';
+  }
+}
+
+/**
+ * Decode yaml file with multiple documents.
+ *
+ * @param string $yaml
+ *   The yaml content.
+ *
+ * @return array
+ *   The yaml array decoded.
+ */
+function k8s_decode_multiple_doc_yaml($yaml) {
+  $docs = [];
+  $lines = explode("\n", $yaml);
+  $last_doc_lines = [];
+  foreach ($lines ?: [] as $line) {
+    if (rtrim($line) === '---') {
+      if (!empty($last_doc_lines)) {
+        $docs[] = implode("\n", $last_doc_lines);
+        $last_doc_lines = [];
+      }
+      continue;
+    }
+
+    // Because the bug of the parser, skip the comment line.
+    if (strpos(ltrim($line), '#') === 0) {
+      continue;
+    }
+
+    $last_doc_lines[] = rtrim($line);
+  }
+  if (!empty($last_doc_lines)) {
+    $docs[] = implode("\n", $last_doc_lines);
+  }
+
+  $result = [];
+  foreach ($docs ?: [] as $doc) {
+    $result[] = Yaml::decode($doc);
+  }
+
+  return $result;
+}
+
+/**
+ * Update resource storage entity.
+ *
+ * @param array $params
+ *   The yaml content.
+ */
+function update_resource_storage_entity(array $params) {
+  $label = $params['label'];
+  $cloud_context = $params['cloud_context'];
+  $k8s_service = \Drupal::service('k8s');
+  $result = $k8s_service->calculateCostPerNamespace($cloud_context, $label);
+  $cost = $result['cost'];
+  $collect_time = $result['collect_time'];
+  $data = [
+    'cloud_context' => $cloud_context,
+    'payer' => $label,
+    'cost' => $cost,
+    'resources' => Yaml::encode($result['resources']),
+    'refreshed' => $collect_time,
+  ];
+  $entity = \Drupal::entityTypeManager()->getStorage('cloud_resource_storage')->create($data);
+  $entity->save();
+}

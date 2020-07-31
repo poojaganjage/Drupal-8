@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.aws_cloud
+    - field.storage.cloud_config.field_traffic_type
+  module:
+    - options
+id: cloud_config.aws_cloud.field_traffic_type
+field_name: field_traffic_type
+entity_type: cloud_config
+bundle: aws_cloud
+label: 'Traffic Type'
+description: 'The type of traffic to log.'
+required: true
+translatable: false
+default_value:
+  -
+    value: ALL
+default_value_callback: ''
+settings: {  }
+field_type: list_string

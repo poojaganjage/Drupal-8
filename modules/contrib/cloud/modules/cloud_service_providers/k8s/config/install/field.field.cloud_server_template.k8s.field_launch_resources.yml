@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_server_template_type.k8s
+    - field.storage.cloud_server_template.field_launch_resources
+id: cloud_server_template.k8s.field_launch_resources
+field_name: field_launch_resources
+entity_type: cloud_server_template
+bundle: k8s
+label: 'Launch Resources'
+description: 'The resources launched by this application.'
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: key_value

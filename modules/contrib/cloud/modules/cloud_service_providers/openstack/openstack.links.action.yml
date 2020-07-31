@@ -1,0 +1,361 @@
+######################
+# OpenStack Instance.
+######################
+
+entity.openstack_instance.add_form:
+  route_name: entity.cloud_server_template.collection
+  title: 'Add | Launch OpenStack Instance'
+  appears_on:
+    - view.openstack_instance.list
+
+entity.openstack_instance.collection:
+  route_name: view.openstack_instance.list
+  title: 'List OpenStack Instances'
+  appears_on:
+    - entity.openstack_instance.add_form
+    - entity.openstack_instance.edit_form
+    - entity.openstack_instance.delete_form
+    - entity.openstack_instance.canonical
+
+entity.openstack_instance.refresh:
+  route_name: entity.openstack_instance.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_instance.list
+
+entity.openstack_instance.edit:
+  route_name: entity.openstack_instance.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_instance.canonical
+
+entity.openstack_instance.start:
+  route_name: entity.openstack_instance.start_form
+  title: 'Start'
+  appears_on:
+    - entity.openstack_instance.edit_form
+    - entity.openstack_instance.canonical
+
+entity.openstack_instance.stop:
+  route_name: entity.openstack_instance.stop_form
+  title: 'Stop'
+  appears_on:
+    - entity.openstack_instance.edit_form
+    - entity.openstack_instance.canonical
+
+entity.openstack_instance.reboot:
+  route_name: entity.openstack_instance.reboot_form
+  title: 'Reboot'
+  appears_on:
+    - entity.openstack_instance.edit_form
+    - entity.openstack_instance.canonical
+
+entity.openstack_instance.delete:
+  route_name: entity.openstack_instance.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_instance.canonical
+
+##################
+# OpenStack Image.
+##################
+
+entity.openstack_image.add_form:
+  route_name: entity.openstack_image.add_form
+  title: 'Add OpenStack Image'
+  appears_on:
+    - view.openstack_image.list
+
+entity.openstack_image.collection:
+  route_name: view.openstack_image.list
+  title: 'List OpenStack Images'
+  appears_on:
+    - entity.openstack_image.add_form
+    - entity.openstack_image.edit_form
+    - entity.openstack_image.delete_form
+    - entity.openstack_image.canonical
+
+entity.openstack_image.refresh:
+  route_name: entity.openstack_image.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_image.list
+
+entity.openstack_image.edit:
+  route_name: entity.openstack_image.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_image.canonical
+
+entity.openstack_image.delete:
+  route_name: entity.openstack_image.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_image.canonical
+
+###########################
+# OpenStack Security Group.
+###########################
+
+entity.openstack_security_group.add_form:
+  route_name: entity.openstack_security_group.add_form
+  title: 'Add OpenStack Security Group'
+  appears_on:
+    - view.openstack_security_group.list
+
+entity.openstack_security_group.collection:
+  route_name: view.openstack_security_group.list
+  title: 'List OpenStack Security Groups'
+  appears_on:
+    - entity.openstack_security_group.add_form
+    - entity.openstack_security_group.edit_form
+    - entity.openstack_security_group.delete_form
+    - entity.openstack_security_group.canonical
+
+entity.openstack_security_group.refresh:
+  route_name: entity.openstack_security_group.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_security_group.list
+
+entity.openstack_security_group.edit:
+  route_name: entity.openstack_security_group.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_security_group.canonical
+
+entity.openstack_security_group.delete:
+  route_name: entity.openstack_security_group.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_security_group.canonical
+
+###################
+# Openstack Volume.
+###################
+entity.openstack_volume.add_form:
+  route_name: entity.openstack_volume.add_form
+  title: 'Add OpenStack Volume'
+  appears_on:
+    - view.openstack_volume.list
+
+entity.openstack_volume.collection:
+  route_name: view.openstack_volume.list
+  title: 'List OpenStack Volumes'
+  appears_on:
+    - entity.openstack_volume.add_form
+    - entity.openstack_volume.edit_form
+    - entity.openstack_volume.delete_form
+    - entity.openstack_volume.canonical
+
+entity.openstack_volume.refresh:
+  route_name: entity.openstack_volume.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_volume.list
+
+entity.openstack_volume.edit:
+  route_name: entity.openstack_volume.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_volume.canonical
+
+entity.openstack_volume.attach:
+  route_name: entity.openstack_volume.attach_form
+  title: 'Attach'
+  appears_on:
+    - entity.openstack_volume.edit_form
+    - entity.openstack_volume.canonical
+
+entity.openstack_volume.detach:
+  route_name: entity.openstack_volume.detach_form
+  title: 'Detach'
+  appears_on:
+    - entity.openstack_volume.edit_form
+    - entity.openstack_volume.canonical
+
+entity.openstack_volume.delete:
+  route_name: entity.openstack_volume.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_volume.canonical
+
+#####################
+# OpenStack Snapshot.
+#####################
+
+entity.openstack_snapshot.add_form:
+  route_name: entity.openstack_snapshot.add_form
+  title: 'Add OpenStack Snapshot'
+  class: 'Drupal\openstack\Plugin\Menu\LocalAction\OpenStackSnapshotAddFormLocalAction'
+  appears_on:
+    - view.openstack_snapshot.list
+    - entity.openstack_volume.edit_form
+    - entity.openstack_volume.canonical
+
+entity.openstack_snapshot.collection:
+  route_name: view.openstack_snapshot.list
+  title: 'List OpenStack Snapshots'
+  appears_on:
+    - entity.openstack_snapshot.add_form
+    - entity.openstack_snapshot.edit_form
+    - entity.openstack_snapshot.delete_form
+    - entity.openstack_snapshot.canonical
+
+entity.openstack_snapshot.edit:
+  route_name: entity.openstack_snapshot.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_snapshot.canonical
+
+entity.openstack_snapshot.create_volume:
+  route_name: entity.openstack_volume.add_form
+  title: 'Create Volume'
+  class: 'Drupal\openstack\Plugin\Menu\LocalAction\OpenStackVolumeAddFormLocalAction'
+  appears_on:
+    - entity.openstack_snapshot.edit_form
+    - entity.openstack_snapshot.canonical
+
+entity.openstack_snapshot.delete:
+  route_name: entity.openstack_snapshot.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_snapshot.canonical
+
+entity.openstack_snapshot.refresh:
+  route_name: entity.openstack_snapshot.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_snapshot.list
+
+#####################
+# OpenStack Key Pair.
+#####################
+
+entity.openstack_key_pair.add_form:
+  route_name: entity.openstack_key_pair.add_form
+  title: 'Add OpenStack Cloud Key Pair'
+  appears_on:
+    - view.openstack_key_pair.list
+
+entity.openstack_key_pair.import_form:
+  route_name: entity.openstack_key_pair.import_form
+  title: 'Import OpenStack Key Pair'
+  appears_on:
+    - view.openstack_key_pair.list
+
+entity.openstack_key_pair.collection:
+  route_name: view.openstack_key_pair.list
+  title: 'List OpenStack Key Pairs'
+  appears_on:
+    - entity.openstack_key_pair.add_form
+    - entity.openstack_key_pair.edit_form
+    - entity.openstack_key_pair.delete_form
+    - entity.openstack_key_pair.canonical
+
+entity.openstack_key_pair.refresh:
+  route_name: entity.openstack_key_pair.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_key_pair.list
+
+entity.openstack_key_pair.edit:
+  route_name: entity.openstack_key_pair.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_key_pair.canonical
+
+entity.openstack_key_pair.delete:
+  route_name: entity.openstack_key_pair.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_key_pair.canonical
+
+##############################
+# OpenStack Network Interface.
+##############################
+
+entity.openstack_network_interface.add_form:
+  route_name: entity.openstack_network_interface.add_form
+  title: 'Add OpenStack Network Interface'
+  appears_on:
+    - view.openstack_network_interface.list
+
+entity.openstack_network_interface.collection:
+  route_name: view.openstack_network_interface.list
+  title: 'List OpenStack Network Interfaces'
+  appears_on:
+    - entity.openstack_network_interface.add_form
+    - entity.openstack_network_interface.edit_form
+    - entity.openstack_network_interface.delete_form
+    - entity.openstack_network_interface.canonical
+
+entity.openstack_network_interface.refresh:
+  route_name: entity.openstack_network_interface.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_network_interface.list
+
+entity.openstack_network_interface.edit:
+  route_name: entity.openstack_network_interface.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_network_interface.canonical
+
+entity.openstack_network_interface.delete:
+  route_name: entity.openstack_network_interface.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_network_interface.canonical
+
+#########################
+# OpenStack Floating IP.
+#########################
+entity.openstack_floating_ip.add_form:
+  route_name: entity.openstack_floating_ip.add_form
+  title: 'Add OpenStack Floating IP'
+  appears_on:
+    - view.openstack_floating_ip.list
+
+entity.openstack_floating_ip.refresh:
+  route_name: entity.openstack_floating_ip.list_update
+  title: 'Refresh'
+  appears_on:
+    - view.openstack_floating_ip.list
+
+entity.openstack_floating_ip.collection:
+  route_name: view.openstack_floating_ip.list
+  title: 'List OpenStack Floating IPs'
+  appears_on:
+    - entity.openstack_floating_ip.add_form
+    - entity.openstack_floating_ip.edit_form
+    - entity.openstack_floating_ip.delete_form
+    - entity.openstack_floating_ip.canonical
+
+entity.openstack_floating_ip.edit:
+  route_name: entity.openstack_floating_ip.edit_form
+  title: 'Edit'
+  appears_on:
+    - entity.openstack_floating_ip.canonical
+
+entity.openstack_floating_ip.delete:
+  route_name: entity.openstack_floating_ip.delete_form
+  title: 'Delete'
+  appears_on:
+    - entity.openstack_floating_ip.canonical
+
+entity.openstack_floating_ip.associate:
+  route_name: entity.openstack_floating_ip.associate_form
+  title: 'Associate Floating IP'
+  appears_on:
+    - entity.openstack_floating_ip.add_form
+    - entity.openstack_floating_ip.edit_form
+    - entity.openstack_floating_ip.canonical
+
+entity.openstack_floating_ip.disassociate:
+  route_name: entity.openstack_floating_ip.disassociate_form
+  title: 'Disassociate Floating IP'
+  appears_on:
+    - entity.openstack_floating_ip.add_form
+    - entity.openstack_floating_ip.edit_form
+    - entity.openstack_floating_ip.canonical

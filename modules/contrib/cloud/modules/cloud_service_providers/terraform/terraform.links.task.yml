@@ -1,0 +1,47 @@
+terraform.settings.local_tasks.profile_list:
+  title: 'Profiles'
+  route_name: 'terraform.settings'
+  base_route: 'terraform.settings'
+  description: 'Terraform Profile List.'
+  weight: 0
+
+terraform.settings.local_tasks.options:
+  title: 'Settings'
+  route_name: 'terraform.settings.options'
+  base_route: 'terraform.settings'
+  description: 'Configure Terraform.'
+  weight: 1
+
+terraform.local_tasks.all_resources:
+  deriver: 'Drupal\terraform\Plugin\Derivative\TerraformAllResourcesLocalTasks'
+  weight: 10
+
+terraform.local_tasks.workspace.view:
+  title: 'Info'
+  route_name: 'entity.terraform_workspace.canonical'
+  base_route: 'entity.terraform_workspace.canonical'
+  weight: 10
+
+terraform.local_tasks.instance.all:
+  title: 'Instances'
+  route_name: 'view.terraform_workspace.all'
+  base_route: 'terraform.local_tasks.all_resources'
+  weight: 10
+
+terraform.local_tasks.workspace.run:
+  title: 'Runs'
+  route_name: 'view.terraform_run.list'
+  base_route: 'entity.terraform_workspace.canonical'
+  weight: 20
+
+terraform.local_tasks.workspace.state:
+  title: 'States'
+  route_name: 'view.terraform_state.list'
+  base_route: 'entity.terraform_workspace.canonical'
+  weight: 30
+
+terraform.local_tasks.workspace.variable:
+  title: 'Variables'
+  route_name: 'view.terraform_variable.list'
+  base_route: 'entity.terraform_workspace.canonical'
+  weight: 40

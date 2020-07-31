@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - k8s
+id: k8s_endpoint_delete_action
+label: 'Delete Endpoint(s)'
+type: k8s_endpoint
+plugin: entity:delete_action:k8s_endpoint
+configuration: {  }

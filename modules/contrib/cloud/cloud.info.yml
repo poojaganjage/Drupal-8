@@ -1,0 +1,24 @@
+name: 'Cloud'
+type: module
+description: 'Allows users to manage Cloud service providers.'
+package: Cloud
+core_version_requirement: ^8.8 || ^9
+configure: cloud.settings
+dependencies:
+  - drupal:field
+  - drupal:file
+  - drupal:filter
+  - drupal:image
+  - drupal:link
+  - drupal:options
+  - drupal:user
+  - drupal:taxonomy
+  - drupal:text
+  - drupal:views
+scripts:
+  - js/cloud.js
+
+# Information added by Drupal.org packaging script on 2020-07-30
+version: '3.x-dev'
+project: 'cloud'
+datestamp: 1596085889

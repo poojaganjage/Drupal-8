@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.vmware
+    - field.storage.cloud_config.field_vcenter_url
+id: cloud_config.vmware.field_vcenter_url
+field_name: field_vcenter_url
+entity_type: cloud_config
+bundle: vmware
+label: 'vCenter URL'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

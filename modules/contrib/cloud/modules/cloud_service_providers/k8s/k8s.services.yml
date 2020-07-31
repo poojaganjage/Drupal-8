@@ -1,0 +1,12 @@
+services:
+  k8s.factory:
+    class: Drupal\k8s\Service\K8sServiceFactory
+    arguments: ['@entity_type.manager', '@config.factory', '@current_user', '@plugin.manager.cloud_config_plugin', '@plugin.manager.field.field_type', '@entity_field.manager', '@lock', '@queue', '@module_handler']
+
+  k8s:
+    factory: ['@k8s.factory', 'create']
+    class: Drupal\k8s\Service\K8sServiceInterface
+
+  k8s.cost_fields_renderer:
+    class: Drupal\k8s\Service\CostFieldsRenderer
+    arguments: ['@module_handler']

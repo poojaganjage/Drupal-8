@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - aws_cloud
+id: aws_cloud_vpc_peering_connection_delete_action
+label: 'Delete VPC Peering Connection(s)'
+type: aws_cloud_vpc_peering_connection
+plugin: entity:delete_action:aws_cloud_vpc_peering_connection
+configuration: {  }

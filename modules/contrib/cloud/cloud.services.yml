@@ -1,0 +1,37 @@
+services:
+  cloud:
+    class: Drupal\cloud\Service\CloudService
+    arguments: ['@entity_type.manager', '@entity.definition_update_manager', '@config.manager', '@config.factory', '@config.typed', '@file_system', '@module_handler', '@request_stack']
+
+  cloud.subscriber:
+    class: Drupal\cloud\EventSubscriber\CloudSubscriber
+    arguments: ['@entity_type.manager', '@current_route_match', '@current_user']
+    tags:
+      - { name: event_subscriber }
+
+  entity.link_renderer:
+    class: Drupal\cloud\Service\EntityLinkRenderer
+    arguments: ['@current_route_match', '@class_resolver', '@entity_type.manager', '@request_stack']
+
+  cloud.ansi_string_renderer:
+    class: Drupal\cloud\Service\AnsiStringRenderer
+    arguments: []
+
+  plugin.manager.cloud_config_plugin:
+    class: Drupal\cloud\Plugin\cloud\config\CloudConfigPluginManager
+    shared: false
+    arguments: ['@container.namespaces', '@module_handler', '@cache.discovery']
+
+  plugin.manager.cloud_server_template_plugin:
+    class: Drupal\cloud\Plugin\cloud\server_template\CloudServerTemplatePluginManager
+    arguments: ['@container.namespaces', '@module_handler', '@cache.discovery']
+
+  plugin.manager.cloud_project_plugin:
+    class: Drupal\cloud\Plugin\cloud\project\CloudProjectPluginManager
+    arguments: ['@container.namespaces', '@module_handler', '@cache.discovery']
+
+  cloud.uninstall_validator:
+    class: Drupal\cloud\Plugin\cloud\server_template\CloudServerTemplatePluginUninstallValidator
+    tags:
+      - { name: module_install.uninstall_validator }
+    arguments: ['@entity_type.manager']

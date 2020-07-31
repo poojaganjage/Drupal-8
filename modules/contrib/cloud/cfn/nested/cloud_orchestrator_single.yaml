@@ -1,0 +1,323 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cloud Orchestrator Master Template - Single Instance
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+      - default: Stack Prefix
+      Parameters:
+      - StackPrefix
+    - Label:
+        default: Amazon EC2 Configuration
+      Parameters:
+      - InstanceType
+      - KeyName
+    - Label:
+        default: Database Configuration
+      Parameters:
+      - MySQLUserName
+      - MySQLPassword
+      - DatabaseName
+    - Label:
+        default: Drupal Configuration
+      Parameters:
+      - DrupalUserName
+      - DrupalPassword
+      - DrupalEmail
+      - CloudOrchestratorVersion
+    ParameterLabels:
+      StackPrefix:
+        default: Stack Prefix
+      DrupalUserName:
+        default: Drupal administrator account
+      DrupalPassword:
+        default: Drupal administrator password
+      DrupalEmail:
+        default: Drupal email account
+      MySQLUserName:
+        default: MySQL administrator username
+      MySQLPassword:
+        default: MySQL administrator password
+      DatabaseName:
+        default: MySQL database name
+      InstanceType:
+        default: EC2 instance type
+      KeyName:
+        default: EC2 key name
+Parameters:
+  StackPrefix:
+    Type: String
+    Description: A prefix to append to resource names/IDs. For example, ${StackPrefix}-IAM-Role,
+      ${StackPrefix}-Drupal-RDS for RDS DB Identifier. Must be between 1 and 20 characters
+      and only contain alphanumeric characters and hyphens.
+    MinLength: '1'
+    MaxLength: '20'
+    AllowedPattern: '[a-zA-Z0-9\\-]*'
+  KeyName:
+    Description: Name of an existing EC2 key pair to SSH access into the EC2 instance.
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+    MinLength: '1'
+  InstanceType:
+    Description: The EC2 instance type.
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+    - t3.medium
+    - t3.large
+    - t3.xlarge
+    - t3.2xlarge
+    - t3a.medium
+    - t3a.large
+    - t3a.xlarge
+    - t3a.2xlarge
+    - m5.large
+    - m5.xlarge
+    - m5.2xlarge
+    - m5.4xlarge
+    - m5.8xlarge
+    - m5.12xlarge
+    - m5.16xlarge
+    - m5.24xlarge
+    - m5a.large
+    - m5a.xlarge
+    - m5a.2xlarge
+    - m5a.4xlarge
+    - m5a.8xlarge
+    - m5a.12xlarge
+    - m5a.16xlarge
+    - m5a.24xlarge
+    - c5.large
+    - c5.xlarge
+    - c5.2xlarge
+    - c5.4xlarge
+    - c5.9xlarge
+    - c5.12xlarge
+    - c5.18xlarge
+    - c5.24xlarge
+    - c5d.large
+    - c5d.xlarge
+    - c5d.2xlarge
+    - c5d.4xlarge
+    - c5d.9xlarge
+    - c5d.12xlarge
+    - c5d.18xlarge
+    - c5d.24xlarge
+    - r5.large
+    - r5.xlarge
+    - r5.2xlarge
+    - r5.4xlarge
+    - r5.8xlarge
+    - r5.12xlarge
+    - r5.16xlarge
+    - r5.24xlarge
+    - r5a.large
+    - r5a.xlarge
+    - r5a.2xlarge
+    - r5a.4xlarge
+    - r5a.8xlarge
+    - r5a.12xlarge
+    - r5a.16xlarge
+    - r5a.24xlarge
+    - d2.xlarge
+    - d2.2xlarge
+    - d2.4xlarge
+    - d2.8xlarge
+    - i3.large
+    - i3.xlarge
+    - i3.2xlarge
+    - i3.4xlarge
+    - i3.8xlarge
+    - i3.16xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+  MySQLUserName:
+    Description: Username for the database. Must be between 5 and 16 characters and
+      only contain alphanumeric characters and underscores.
+    Default: administrator
+    Type: String
+    NoEcho: 'false'
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    ConstraintDescription: Must contain only alphanumeric characters, underscores
+      and must be between 5 and 16 characters long.
+  MySQLPassword:
+    Description: Password for the RDS Username.  Must be between 6 and 32 characters
+      and only contain alphanumeric characters and these special characters '_'`~!#$%^&*()_+,-.
+    Type: String
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: ^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$
+    ConstraintDescription: Your MySQLPassword must be letters (upper or lower), numbers,
+      and these special characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+  DatabaseName:
+    Description: The name of the database. Must be between 4 and 32 characters and
+      only contain alphanumeric characters and underscores.
+    Type: String
+    Default: cloud_orchestrator
+    AllowedPattern: '[a-zA-Z0-9_]*'
+    MinLength: '4'
+    MaxLength: '32'
+    ConstraintDescription: Your database name must be between 4 and 32 characters
+      and contain alphanumeric characters and underscores.
+  DrupalUserName:
+    Default: cloud_admin
+    Description: The Drupal admin account username. Must be between 5 and 16 characters
+      and only contain alphanumeric characters and underscores.
+    Type: String
+    MinLength: '5'
+    MaxLength: '16'
+    AllowedPattern: '[a-zA-Z][a-zA-Z0-9_]*'
+    NoEcho: 'false'
+    ConstraintDescription: Must only contain alphanumeric characters, underscores
+      and must be between 5 and 16 characters long.
+  DrupalPassword:
+    Type: String
+    Description: The Drupal admin account password. Must be between 6 and 32 characters
+      and only contain alphanumeric characters and these special characters '_'`~!#$%^&*()_+,-.
+    NoEcho: 'true'
+    MinLength: '6'
+    MaxLength: '32'
+    AllowedPattern: ^([a-z0-9A-Z`~!#$%^&*()_+,.\\-])*$
+    ConstraintDescription: Your Drupal password must be between 6 and 32 characters
+      and be letters (upper or lower), numbers, and these special characters '_'`~!#$%^&*()_+,-
+      .
+  DrupalEmail:
+    Description: Drupal site administrator email.
+    Type: String
+    AllowedPattern: ^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$
+    ConstraintDescription: Must be a valid email address.
+  CloudOrchestratorVersion:
+    Description: Version of the Cloud Orchestrator to install.
+    Default: 8.2.0
+    Type: String
+    AllowedValues:
+      - 8.2.0
+      - 3.x-dev
+Resources:
+  IamRole:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: iam/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+  Networking:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: networking/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+  PublicSubnetCidr:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: lambda/vpc_attributes/template.yaml
+      Parameters:
+        VPC: !GetAtt Networking.Outputs.VPC
+        Subnet: !GetAtt Networking.Outputs.PublicSubnet1
+  Ec2Security:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: security/ec2/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+        VPC:
+          !GetAtt Networking.Outputs.VPC
+  SubnetSecurity:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: security/subnet/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+        VPC: !GetAtt Networking.Outputs.VPC
+        PublicSubnet: !GetAtt PublicSubnetCidr.Outputs.SubnetCidrBlock
+  Ec2Instance:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ec2/single/template.yaml
+      Parameters:
+        StackPrefix:
+          Ref: StackPrefix
+        IAMInstanceProfile:
+          Fn::GetAtt:
+          - IamRole
+          - Outputs.InstanceProfileName
+        InstanceType:
+          Ref: InstanceType
+        KeyName:
+          Ref: KeyName
+        PublicSubnet1:
+          Fn::GetAtt:
+          - Networking
+          - Outputs.PublicSubnet1
+        EC2SecurityGroup:
+          Fn::GetAtt:
+          - Ec2Security
+          - Outputs.EC2SecurityGroup
+        MySQLUserName:
+          Ref: MySQLUserName
+        MySQLPassword:
+          Ref: MySQLPassword
+        DatabaseName:
+          Ref: DatabaseName
+        DrupalUserName:
+          Ref: DrupalUserName
+        DrupalPassword:
+          Ref: DrupalPassword
+        DrupalEmail:
+          Ref: DrupalEmail
+        CloudOrchestratorVersion:
+          Ref: CloudOrchestratorVersion
+Outputs:
+  Instructions:
+    Value: The CFn template has completed.  Please allow 10-15 minutes for the install
+      script to complete the Cloud Orchestrator installation.  To follow the installation
+      progress, access the instance using SSH and tail the /var/log/cloud-init-output.log
+      file.  Once completed, use the DrupalUserName and DrupalPassword to log into
+      your Cloud Orchestrator instance.
+  SSHAccess:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.SSHAccess
+  DrupalUrl:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.DrupalUrl
+  DrupalUserName:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.DrupalUserName
+  DrupalPassword:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.DrupalPassword
+  DrupalEmail:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.DrupalEmail
+  CloudOrchestratorVersion:
+    Value:
+      Ref: CloudOrchestratorVersion
+  DatabaseName:
+    Value:
+      Ref: DatabaseName
+  MySQLUserName:
+    Value:
+      Ref: MySQLUserName
+  MySQLPassword:
+    Value:
+      Ref: MySQLPassword
+  EC2InstanceName:
+    Value:
+      Fn::GetAtt:
+      - Ec2Instance
+      - Outputs.EC2InstanceName

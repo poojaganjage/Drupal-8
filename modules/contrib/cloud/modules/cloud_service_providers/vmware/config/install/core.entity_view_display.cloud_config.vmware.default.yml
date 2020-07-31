@@ -1,0 +1,111 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - cloud.cloud_config_type.vmware
+    - field.field.cloud_config.vmware.field_vcenter_password
+    - field.field.cloud_config.vmware.field_vcenter_url
+    - field.field.cloud_config.vmware.field_vcenter_username
+    - field.field.cloud_config.vmware.field_location_city
+    - field.field.cloud_config.vmware.field_location_country
+    - field.field.cloud_config.vmware.field_location_latitude
+    - field.field.cloud_config.vmware.field_location_longitude
+    - image.style.icon_32x32
+  enforced:
+    module:
+      - vmware
+  module:
+    - cloud
+    - user
+id: cloud_config.vmware.default
+targetEntityType: cloud_config
+bundle: vmware
+mode: default
+content:
+  field_vcenter_password:
+    weight: 102
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_vcenter_url:
+    weight: 103
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_vcenter_username:
+    weight: 101
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_location_city:
+    weight: 100
+    label: inline
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_location_country:
+    weight: 99
+    label: inline
+    settings: {  }
+    third_party_settings: {  }
+    type: list_default
+    region: content
+  field_location_latitude:
+    weight: 98
+    label: inline
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 6
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_decimal
+    region: content
+  field_location_longitude:
+    weight: 97
+    label: inline
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 6
+      prefix_suffix: true
+    third_party_settings: {  }
+    type: number_decimal
+    region: content
+  image:
+    label: inline
+    type: cloud_image
+    settings:
+      image_style: icon_32x32
+      image_link: ''
+    weight: 0
+    region: content
+    third_party_settings: {  }
+  name:
+    label: above
+    type: string
+    weight: -4
+    region: content
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+  uid:
+    label: hidden
+    type: author
+    weight: 99
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  search_api_excerpt: true

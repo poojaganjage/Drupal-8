@@ -1,0 +1,10 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - openstack
+id: openstack_instance_delete_action
+label: 'Terminate Instance(s)'
+type: openstack_instance
+plugin: entity:delete_action:openstack_instance
+configuration: {  }

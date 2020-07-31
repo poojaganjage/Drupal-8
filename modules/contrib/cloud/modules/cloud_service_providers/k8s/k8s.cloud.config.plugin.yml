@@ -1,0 +1,7 @@
+# Plugin property $defaults are defined in CloudConfigPluginManager.
+k8s.cloud_config:
+  id: k8s
+  entity_type: cloud_config
+  entity_bundle: k8s
+  deriver: 'Drupal\cloud\Plugin\Derivative\CloudConfigCloudContextBundleDeriver'
+  class: '\Drupal\k8s\Plugin\cloud\config\K8sCloudConfigPlugin'
