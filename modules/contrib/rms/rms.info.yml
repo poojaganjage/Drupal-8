@@ -87,6 +87,7 @@ dependencies:
   - rms_search:rms_search
   - rms_settings:rms_settings
   - rms_users:rms_users
+  - rms_evaluation:rms_evaluation
 
 # List any themes that should be installed as part of the profile installation.
 # Note that this will not set any theme as the default theme.
@@ -94,3 +95,8 @@ themes:
   - bartik
   - seven
   - rms_theme
+
+# Information added by drush on 2020-07-22
+version: '8.x-1.x-dev'
+project: 'rms'
+datestamp: 1595395081
