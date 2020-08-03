@@ -1,0 +1,28 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_functional_areas
+    - node.type.jobs
+    - taxonomy.vocabulary.functional_areas
+id: node.jobs.field_functional_areas
+field_name: field_functional_areas
+entity_type: node
+bundle: jobs
+label: 'Functional Areas'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      functional_areas: functional_areas
+    sort:
+      field: name
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

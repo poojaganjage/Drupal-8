@@ -1,0 +1,47 @@
+langcode: en
+status: true
+dependencies: {  }
+id: recruiter
+label: Recruiter
+weight: 3
+is_admin: null
+permissions:
+  - 'access content'
+  - 'access content overview'
+  - 'access taxonomy overview'
+  - 'access toolbar'
+  - 'administer search'
+  - 'administer site configuration'
+  - 'change own username'
+  - 'create jobs content'
+  - 'create terms in designation'
+  - 'create terms in employement_type'
+  - 'create terms in functional_areas'
+  - 'create terms in job_location'
+  - 'create terms in key_skills'
+  - 'create terms in qualification'
+  - 'create terms in role_category'
+  - 'delete any jobs content'
+  - 'delete own jobs content'
+  - 'delete terms in designation'
+  - 'delete terms in employement_type'
+  - 'delete terms in functional_areas'
+  - 'delete terms in job_location'
+  - 'delete terms in key_skills'
+  - 'delete terms in qualification'
+  - 'delete terms in role_category'
+  - 'edit any jobs content'
+  - 'edit own jobs content'
+  - 'edit terms in designation'
+  - 'edit terms in employement_type'
+  - 'edit terms in functional_areas'
+  - 'edit terms in job_location'
+  - 'edit terms in key_skills'
+  - 'edit terms in qualification'
+  - 'edit terms in role_category'
+  - 'search content'
+  - 'use advanced search'
+  - 'use text format basic_html'
+  - 'view own unpublished content'
+  - 'view the administration theme'
+

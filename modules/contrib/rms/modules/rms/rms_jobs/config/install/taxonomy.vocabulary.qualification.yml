@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: Qualification
+vid: qualification
+description: 'Used for Job Qualification'
+weight: 0

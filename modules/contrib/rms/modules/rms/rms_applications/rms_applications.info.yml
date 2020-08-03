@@ -1,0 +1,7 @@
+name: 'Rms Applications'
+type: module
+description: 'Provides the user interface for Applications Management.'
+package: Recruitment management system
+core: 8.x
+dependencies:
+  - rms_jobs:rms_jobs

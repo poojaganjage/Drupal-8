@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_notice_period_tenure
+    - node.type.applications
+  module:
+    - options
+id: node.applications.field_notice_period_tenure
+field_name: field_notice_period_tenure
+entity_type: node
+bundle: applications
+label: 'Notice Period Tenure'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: '6'
+default_value_callback: ''
+settings: {  }
+field_type: list_string

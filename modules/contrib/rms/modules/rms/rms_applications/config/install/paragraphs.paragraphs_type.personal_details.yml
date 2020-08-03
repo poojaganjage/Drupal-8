@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+id: personal_details
+label: 'Personal Details'
+icon_uuid: null
+description: 'Used for the applicant''s personal details.'
+behavior_plugins: {  }

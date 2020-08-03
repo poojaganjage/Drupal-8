@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_date_of_certification
+    - paragraphs.paragraphs_type.certification_details
+  module:
+    - datetime
+id: paragraph.certification_details.field_date_of_certification
+field_name: field_date_of_certification
+entity_type: paragraph
+bundle: certification_details
+label: 'Date of Certification'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

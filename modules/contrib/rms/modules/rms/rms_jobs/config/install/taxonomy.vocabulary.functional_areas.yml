@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Functional Areas'
+vid: functional_areas
+description: 'Used for Job Functional Areas'
+weight: 0

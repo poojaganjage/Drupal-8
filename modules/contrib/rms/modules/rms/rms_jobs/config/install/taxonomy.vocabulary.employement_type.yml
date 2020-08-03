@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Employement type'
+vid: employement_type
+description: 'Used for Employement type'
+weight: 0

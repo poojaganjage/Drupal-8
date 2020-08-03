@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Role Category'
+vid: role_category
+description: 'Used for Job Role'
+weight: 0

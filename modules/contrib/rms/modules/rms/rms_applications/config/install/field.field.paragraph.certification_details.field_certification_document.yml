@@ -1,0 +1,26 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_certification_document
+    - paragraphs.paragraphs_type.certification_details
+  module:
+    - file
+id: paragraph.certification_details.field_certification_document
+field_name: field_certification_document
+entity_type: paragraph
+bundle: certification_details
+label: 'Certification Document'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  file_directory: '[date:custom:Y]-[date:custom:m]'
+  file_extensions: 'txt pdf jpeg png'
+  max_filesize: ''
+  description_field: false
+  handler: 'default:file'
+  handler_settings: {  }
+field_type: file

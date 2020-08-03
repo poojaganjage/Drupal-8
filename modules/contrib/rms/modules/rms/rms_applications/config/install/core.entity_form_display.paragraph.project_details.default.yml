@@ -1,0 +1,61 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.project_details.field_applicant_role
+    - field.field.paragraph.project_details.field_description
+    - field.field.paragraph.project_details.field_details
+    - field.field.paragraph.project_details.field_project_name
+    - field.field.paragraph.project_details.field_strength
+    - paragraphs.paragraphs_type.project_details
+  module:
+    - text
+id: paragraph.project_details.default
+targetEntityType: paragraph
+bundle: project_details
+mode: default
+content:
+  field_applicant_role:
+    weight: 6
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_description:
+    weight: 1
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textarea
+    region: content
+  field_details:
+    weight: 4
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: text_textarea_with_summary
+    region: content
+  field_project_name:
+    weight: 0
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_strength:
+    weight: 5
+    settings:
+      placeholder: ''
+    third_party_settings: {  }
+    type: number
+    region: content
+hidden:
+  created: true
+  status: true

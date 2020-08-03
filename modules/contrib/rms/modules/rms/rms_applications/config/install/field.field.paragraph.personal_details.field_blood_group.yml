@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_blood_group
+    - paragraphs.paragraphs_type.personal_details
+  module:
+    - options
+id: paragraph.personal_details.field_blood_group
+field_name: field_blood_group
+entity_type: paragraph
+bundle: personal_details
+label: 'Blood group'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: '7'
+default_value_callback: ''
+settings: {  }
+field_type: list_string

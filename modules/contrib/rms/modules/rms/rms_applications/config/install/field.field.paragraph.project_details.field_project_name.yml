@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_project_name
+    - paragraphs.paragraphs_type.project_details
+id: paragraph.project_details.field_project_name
+field_name: field_project_name
+entity_type: paragraph
+bundle: project_details
+label: 'Project name'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

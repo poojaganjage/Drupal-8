@@ -1,0 +1,89 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - core.entity_view_mode.node.search_index
+    - field.field.node.jobs.field_application_status
+    - field.field.node.jobs.field_description
+    - field.field.node.jobs.field_designation
+    - field.field.node.jobs.field_employement_type
+    - field.field.node.jobs.field_experience_level
+    - field.field.node.jobs.field_functional_areas
+    - field.field.node.jobs.field_job_id
+    - field.field.node.jobs.field_job_location
+    - field.field.node.jobs.field_key_skills
+    - field.field.node.jobs.field_qualification
+    - field.field.node.jobs.field_role_category
+    - field.field.node.jobs.field_salary
+    - node.type.jobs
+  module:
+    - range
+    - user
+id: node.jobs.search_index
+targetEntityType: node
+bundle: jobs
+mode: search_index
+content:
+  field_designation:
+    weight: 2
+    label: hidden
+    settings:
+      link: false
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_experience_level:
+    weight: 3
+    label: hidden
+    settings:
+      range_separator: '-'
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 1
+      range_combine: true
+      from_prefix_suffix: false
+      to_prefix_suffix: false
+    third_party_settings: {  }
+    type: range_decimal
+    region: content
+  field_job_id:
+    weight: 1
+    label: hidden
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_job_location:
+    weight: 4
+    label: hidden
+    settings:
+      link: false
+    third_party_settings: {  }
+    type: entity_reference_label
+    region: content
+  field_salary:
+    weight: 5
+    label: hidden
+    settings:
+      thousand_separator: ''
+      decimal_separator: .
+      scale: 2
+      prefix_suffix: false
+    third_party_settings: {  }
+    type: number_decimal
+    region: content
+  links:
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  field_application_status: true
+  field_description: true
+  field_employement_type: true
+  field_functional_areas: true
+  field_key_skills: true
+  field_qualification: true
+  field_role_category: true
+  search_api_excerpt: true

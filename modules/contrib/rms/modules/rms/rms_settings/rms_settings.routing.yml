@@ -1,0 +1,14 @@
+rms_settings.admin_config_rms:
+  path: '/admin/config/rms'
+  defaults:
+    _controller: '\Drupal\system\Controller\SystemController::systemAdminMenuBlockPage'
+    _title: 'RMS'
+  requirements:
+    _permission: 'access administration pages'
+rms_settings.admin_config_rms_settings:
+  path: '/admin/config/rms/settings'
+  defaults:
+    _form: '\Drupal\rms_settings\Form\RMSSettingsConfigForm'
+    _title: 'RMS Settings'
+  requirements:
+    _permission: 'administer site configuration'

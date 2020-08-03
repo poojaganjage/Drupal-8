@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_year_of_completion
+    - paragraphs.paragraphs_type.qualification_details
+id: paragraph.qualification_details.field_year_of_completion
+field_name: field_year_of_completion
+entity_type: paragraph
+bundle: qualification_details
+label: 'Year of Completion'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

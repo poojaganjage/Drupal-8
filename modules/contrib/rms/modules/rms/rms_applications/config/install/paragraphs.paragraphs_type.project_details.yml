@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+id: project_details
+label: 'Project Details'
+icon_uuid: null
+description: 'Used for Applicant''s Project Details'
+behavior_plugins: {  }

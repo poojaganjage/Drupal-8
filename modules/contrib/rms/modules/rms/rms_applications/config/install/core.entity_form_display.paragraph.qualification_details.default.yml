@@ -1,0 +1,51 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.qualification_details.field_degree
+    - field.field.paragraph.qualification_details.field_institution
+    - field.field.paragraph.qualification_details.field_percentage_grade
+    - field.field.paragraph.qualification_details.field_year_of_completion
+    - paragraphs.paragraphs_type.qualification_details
+id: paragraph.qualification_details.default
+targetEntityType: paragraph
+bundle: qualification_details
+mode: default
+content:
+  field_degree:
+    weight: 0
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_institution:
+    weight: 4
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_percentage_grade:
+    weight: 3
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_year_of_completion:
+    weight: 2
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+hidden:
+  created: true
+  status: true

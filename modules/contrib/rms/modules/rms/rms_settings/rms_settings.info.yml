@@ -1,0 +1,5 @@
+name: 'RMS Settings'
+type: module
+description: 'Provides a user interface for RMS admin settings.'
+package: Recruitment management system
+core: 8.x

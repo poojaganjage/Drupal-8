@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: Degree
+vid: degree
+description: 'Used for Applicant''s Degree'
+weight: 0

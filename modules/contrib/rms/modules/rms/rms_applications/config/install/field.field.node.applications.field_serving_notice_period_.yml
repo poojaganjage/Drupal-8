@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_serving_notice_period_
+    - node.type.applications
+id: node.applications.field_serving_notice_period_
+field_name: field_serving_notice_period_
+entity_type: node
+bundle: applications
+label: 'Serving Notice period?'
+description: ''
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: 'Yes'
+  off_label: 'No'
+field_type: boolean

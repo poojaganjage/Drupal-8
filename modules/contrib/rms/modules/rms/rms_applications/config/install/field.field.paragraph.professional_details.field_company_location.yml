@@ -1,0 +1,28 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_company_location
+    - paragraphs.paragraphs_type.professional_details
+    - taxonomy.vocabulary.job_location
+id: paragraph.professional_details.field_company_location
+field_name: field_company_location
+entity_type: paragraph
+bundle: professional_details
+label: 'Company location'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:taxonomy_term'
+  handler_settings:
+    target_bundles:
+      job_location: job_location
+    sort:
+      field: name
+      direction: asc
+    auto_create: false
+    auto_create_bundle: ''
+field_type: entity_reference

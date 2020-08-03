@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+id: certification_details
+label: 'Certification Details'
+icon_uuid: null
+description: 'Used for Applicant''s Certification Details'
+behavior_plugins: {  }

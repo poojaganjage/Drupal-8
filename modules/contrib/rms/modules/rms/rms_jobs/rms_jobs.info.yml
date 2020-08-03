@@ -1,0 +1,8 @@
+name: 'Rms Jobs'
+type: module
+description: 'Provides a user interface for Job Management.'
+package: Recruitment management system
+core: 8.x
+dependencies:
+  - range:range
+  - paragraphs:paragraphs

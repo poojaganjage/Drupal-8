@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+id: qualification_details
+label: 'Qualification Details'
+icon_uuid: null
+description: 'Used for Applicant''s Qualification.'
+behavior_plugins: {  }

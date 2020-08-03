@@ -1,0 +1,28 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_total_experience
+    - node.type.applications
+  module:
+    - range
+id: node.applications.field_total_experience
+field_name: field_total_experience
+entity_type: node
+bundle: applications
+label: 'Total Experience'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  from:
+    prefix: ''
+    suffix: ''
+  to:
+    prefix: ''
+    suffix: ''
+field_type: range_decimal

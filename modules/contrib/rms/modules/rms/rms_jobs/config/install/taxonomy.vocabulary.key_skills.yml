@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: 'Key Skills'
+vid: key_skills
+description: 'Used for applicant''s Key Skills'
+weight: 0

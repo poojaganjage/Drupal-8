@@ -1,0 +1,49 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.certification_details.field_certification_document
+    - field.field.paragraph.certification_details.field_certification_name
+    - field.field.paragraph.certification_details.field_certification_provider
+    - field.field.paragraph.certification_details.field_date_of_certification
+    - paragraphs.paragraphs_type.certification_details
+  module:
+    - datetime
+    - file
+id: paragraph.certification_details.default
+targetEntityType: paragraph
+bundle: certification_details
+mode: default
+content:
+  field_certification_document:
+    weight: 3
+    settings:
+      progress_indicator: throbber
+    third_party_settings: {  }
+    type: file_generic
+    region: content
+  field_certification_name:
+    weight: 0
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_certification_provider:
+    weight: 1
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_date_of_certification:
+    weight: 2
+    settings: {  }
+    third_party_settings: {  }
+    type: datetime_default
+    region: content
+hidden:
+  created: true
+  status: true

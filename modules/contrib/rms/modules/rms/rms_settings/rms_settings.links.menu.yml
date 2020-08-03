@@ -1,0 +1,10 @@
+rms_settings.admin_config_rms:
+  title: 'RMS'
+  description: 'RMS admin settings'
+  route_name: rms_settings.admin_config_rms
+  parent: system.admin_config
+rms_settings.admin_config_rms_settings:
+  title: 'Job Id Prefix'
+  description: 'Enter the prefix to be added for Job ID'
+  route_name: rms_settings.admin_config_rms_settings
+  parent: system.admin_config_rms

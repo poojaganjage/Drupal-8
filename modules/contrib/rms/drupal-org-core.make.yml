@@ -1,0 +1,8 @@
+api: '2'
+core: 8.x
+projects:
+  drupal:
+    type: core
+    version: 8.8.4
+
+# Include any Drupal core patches here.

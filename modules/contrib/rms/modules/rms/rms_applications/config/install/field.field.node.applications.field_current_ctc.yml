@@ -1,0 +1,22 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_current_ctc
+    - node.type.applications
+id: node.applications.field_current_ctc
+field_name: field_current_ctc
+entity_type: node
+bundle: applications
+label: 'Current CTC'
+description: ''
+required: true
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: decimal

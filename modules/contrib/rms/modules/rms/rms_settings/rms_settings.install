@@ -1,0 +1,30 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the RMS installation profile.
+ */
+
+use Drupal\menu_link_content\Entity\MenuLinkContent;
+
+/**
+ * Implements hook_install().
+ *
+ * Perform actions to set up the site for this profile.
+ *
+ * @see system_install()
+ */
+function rms_settings_install() {
+  $profile = \Drupal::service('config.factory')->get('core.extension')->get('profile');
+  if ($profile === 'rms') {
+    $menu_link = MenuLinkContent::create([
+      'title' => 'RMS Settings',
+      'link' => ['uri' => 'internal:/admin/config/rms/settings'],
+      'langcode' => \Drupal::languageManager()->getCurrentLanguage()->getId(),
+      'status' => TRUE,
+      'parent' => 'rms_settings.admin_config_rms',
+    ]);
+
+    $menu_link->save();
+  }
+}

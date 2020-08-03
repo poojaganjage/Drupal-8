@@ -1,0 +1,65 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.paragraph.professional_details.field_applicant_designation
+    - field.field.paragraph.professional_details.field_company_location
+    - field.field.paragraph.professional_details.field_company_name
+    - field.field.paragraph.professional_details.field_is_this_your_current_compa
+    - field.field.paragraph.professional_details.field_project_details
+    - paragraphs.paragraphs_type.professional_details
+  module:
+    - paragraphs
+id: paragraph.professional_details.default
+targetEntityType: paragraph
+bundle: professional_details
+mode: default
+content:
+  field_applicant_designation:
+    weight: 2
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_company_location:
+    weight: 1
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    region: content
+  field_company_name:
+    weight: 0
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    region: content
+  field_is_this_your_current_compa:
+    weight: 3
+    settings:
+      display_label: true
+    third_party_settings: {  }
+    type: boolean_checkbox
+    region: content
+  field_project_details:
+    type: entity_reference_paragraphs
+    weight: 4
+    settings:
+      title: Paragraph
+      title_plural: Paragraphs
+      edit_mode: open
+      add_mode: dropdown
+      form_display_mode: default
+      default_paragraph_type: ''
+    third_party_settings: {  }
+    region: content
+hidden:
+  created: true
+  status: true

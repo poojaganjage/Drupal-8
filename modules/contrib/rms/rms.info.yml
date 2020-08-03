@@ -1,0 +1,96 @@
+name: RMS
+type: profile
+description: 'Install Drupal with modules, themes required by Recruitement Management System.'
+core: 8.x
+
+# Optional: Declare your installation profile as a distribution
+# This will make the installer auto-select this installation profile.
+# The distribution_name property is used in the installer and other places as
+# a label for the software being installed.
+#distribution:
+  # name: RMS
+  # If you want your distribution to pre-select a language you can specify
+  # the language code, as well. This will prevent the user from selecting
+  # a language code in the user interface. While not recommended for generic
+  # community distributions, this can be very useful for distributions that
+  # are tailored to a language-specific audience (for example government
+  # institutions in a certain country) but also site-specific installation
+  # profiles. Note that this language code will also be used when installing
+  # the site via Drush.
+  #
+  # To set your theme as the theme for the distribution installation uncomment the following:
+  #
+  # install:
+  #   theme: my_theme
+  #langcode: de
+
+distribution:
+  name: Recruitment Management System
+
+# Modules to install to support the profile.
+install:
+  - automated_cron
+  - admin_toolbar
+  - admin_toolbar_tools
+  - big_pipe
+  - block
+  - block_content
+  - breakpoint
+  - ckeditor
+  - color
+  - comment
+  - config
+  - contact
+  - contextual
+  - datetime
+  - dblog_filter
+  - devel
+  - dynamic_page_cache
+  - editor
+  - facets
+  - field
+  - field_group
+  - field_ui
+  - file
+  - filter
+  - help
+  - history
+  - image
+  - link
+  - menu_ui
+  - node
+  - options
+  - page_cache
+  - path
+  - pathauto
+  - quickedit
+  - rdf
+  - search
+  - search_api
+  - search_api_db
+  - shortcut
+  - system
+  - taxonomy
+  - text
+  - toolbar
+  - update
+  - user
+  - views_ui
+  - menu_link_content
+  - views
+
+# Required modules
+# Note that any dependencies of the modules listed here will be installed automatically.
+dependencies:
+  - rms_applications:rms_applications
+  - rms_jobs:rms_jobs
+  - rms_search:rms_search
+  - rms_settings:rms_settings
+  - rms_users:rms_users
+
+# List any themes that should be installed as part of the profile installation.
+# Note that this will not set any theme as the default theme.
+themes:
+  - bartik
+  - seven
+  - rms_theme

@@ -1,0 +1,17 @@
+name: Rms Theme
+type: theme
+description: 'Theme for RMS.'
+package: RMS
+core: 8.x
+libraries:
+  - rms_theme/global-styling
+base theme: classy
+regions:
+  branding: Branding
+  navigation: Navigation
+  content: Content
+  sidebar: Sidebar
+  footer_first: Footer first
+  footer_second: Footer second
+  footer_third: Footer third
+  footer_bottom: Footer bottom

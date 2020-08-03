@@ -1,0 +1,20 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_date_of_birth
+    - paragraphs.paragraphs_type.personal_details
+  module:
+    - datetime
+id: paragraph.personal_details.field_date_of_birth
+field_name: field_date_of_birth
+entity_type: paragraph
+bundle: personal_details
+label: 'Date of Birth'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: datetime

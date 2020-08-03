@@ -1,0 +1,6 @@
+name: 'Rms Users'
+type: module
+description: 'Provides the user management for RMS.'
+package: Recruitment management system
+core: 8.x
+

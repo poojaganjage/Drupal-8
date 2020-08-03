@@ -1,0 +1,7 @@
+langcode: en
+status: true
+dependencies: {  }
+name: Skills
+vid: skills
+description: 'Used for Applicant''s Skills.'
+weight: 0

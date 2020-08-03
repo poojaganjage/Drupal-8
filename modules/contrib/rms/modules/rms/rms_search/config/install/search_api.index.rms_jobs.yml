@@ -1,0 +1,121 @@
+langcode: en
+status: true
+dependencies:
+  module:
+    - node
+    - taxonomy
+    - search_api
+  config:
+    - field.storage.node.field_designation
+    - field.storage.node.field_employement_type
+    - field.storage.node.field_job_id
+    - field.storage.node.field_job_location
+    - field.storage.node.field_role_category
+    - search_api.server.rms
+id: rms_jobs
+name: 'RMS Jobs'
+description: ''
+read_only: false
+field_settings:
+  created:
+    label: 'Authored on'
+    datasource_id: 'entity:node'
+    property_path: created
+    type: date
+    dependencies:
+      module:
+        - node
+  designation:
+    label: 'Designation » Taxonomy term » Name'
+    datasource_id: 'entity:node'
+    property_path: 'field_designation:entity:name'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_designation
+      module:
+        - taxonomy
+  employment_type:
+    label: 'Employement type » Taxonomy term » Name'
+    datasource_id: 'entity:node'
+    property_path: 'field_employement_type:entity:name'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_employement_type
+      module:
+        - taxonomy
+  field_job_id:
+    label: 'Job ID'
+    datasource_id: 'entity:node'
+    property_path: field_job_id
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_job_id
+  location:
+    label: 'Job Location » Taxonomy term » Name'
+    datasource_id: 'entity:node'
+    property_path: 'field_job_location:entity:name'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_job_location
+      module:
+        - taxonomy
+  role_category:
+    label: 'Role Category » Taxonomy term » Name'
+    datasource_id: 'entity:node'
+    property_path: 'field_role_category:entity:name'
+    type: string
+    dependencies:
+      config:
+        - field.storage.node.field_role_category
+      module:
+        - taxonomy
+  status:
+    label: Published
+    datasource_id: 'entity:node'
+    property_path: status
+    type: boolean
+    dependencies:
+      module:
+        - node
+  title:
+    label: Title
+    datasource_id: 'entity:node'
+    property_path: title
+    type: string
+    dependencies:
+      module:
+        - node
+  type:
+    label: 'Content type'
+    datasource_id: 'entity:node'
+    property_path: type
+    type: string
+    dependencies:
+      module:
+        - node
+datasource_settings:
+  'entity:node':
+    bundles:
+      default: false
+      selected:
+        - jobs
+    languages:
+      default: true
+      selected: {  }
+processor_settings:
+  add_url: {  }
+  aggregated_field: {  }
+  entity_status: {  }
+  language_with_fallback: {  }
+  rendered_item: {  }
+tracker_settings:
+  default:
+    indexing_order: fifo
+options:
+  index_directly: true
+  cron_limit: 50
+server: rms

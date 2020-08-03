@@ -1,0 +1,27 @@
+{
+  "name": "RMS",
+  "version": "1.0.0",
+  "description": "RMS theme for Drupal 8",
+  "main": "Gulpfile.js",
+  "repository": {
+    "private": true
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.12.1",
+    "bootstrap": "^4.4.1",
+    "gulp": "4",
+    "gulp-sass": "^4.0.2",
+    "jquery": "^3.5.0",
+    "popper.js": "^1.16.1"
+  },
+  "devDependencies": {
+    "gulp-autoprefixer": "^7.0.1",
+    "gulp-uglify": "^3.0.2",
+    "gulp-sourcemaps": "^2.6.5"
+  }
+}

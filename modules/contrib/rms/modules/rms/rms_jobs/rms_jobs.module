@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Rms Jobs Module file.
+ */
+
+use Drupal\node\Entity\Node;
+
+/**
+ * Implements hook_ENTITY_TYPE_insert().
+ */
+function rms_jobs_node_insert(Node $node) {
+  if ($node->gettype() == 'jobs') {
+    $job_id_prefix = \Drupal::config('rms_jobs.settings')->get('job_id_prefix');
+    $job_nid = $job_id = $node->id();
+    if (!empty($job_id_prefix)) {
+      $job_id = $job_id_prefix . $job_nid;
+    }
+    $node->field_job_id->value = $job_id;
+  }
+  $node->save();
+}

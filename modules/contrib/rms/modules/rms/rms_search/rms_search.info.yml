@@ -1,0 +1,7 @@
+name: 'Rms Search'
+type: module
+description: 'Provides the Search for RMS.'
+package: Recruitment management system
+core: 8.x
+dependencies:
+  - search_api_db

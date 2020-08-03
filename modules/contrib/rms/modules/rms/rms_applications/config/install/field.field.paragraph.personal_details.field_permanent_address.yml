@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_permanent_address
+    - paragraphs.paragraphs_type.personal_details
+id: paragraph.personal_details.field_permanent_address
+field_name: field_permanent_address
+entity_type: paragraph
+bundle: personal_details
+label: 'Permanent Address'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string_long

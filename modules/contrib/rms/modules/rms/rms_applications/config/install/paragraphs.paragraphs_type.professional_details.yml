@@ -1,0 +1,8 @@
+langcode: en
+status: true
+dependencies: {  }
+id: professional_details
+label: 'Professional Details'
+icon_uuid: null
+description: 'Used for Applicant''s Professional Details.'
+behavior_plugins: {  }

@@ -1,0 +1,42 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.paragraph.field_project_details
+    - paragraphs.paragraphs_type.professional_details
+    - paragraphs.paragraphs_type.project_details
+  module:
+    - entity_reference_revisions
+id: paragraph.professional_details.field_project_details
+field_name: field_project_details
+entity_type: paragraph
+bundle: professional_details
+label: 'Project Details'
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  handler: 'default:paragraph'
+  handler_settings:
+    negate: 0
+    target_bundles:
+      project_details: project_details
+    target_bundles_drag_drop:
+      certification_details:
+        weight: 6
+        enabled: false
+      personal_details:
+        weight: 7
+        enabled: false
+      professional_details:
+        weight: 8
+        enabled: false
+      project_details:
+        enabled: true
+        weight: 9
+      qualification_details:
+        weight: 10
+        enabled: false
+field_type: entity_reference_revisions
