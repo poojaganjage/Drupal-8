@@ -1,0 +1,86 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.evaluation.field_contents_evaluation_round
+    - field.field.node.evaluation.field_contents_title
+    - field.field.node.evaluation.field_contents_application
+    - field.field.node.evaluation.field_contents_job
+    - field.field.node.evaluation.field_contents_interview
+    - field.field.node.evaluation.field_contents_interviewer
+    - node.type.evaluation
+  module:
+    - datetime
+    - user
+
+id: node.evaluation.default
+targetEntityType: node
+bundle: evaluation
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_contents_evaluation_round:
+    weight: 100
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    hidden: {  }
+    region: content
+  field_contents_title:
+    weight: 101
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    region: content
+  field_contents_application:
+    weight: 102
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    hidden: {  }
+    region: content
+  field_contents_job:
+    weight: 103
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    hidden: {  }
+    region: content
+  field_contents_interview:
+    weight: 104
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    hidden: {  }
+    region: content
+  field_contents_interviewer:
+    weight: 105
+    label: above
+    settings:
+      link_to_entity: false
+    third_party_settings: {  }
+    type: string
+    hidden: {  }
+    region: content
+  links:
+    weight: 0
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+hidden:
+  search_api_excerpt: true

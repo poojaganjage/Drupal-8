@@ -1,0 +1,106 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.evaluation.field_contents_evaluation_round
+    - field.field.node.evaluation.field_contents_title
+    - field.field.node.evaluation.field_contents_application
+    - field.field.node.evaluation.field_contents_job
+    - field.field.node.evaluation.field_contents_interview
+    - field.field.node.evaluation.field_contents_interviewer
+    - node.type.evaluation
+  module:
+    - datetime
+
+id: node.evaluation.default
+targetEntityType: node
+bundle: evaluation
+mode: default
+content:
+  created:
+    type: datetime_timestamp
+    weight: 10
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_contents_evaluation_round:
+    weight: 5
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    hidden: {  }
+    region: content
+  field_contents_title:
+    weight: 6
+    settings:
+      match_operator: CONTAINS
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+    type: string_textfield
+    hidden: {  }
+    region: content
+  field_contents_application:
+    weight: 7
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    hidden: {  }
+    region: content
+  field_contents_job:
+    weight: 8
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    hidden: {  }
+    region: content
+  field_contents_interview:
+    weight: 9
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: datetime
+    hidden: {  }
+    region: content
+  field_contents_interviewer:
+    weight: 10
+    settings:
+      rows: 9
+      summary_rows: 3
+      placeholder: ''
+    third_party_settings: {  }
+    type: entity_reference_autocomplete
+    hidden: {  }
+    region: content
+  status:
+    type: boolean_checkbox
+    settings:
+      display_label: true
+    weight: 6
+    region: content
+    third_party_settings: {  }
+  title:
+    type: string_textfield
+    weight: 0
+    region: content
+    settings:
+      size: 60
+      placeholder: ''
+    third_party_settings: {  }
+hidden:
+  created: true
+  path: true
+  promote: true
+  sticky: true
+  uid: true
