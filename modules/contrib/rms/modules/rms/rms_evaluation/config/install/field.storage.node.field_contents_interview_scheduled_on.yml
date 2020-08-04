@@ -1,0 +1,18 @@
+langcode: en
+status: true
+dependencies:
+ module:
+   - node
+   - user
+id: node.field_contents_interview_scheduled_on
+field_name: field_content1_interview_scheduled_on
+entity_type: node
+type: datetime_default
+settings: {  }
+module: user
+locked: false
+cardinality: 1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

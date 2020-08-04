@@ -1,0 +1,8 @@
+name: 'Rms Evaluation'
+type: module
+description: 'Provides a user interface for Evaluation.'
+package: Recruitment management system
+core: 8.x
+dependencies:
+  - drupal:taxonomy
+  - drupal:user

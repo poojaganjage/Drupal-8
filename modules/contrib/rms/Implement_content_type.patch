@@ -1,0 +1,630 @@
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_form_display.node.evaluation.default.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_form_display.node.evaluation.default.yaml
+index e69de29..2f3d76d 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_form_display.node.evaluation.default.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_form_display.node.evaluation.default.yaml
+@@ -0,0 +1,86 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.field.node.evaluation.field_contents_title
++    - field.field.node.evaluation.field_contents_application
++    - field.field.node.evaluation.field_contents_job
++    - field.field.node.evaluation.field_contents_interview_scheduled_on
++    - field.field.node.evaluation.field_contents_interviewer
++    - field.field.node.evaluation.field_contents_evaluation_round
++    - node.type.evaluation
++  module:
++    - datetime
++
++id: node.evaluation.default
++targetEntityType: node
++bundle: evaluation
++mode: default
++content:
++  created:
++    type: datetime_timestamp
++    weight: 10
++    region: content
++    settings: {  }
++    third_party_settings: {  }
++  field_contents_title:
++    weight: 5
++    settings:
++      rows: 9
++      summary_rows: 3
++      placeholder: ''
++    third_party_settings: {  }
++    type: string_textfield
++    hidden: {  }
++    region: content
++  field_contents_application:
++    weight: 6
++    settings:
++      rows: 9
++      summary_rows: 3
++      placeholder: ''
++    third_party_settings: {  }
++    type: entity_reference_autocomplete
++    hidden: {  }
++    region: content
++  field_contents_job:
++    weight: 7
++    settings:
++      rows: 9
++      summary_rows: 3
++      placeholder: ''
++    third_party_settings: {  }
++    type: entity_reference_autocomplete
++    hidden: {  }
++    region: content
++  field_contents_interview_scheduled_on:
++    weight: 8
++    settings:
++      rows: 9
++      summary_rows: 3
++      placeholder: ''
++    third_party_settings: {  }
++    type: datetime_default
++    hidden: {  }
++    region: content
++  field_contents_interviewer:
++    weight: 9
++    settings:
++      rows: 9
++      summary_rows: 3
++      placeholder: ''
++    third_party_settings: {  }
++    type: entity_reference_autocomplete
++    hidden: {  }
++    region: content
++  field_contents_evaluation_round:
++    weight: 10
++    settings:
++      match_operator: CONTAINS
++      size: 60
++      placeholder: ''
++    third_party_settings: {  }
++    type: string_textfield
++    hidden: {  }
++    region: content
++hidden: {  }
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.default.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.default.yaml
+index e69de29..af8f796 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.default.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.default.yaml
+@@ -0,0 +1,82 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.field.node.evaluation.field_contents_title
++    - field.field.node.evaluation.field_contents_application
++    - field.field.node.evaluation.field_contents_job
++    - field.field.node.evaluation.field_contents_interview_scheduled_on
++    - field.field.node.evaluation.field_contents_interviewer
++    - field.field.node.evaluation.field_contents_evaluation_round
++    - node.type.evaluation
++  module:
++    - datetime
++    - user
++
++id: node.evaluation.default
++targetEntityType: node
++bundle: evaluation
++mode: default
++content:
++  created:
++    type: datetime_timestamp
++    weight: 10
++    region: content
++    settings: {  }
++    third_party_settings: {  }
++  field_contents_title:
++    weight: 100
++    label: above
++    settings:
++      link_to_entity: false
++    third_party_settings: {  }
++    type: string
++    region: content
++  field_contents_application:
++    weight: 101
++    label: above
++    settings:
++      link_to_entity: false
++    third_party_settings: {  }
++    type: string
++    hidden: {  }
++    region: content
++  field_contents_job:
++    weight: 102
++    label: above
++    settings:
++      link_to_entity: false
++    third_party_settings: {  }
++    type: string
++    hidden: {  }
++    region: content
++  field_contents_interview_scheduled_on:
++    weight: 103
++    label: above
++    settings:
++      link_to_entity: false
++    third_party_settings: {  }
++    type: string
++    hidden: {  }
++    region: content
++  field_contents_interviewer:
++    weight: 104
++    label: above
++    settings:
++      link_to_entity: false
++    third_party_settings: {  }
++    type: string
++    hidden: {  }
++    region: content
++  field_contents_evaluation_round:
++    weight: 105
++    label: above
++    settings:
++      match_operator: CONTAINS
++      size: 60
++      placeholder: ''
++    third_party_settings: {  }
++    type: string
++    hidden: {  }
++    region: content
++hidden: {  }
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.teaser.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.teaser.yaml
+index e69de29..777bca2 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.teaser.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/core.entity_view_display.node.evaluation.teaser.yaml
+@@ -0,0 +1,61 @@
++langcode: en
++status: true
++dependencies:
++    config:
++        - core.entity_view_mode.node.teaser
++        - field.field.node.evaluation.field_contents_title
++        - field.field.node.evaluation.field_contents_application
++        - field.field.node.evaluation.field_contents_job
++        - field.field.node.evaluation.field_contents_interview_scheduled_on
++        - field.field.node.evaluation.field_contents_interviewer
++        - field.field.node.evaluation.field_contents_evaluation_round
++        - node.type.evaluation
++    module:
++        - user
++id: node.evaluation.teaser
++targetEntityType: node
++bundle: evaluation
++mode: teaser
++content:
++    field_contents_title:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 101
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
++    field_contents_application:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 102
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
++    field_contents_job:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 103
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
++    field_contents_interview_scheduled_on:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 104
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
++    field_contents_interviewer:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 105
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
++    field_contents_evaluation_round:
++        label: hidden
++        type: text_summary_or_trimmed
++        weight: 106
++        settings:
++            trim_length: 600
++        third_party_settings: {  }
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_application.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_application.yaml
+index e69de29..dcc8275 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_application.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_application.yaml
+@@ -0,0 +1,21 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_contents_application
++    - node.type.evaluation
++  module:
++    - user
++id: node.evaluation.field_contents_application
++field_name: field_contents_application
++entity_type: node
++bundle: evaluation
++label: 'Application'
++description: 'RMS Application'
++required: false
++translatable: false
++default_value: {  }
++default_value_callback: ''
++settings:
++  display_summary: false
++field_type: entity_reference
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_evaluation_round.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_evaluation_round.yaml
+index e69de29..e638efe 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_evaluation_round.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_evaluation_round.yaml
+@@ -0,0 +1,27 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_evaluation_round
++    - node.type.evaluation
++    - taxonomy.vocabulary.evaluation_round
++id: node.evaluation.field_evaluation_round
++field_name: field_evaluation_round
++entity_type: node
++bundle: evaluation
++label: 'Evaluation Round'
++description: ''
++required: false
++translatable: false
++default_value_callback: ''
++settings:
++   handler: 'default:taxonomy_term'
++handler_settings:
++    target_bundles:
++      evaluation_round: evaluation_round
++    sort:
++      field: name
++      direction: asc
++    auto_create: true
++    auto_create_bundle: ''
++field_type: entity_reference
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interview_scheduled_on.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interview_scheduled_on.yaml
+index e69de29..28ce3b0 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interview_scheduled_on.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interview_scheduled_on.yaml
+@@ -0,0 +1,21 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_contents_interview_scheduled_on
++    - node.type.evaluation
++  module:
++    - user
++id: node.evaluation.field_contents_interview_scheduled_on
++field_name: field_contents_interview_scheduled_on
++entity_type: node
++bundle: evaluation
++label: 'Interview Scheduled On'
++description: 'RMS Interview Scheduled On'
++required: false
++translatable: false
++default_value: {  }
++default_value_callback: ''
++settings:
++  display_summary: false
++field_type: datetime_default
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interviewer.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interviewer.yaml
+index e69de29..fa3a71c 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interviewer.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_interviewer.yaml
+@@ -0,0 +1,21 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_contents_interviewer
++    - node.type.evaluation
++  module:
++    - user
++id: node.evaluation.field_contents_interviewer
++field_name: field_contents_interviewer
++entity_type: node
++bundle: evaluation
++label: 'Interviewer'
++description: 'RMS Interviewer'
++required: false
++translatable: false
++default_value: {  }
++default_value_callback: ''
++settings:
++  display_summary: false
++field_type: entity_reference
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_job.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_job.yaml
+index e69de29..b35f3a2 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_job.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_job.yaml
+@@ -0,0 +1,21 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_contents_job
++    - node.type.evaluation
++  module:
++    - user
++id: node.evaluation.field_contents_job
++field_name: field_contents_job
++entity_type: node
++bundle: evaluation
++label: 'Job'
++description: 'RMS Job'
++required: false
++translatable: false
++default_value: {  }
++default_value_callback: ''
++settings:
++  display_summary: false
++field_type: entity_reference
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_title.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_title.yaml
+index e69de29..2002c29 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_title.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.field.node.evaluation.field_contents_title.yaml
+@@ -0,0 +1,21 @@
++langcode: en
++status: true
++dependencies:
++  config:
++    - field.storage.node.field_contents_title
++    - node.type.evaluation
++  module:
++    - user
++id: node.evaluation.field_contents_title
++field_name: field_contents_title
++entity_type: node
++bundle: evaluation
++label: 'Title'
++description: 'RMS Title'
++required: false
++translatable: false
++default_value: {  }
++default_value_callback: ''
++settings:
++    display_summary: false
++field_type: string
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_application.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_application.yml
+index e69de29..97044c4 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_application.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_application.yml
+@@ -0,0 +1,18 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - user
++id: node.field_contents_application
++field_name: field_contents_application
++entity_type: node
++type: entity_reference
++settings: {  }
++module: user
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_evaluation_round.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_evaluation_round.yml
+index e69de29..d330b56 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_evaluation_round.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_evaluation_round.yml
+@@ -0,0 +1,19 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - taxonomy
++id: node.field_evaluation_round
++field_name: field_evaluation_round
++entity_type: node
++type: entity_reference
++settings:
++   target_type: taxonomy_term
++module: core
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interview_scheduled_on.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interview_scheduled_on.yml
+index e69de29..d0944ee 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interview_scheduled_on.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interview_scheduled_on.yml
+@@ -0,0 +1,18 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - user
++id: node.field_contents_interview_scheduled_on
++field_name: field_content1_interview_scheduled_on
++entity_type: node
++type: datetime_default
++settings: {  }
++module: user
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interviewer.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interviewer.yml
+index e69de29..9e76d46 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interviewer.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_interviewer.yml
+@@ -0,0 +1,18 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - user
++id: node.field_contents_interviewer
++field_name: field_contents_interviewer
++entity_type: node
++type: entity_reference
++settings: {  }
++module: user
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_job.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_job.yml
+index e69de29..c16d744 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_job.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_job.yml
+@@ -0,0 +1,18 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - user
++id: node.field_contents_job
++field_name: field_contents_job
++entity_type: node
++type: entity_reference
++settings: {  }
++module: user
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_title.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_title.yml
+index e69de29..709227a 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_title.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/field.storage.node.field_contents_title.yml
+@@ -0,0 +1,18 @@
++langcode: en
++status: true
++dependencies:
++ module:
++   - node
++   - user
++id: node.field_contents_title
++field_name: field_contents_title
++entity_type: node
++type: string
++settings: {  }
++module: user
++locked: false
++cardinality: 1
++translatable: true
++indexes: {  }
++persist_with_no_fields: false
++custom_storage: false
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/node.type.evaluation.yml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/node.type.evaluation.yml
+index e69de29..e3db04a 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/node.type.evaluation.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/node.type.evaluation.yml
+@@ -0,0 +1,13 @@
++langcode: en
++status: true
++dependencies:
++  enforced:
++    module:
++      - menu_ui
++name: 'Evaluation'
++type: evaluation
++description: 'Content type for Evaluation RMS'
++help: ''
++new_revision: false
++preview_mode: 1
++display_submitted: true
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/taxonomy.vocabulary.evaluation_round.yaml b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/taxonomy.vocabulary.evaluation_round.yaml
+index e69de29..e2923ec 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/config/install/taxonomy.vocabulary.evaluation_round.yaml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/config/install/taxonomy.vocabulary.evaluation_round.yaml
+@@ -0,0 +1,11 @@
++langcode: en
++status: true
++dependencies:
++ enforced:
++   module:
++     - custom_taxonomy
++name: Evaluation Round
++vid: evaluation_round
++description: 'Evaluation Round for RMS'
++hierarchy: 0
++weight: 0
+\ No newline at end of file
+diff --git a/modules/contrib/rms/modules/rms/rms_evaluation/rms_evaluation.info.yml b/modules/contrib/rms/modules/rms/rms_evaluation/rms_evaluation.info.yml
+index e69de29..9af3974 100644
+--- a/modules/contrib/rms/modules/rms/rms_evaluation/rms_evaluation.info.yml
++++ b/modules/contrib/rms/modules/rms/rms_evaluation/rms_evaluation.info.yml
+@@ -0,0 +1,8 @@
++name: 'Rms Evaluation'
++type: module
++description: 'Provides a user interface for Evaluation.'
++package: Recruitment management system
++core: 8.x
++dependencies:
++  - drupal:taxonomy
++  - drupal:user
+\ No newline at end of file
+diff --git a/modules/contrib/rms/rms.info.yml b/modules/contrib/rms/rms.info.yml
+index 555c4bc..60ef5dd 100644
+--- a/modules/contrib/rms/rms.info.yml
++++ b/modules/contrib/rms/rms.info.yml
+@@ -87,7 +87,7 @@ dependencies:
+   - rms_search:rms_search
+   - rms_settings:rms_settings
+   - rms_users:rms_users
+-
++  - rms_evaluation:rms_evaluation
+ 
+ # List any themes that should be installed as part of the profile installation.
+ # Note that this will not set any theme as the default theme.
+@@ -96,3 +96,7 @@ themes:
+   - seven
+   - rms_theme
+ 
++# Information added by drush on 2020-07-22
++version: '8.x-1.x-dev'
++project: 'rms'
++datestamp: 1595395081
