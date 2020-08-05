@@ -1,0 +1,65 @@
+langcode: en
+status: true
+dependencies:
+    config:
+        - core.entity_view_mode.node.teaser
+        - field.field.node.evaluation.field_contents_title
+        - field.field.node.evaluation.field_contents_application
+        - field.field.node.evaluation.field_contents_job
+        - field.field.node.evaluation.field_contents_interview
+        - field.field.node.evaluation.field_contents_interviewer
+        - node.type.evaluation
+    module:
+        - user
+id: node.evaluation.teaser
+targetEntityType: node
+bundle: evaluation
+mode: teaser
+content:
+    field_contents_title:
+        label: hidden
+        type: text_summary_or_trimmed
+        weight: 101
+        settings:
+            trim_length: 600
+        third_party_settings: {  }
+    field_contents_application:
+        label: hidden
+        type: string
+        weight: 102
+        settings:
+            trim_length: 600
+        third_party_settings: {  }
+    field_contents_job:
+        label: hidden
+        type: string
+        weight: 103
+        settings:
+            trim_length: 600
+        third_party_settings: {  }
+    field_contents_interview:
+        label: hidden
+        type: string
+        weight: 104
+        settings:
+            trim_length: 600
+        third_party_settings: {  }
+    field_contents_interviewer:
+        label: hidden
+        type: string
+        weight: 105
+        settings:
+            trim_length: 600
+        third_party_settings: {  }
+    links:
+    weight: 100
+    settings: {  }
+    third_party_settings: {  }
+    region: content
+hidden:
+  field_contents_title: true
+  field_contents_application: true
+  field_contents_job: true
+  field_contents_interview: true
+  field_contents_interviewer: true
+  search_api_excerpt: true
