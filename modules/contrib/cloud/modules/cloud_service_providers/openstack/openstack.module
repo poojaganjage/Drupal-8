@@ -516,7 +516,7 @@ function openstack_image_allowed_values_function(FieldStorageConfig $definition,
       }
     }
     catch (\Exception $e) {
-      \Drupal::logger('openstack')->debug('No cloud context specified.');
+      \Drupal::logger('openstack')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -557,7 +557,7 @@ function openstack_availability_zone_allowed_values_function(FieldStorageConfig 
       $availability_zones = $ec2Service->getAvailabilityZones();
     }
     catch (\Exception $e) {
-      \Drupal::logger('openstack')->debug('No cloud context specified.');
+      \Drupal::logger('openstack')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -619,7 +619,7 @@ function openstack_vpc_allowed_values_function(FieldStorageConfig $definition, C
       }
     }
     catch (\Exception $e) {
-      \Drupal::logger('openstack')->debug('No cloud context specified.');
+      \Drupal::logger('openstack')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -795,7 +795,7 @@ function openstack_get_subnet_options_by_vpc_id($vpc_id, EntityInterface $entity
     }
   }
   catch (\Exception $e) {
-    \Drupal::logger('openstack')->debug('No cloud context specified.');
+    \Drupal::logger('openstack')->debug(t('No cloud context specified.'));
   }
 
   return $options;

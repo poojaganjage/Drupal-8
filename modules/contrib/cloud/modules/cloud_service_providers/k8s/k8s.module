@@ -2046,10 +2046,10 @@ function k8s_cloud_project_delete(EntityInterface $entity) {
       '@output' => Markup::Create($output),
     ]));
 
-    \Drupal::logger('k8s')->notice('@type: deleted %label.', [
+    \Drupal::logger('k8s')->notice(t('@type: deleted %label.', [
       '@type' => $entity->getEntityType()->getSingularLabel(),
       '%label' => $entity->label(),
-    ]);
+    ]));
 
   }
   catch (EntityStorageException $e) {

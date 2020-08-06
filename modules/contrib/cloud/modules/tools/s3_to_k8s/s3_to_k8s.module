@@ -36,19 +36,19 @@ function s3_to_k8s_cron() {
 
   $aws_cloud_context = $config->get('aws_cloud');
   if (empty($aws_cloud_context)) {
-    $logger->error('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.');
+    $logger->error(t('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.'));
     return;
   }
 
   $s3_bucket = $config->get('s3_bucket');
   if (empty($s3_bucket)) {
-    $logger->error('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.');
+    $logger->error(t('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.'));
     return;
   }
 
   $s3_path = $config->get('s3_path');
   if (empty($s3_path)) {
-    $logger->error('The configuration s3_path is empty. Please input a S3 Path in admin setting page.');
+    $logger->error(t('The configuration s3_path is empty. Please input a S3 Path in admin setting page.'));
     return;
   }
 
@@ -56,7 +56,7 @@ function s3_to_k8s_cron() {
     ? s3_to_k8s_select_minimum_resource_cluster()
     : $config->get('k8s_cluster');
   if (empty($k8s_cloud_context)) {
-    $logger->error('The configuration k8s_cluster is empty. Please select K8s Cluster in admin setting page.');
+    $logger->error(t('The configuration k8s_cluster is empty. Please select K8s Cluster in admin setting page.'));
     return;
   }
 

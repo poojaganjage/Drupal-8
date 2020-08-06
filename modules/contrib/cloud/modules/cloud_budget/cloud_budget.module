@@ -63,10 +63,10 @@ function cloud_budget_update_credits() {
     $cloud_credit->setRefreshed($now);
     $cloud_credit->save();
 
-    \Drupal::logger('cloud_budget')->notice('@type: updated %label.', [
+    \Drupal::logger('cloud_budget')->notice(t('@type: updated %label.', [
       '@type' => $cloud_credit->bundle(),
       '%label' => $cloud_credit->label(),
       'link' => $cloud_credit->toLink(t('View'))->toString(),
-    ]);
+    ]));
   }
 }

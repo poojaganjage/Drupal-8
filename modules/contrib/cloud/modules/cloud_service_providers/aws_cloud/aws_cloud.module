@@ -137,7 +137,7 @@ function aws_cloud_instance_type_allowed_values_function(FieldStorageConfig $def
     }
   }
   catch (\Exception $e) {
-    \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+    \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
   }
 
   return $instance_types;
@@ -188,7 +188,7 @@ function aws_cloud_image_allowed_values_function(FieldStorageConfig $definition,
       }
     }
     catch (\Exception $e) {
-      \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+      \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -229,7 +229,7 @@ function aws_cloud_availability_zone_allowed_values_function(FieldStorageConfig 
       $availability_zones = $ec2Service->getAvailabilityZones();
     }
     catch (\Exception $e) {
-      \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+      \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -293,7 +293,7 @@ function aws_cloud_vpc_allowed_values_function(FieldStorageConfig $definition, C
       }
     }
     catch (\Exception $e) {
-      \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+      \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -433,7 +433,7 @@ function aws_cloud_iam_role_allowed_values_function(FieldStorageConfig $definiti
       $allowed_values = aws_cloud_get_iam_roles($cloud_context);
     }
     catch (\Exception $e) {
-      \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+      \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
     }
   }
 
@@ -2706,7 +2706,7 @@ function aws_cloud_get_subnet_options_by_vpc_id($vpc_id, EntityInterface $entity
     }
   }
   catch (\Exception $e) {
-    \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+    \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
   }
 
   return $options;
@@ -3471,7 +3471,7 @@ function aws_cloud_get_instance_types($cloud_context) {
     }
   }
   catch (\Exception $e) {
-    \Drupal::logger('aws_cloud')->debug('No cloud context specified.');
+    \Drupal::logger('aws_cloud')->debug(t('No cloud context specified.'));
   }
   return $instance_types;
 }

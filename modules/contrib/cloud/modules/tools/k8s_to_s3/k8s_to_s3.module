@@ -71,19 +71,19 @@ function k8s_to_s3_validate_config() {
     ? []
     : json_decode($config->get('k8s_clusters'), TRUE);
   if (empty($k8s_clusters)) {
-    $logger->error('The configuration k8s_clusters is empty. Please select K8s Clusters in admin setting page.');
+    $logger->error(t('The configuration k8s_clusters is empty. Please select K8s Clusters in admin setting page.'));
     return FALSE;
   }
 
   $aws_cloud_context = $config->get('aws_cloud');
   if (empty($aws_cloud_context)) {
-    $logger->error('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.');
+    $logger->error(t('The configuration aws_cloud is empty. Please select an AWS Cloud Provider in admin setting page.'));
     return FALSE;
   }
 
   $s3_bucket = $config->get('s3_bucket');
   if (empty($s3_bucket)) {
-    $logger->error('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.');
+    $logger->error(t('The configuration s3_bucket is empty. Please input a S3 Bucket in admin setting page.'));
     return FALSE;
   }
   return TRUE;
