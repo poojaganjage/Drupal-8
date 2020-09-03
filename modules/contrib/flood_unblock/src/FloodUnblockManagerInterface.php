@@ -1,4 +1,3 @@
-
 <?php
 
 namespace Drupal\flood_unblock;
