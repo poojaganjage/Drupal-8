@@ -24,7 +24,7 @@ class RedirectForm extends ContentEntityForm {
    * @var Drupal\Core\Entity\EntityTypeManagerInterface
    */
     
-    protected $entityTypeManager;
+  protected $entityTypeManager;
 
   /**
    * The language manager service.
@@ -32,9 +32,9 @@ class RedirectForm extends ContentEntityForm {
    * @var \Drupal\Core\Language\LanguageManagerInterface
    */
    
-   protected $languageManager;
+  protected $languageManager;
 
-   /**
+  /**
    * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
