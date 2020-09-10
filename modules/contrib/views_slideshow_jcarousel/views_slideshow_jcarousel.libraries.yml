@@ -11,7 +11,6 @@ jcarousel.js:
     - core/jquery
 
 views_slideshow_jcarousel:
-
   js:
     js/views_slideshow_jcarousel.js: {}
   dependencies:
