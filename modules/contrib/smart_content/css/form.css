@@ -1,0 +1,215 @@
+/**
+ * @file
+ * Smart Content - Forms
+ *
+ * Styling and layouts for general Smart Content themes.
+ * Coding standards based on https://www.drupal.org/docs/develop/standards/css
+ *
+ * Note that most CSS selectors will require an Off Canvas and a non-Off Canvas variant due to the need to override the
+ * ID selector-based styles coming from Drupal Core (see core/themes/stable/css/core/dialog). It is not certain why a
+ * core theme is using such high specificity selectors, but it is unfortunately an unavoidable issue that we will have
+ * to deal with when theming Smart Content for Layout Builder. Non-Off canvas selectors are needed for when users are
+ * using a contributed solution that takes the block creation process out of the Off Canvas sidebar (i.e. a modal
+ * window).
+ */
+
+/* Input Customizations */
+#drupal-off-canvas .decision-settings-wrapper input[type="submit"].button.remove-button,
+.decision-settings-wrapper input[type="submit"].button.remove-button {
+  width: 100%;
+  height: 100%;
+  min-width: 24px;
+  min-height: 24px;
+  margin: 0.75rem 0 0 0;
+  padding: 0;
+  font-size: 0;
+  box-shadow: none;
+  border: none;
+  transition: opacity ease-in-out 0.2s;
+}
+.decision-settings-wrapper input[type="submit"].button.remove-button {
+  opacity: 0.4;
+  background: url(/core/misc/icons/000000/ex.svg) no-repeat center;
+}
+.decision-settings-wrapper input[type="submit"].button.remove-button:hover,
+.decision-settings-wrapper input[type="submit"].button.remove-button:focus {
+  opacity: 0.9;
+}
+#drupal-off-canvas .decision-settings-wrapper input[type="submit"].button.remove-button {
+  opacity: 0.9;
+  background: url(/core/misc/icons/bebebe/ex.svg) no-repeat center;
+}
+#drupal-off-canvas .decision-settings-wrapper input[type="submit"].button.remove-button:hover,
+#drupal-off-canvas .decision-settings-wrapper input[type="submit"].button.remove-button:focus {
+  opacity: 0.4;
+}
+#drupal-off-canvas #settings-decision-decision-settings .condition-add-container select,
+.condition-add-container select {
+  max-width: 100%;
+}
+#drupal-off-canvas .reaction-settings-wrapper div[class*="add-block-block-type"],
+.reaction-settings-wrapper div[class*="add-block-block-type"] {
+  margin: 0.5rem 0;
+}
+.decision-settings-wrapper .add-container {
+  display: flex;
+  flex-flow: wrap row;
+  align-items: center;
+}
+#drupal-off-canvas .add-container input,
+.add-container input {
+  margin: 0.75rem 1rem;
+}
+
+/* Off Canvas-specific Table Customizations */
+#drupal-off-canvas #settings-decision-decision-settings table {
+  table-layout: fixed;
+  margin-bottom: 1rem;
+}
+#drupal-off-canvas #settings-decision-decision-settings table tr td:nth-child(2) {
+  width: 80%;
+}
+#drupal-off-canvas #settings-decision-decision-settings tr.drag-previous td {
+  background: transparent;
+}
+#drupal-off-canvas #settings-decision-decision-settings tr:hover td {
+  background-color: unset;
+}
+#drupal-off-canvas #settings-decision-decision-settings td {
+  border-bottom: none;
+}
+#drupal-off-canvas .decision-settings-wrapper .fieldset-wrapper > table > tbody > tr > td:first-child {
+  width: unset;
+}
+
+/* General Table Customizations */
+#drupal-off-canvas .decision-settings-wrapper .tabledrag-toggle-weight-wrapper,
+#drupal-off-canvas .condition-settings-wrapper .tabledrag-toggle-weight-wrapper,
+.decision-settings-wrapper .tabledrag-toggle-weight-wrapper,
+.condition-settings-wrapper .tabledrag-toggle-weight-wrapper {
+  padding: 0;
+}
+#drupal-off-canvas .decision-settings-wrapper a.tabledrag-handle .handle,
+#drupal-off-canvas .condition-settings-wrapper a.tabledrag-handle .handle,
+.decision-settings-wrapper a.tabledrag-handle .handle,
+.condition-settings-wrapper a.tabledrag-handle .handle {
+  width: 100%;
+  height: 100%;
+  min-width: 24px;
+  min-height: 24px;
+  padding: .25em;
+  margin: 0;
+}
+#drupal-off-canvas .decision-settings-wrapper .warning.tabledrag-changed,
+.decision-settings-wrapper .warning.tabledrag-changed {
+  color: red;
+}
+#drupal-off-canvas .decision-settings-wrapper thead,
+.decision-settings-wrapper thead {
+  display: none;
+}
+#drupal-off-canvas .decision-settings-wrapper .draggable,
+.decision-settings-wrapper .draggable {
+  padding: 1rem 0;
+  background: transparent;
+}
+#drupal-off-canvas .decision-settings-wrapper td,
+.decision-settings-wrapper td {
+  height: auto;
+  padding: 0;
+}
+#drupal-off-canvas .decision-settings-wrapper .fieldset-wrapper > table > tbody > tr > td:first-child,
+#drupal-off-canvas .decision-settings-wrapper .fieldset-wrapper > table > tbody > tr > td:last-child,
+#drupal-off-canvas .condition-settings-wrapper > table > tbody > tr > td:last-child,
+.decision-settings-wrapper .fieldset-wrapper > table > tbody > tr > td:first-child,
+.decision-settings-wrapper .fieldset-wrapper > table > tbody > tr > td:last-child,
+.condition-settings-wrapper > table > tbody > tr > td:last-child {
+  display: flex;
+  justify-content: flex-end;
+}
+#drupal-off-canvas .condition-settings-wrapper table,
+.condition-settings-wrapper table {
+  width: 100%;
+}
+#drupal-off-canvas .condition-settings-wrapper table tbody tr,
+.condition-settings-wrapper table tbody tr {
+  background-color: inherit;
+}
+#drupal-off-canvas .condition-settings-wrapper table tbody td:first-child,
+.condition-settings-wrapper table tbody td:first-child {
+  width: 90%;
+  padding: 1rem 1rem 1rem 0;
+}
+
+/* Table Row Colorization */
+#drupal-off-canvas .group-condition-settings-wrapper,
+.group-condition-settings-wrapper {
+  margin: 0;
+  padding: .25rem 1rem;
+  border-width: 0px 0px 0px 6px;
+  border-style: solid;
+  border-color: #42a877;
+}
+#drupal-off-canvas .group-condition-settings-wrapper .group-condition-settings-wrapper,
+.group-condition-settings-wrapper .group-condition-settings-wrapper {
+  border-color: #3ca0a8;
+}
+
+#drupal-off-canvas .group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper,
+.group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper {
+  border-color: #585ca8;
+}
+#drupal-off-canvas .group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper,
+. .group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper .group-condition-settings-wrapper {
+  border-color: #a869a8;
+}
+
+/* Decisions */
+#drupal-off-canvas .decision-settings-wrapper .plugin-container-wrapper,
+.decision-settings-wrapper .plugin-container-wrapper,
+#drupal-off-canvas .decision-settings-wrapper .segment-additional-settings-container,
+.decision-settings-wrapper .segment-additional-settings-container {
+  margin-top: 2rem;
+  padding-top: 1.875rem;
+  border-top: 1px solid #d4d4d8;
+}
+.decision-settings-wrapper .plugin-container-wrapper .form-item-label {
+  margin: 0 0 1rem 0;
+}
+
+/* Conditions */
+#drupal-off-canvas .condition-settings-wrapper .condition,
+.condition-settings-wrapper .condition {
+  position: relative;
+  display: flex;
+  flex-flow: wrap row;
+  align-items: center;
+}
+#drupal-off-canvas .condition-settings-wrapper .condition > .form-item,
+#drupal-off-canvas .condition-settings-wrapper .condition > .form-wrapper,
+.condition-settings-wrapper .condition > .form-item,
+.condition-settings-wrapper .condition > .form-wrapper {
+  margin: 0 0.625rem 0.625rem;
+}
+#drupal-off-canvas .condition-settings-wrapper .condition-label,
+.condition-settings-wrapper .condition-label {
+  padding: 0.125rem 0.375rem;
+  font-weight: bold;
+  color: #333;
+  background-color: #f5f5f2;
+  border: 1px solid #e3e3e3;
+  border-radius: 3px;
+}
+
+/* Reactions */
+#drupal-off-canvas .reaction-settings-wrapper,
+.reaction-settings-wrapper {
+  padding: .25rem 1rem;
+  border-width: 0px 0px 0px 6px;
+  border-style: solid;
+  border-color: #446ca8;
+}
+#drupal-off-canvas .reaction-item-settings-wrapper,
+.reaction-item-settings-wrapper {
+  padding: .25rem 1rem;
+}

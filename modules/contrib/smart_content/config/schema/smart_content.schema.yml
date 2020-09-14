@@ -1,0 +1,25 @@
+smart_content.smart_content.decision.*:
+  type: config_entity
+  label: 'Decision config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    settings:
+      type: sequence
+      label: 'Settings'
+      sequence:
+        type: undefined
+
+smart_content.smart_content.segment_set.*:
+  type: config_entity
+  label: 'Decision config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    settings:
+      type: sequence
+      label: 'Settings'
+      sequence:
+        type: undefined
