@@ -1,0 +1,6 @@
+imagedownload.download.file:
+  path: '/download/file/{file_name}'
+  defaults:
+    _controller: '\Drupal\imagedownload\Controller\ImageDownload::downloadFile'
+  requirements:
+    _permission: 'access content'

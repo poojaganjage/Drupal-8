@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter().
+ * @param $form
+ * @param \Drupal\Core\Form\FormStateInterface $form_state
+ * @param $form_id
+ */
+function permissiomodule_form_taxonomy_vocabulary_form_alter(&$form, FormStateInterface $form_state, $form_id) {
+  $entity = $form_state->getBuildInfo()['callback_object']->getEntity();
+
+  if ($entity->id() !== null && Drupal::currentUser()->hasPermission('define view for vocabulary ' . $entity->id())) {
+    _tvi_settings_form($form, $form_state, $entity);
+  }
+}
+

@@ -1,0 +1,6 @@
+name: Custom Permission Module
+description: 'Creating Custom Permission Module'
+type: module
+core: 8.x
+version: 8.x
+package: Custom
