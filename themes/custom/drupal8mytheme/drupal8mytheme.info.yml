@@ -1,0 +1,16 @@
+name: My theme for Drupal 8
+type: theme
+description: A simple theme for drupal 8
+package: custom
+core: 8.x
+regions:
+  header: header
+  drupal8mythememenu: Navigation
+  content: content
+  sidebar_first: Sidebar First
+  footer: Footer
+  page_top: Page Top
+  page_bottom: Page Bottom
+
+libraries:
+  - drupal8mytheme/global-css
